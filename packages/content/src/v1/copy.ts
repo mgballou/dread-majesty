@@ -154,6 +154,7 @@ export const v1Copy = {
     surging: 'Surge',
     cooling: 'Soon',
     ready: 'Enact your will',
+    reigning: 'All shall kneel',
     until: (seconds) => `${seconds} til ready`,
     worth: ({ multiplier, seconds }) => `Everything works ${multiplier} as hard for ${seconds}.`,
     results: [

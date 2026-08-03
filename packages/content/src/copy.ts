@@ -56,6 +56,8 @@ export interface SmiteCopy {
   readonly cooling: string;
   /** Said on the status line while a blow is ready. */
   readonly ready: string;
+  /** Said on the status line while one is running. Not a countdown — the chain is that. */
+  readonly reigning: string;
   /** Said on the status line while one is not. `seconds` arrives formatted. */
   readonly until: (seconds: string) => string;
   /** One line saying what a blow is worth, for the hint. `multiplier` arrives formatted. */
