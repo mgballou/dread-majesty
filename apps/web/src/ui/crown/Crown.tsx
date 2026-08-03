@@ -53,8 +53,12 @@ export function Crown({ state, content, copy }: CrownProps): ReactNode {
 /**
  * What the blow is doing, said on the status line.
  *
- * `ready` and a countdown, never a label whose width depends on the number. The
- * control beside it holds a five-character verb and does not move.
+ * Three states, not two. Running and cooling are both "not ready", and reading the
+ * countdown off `share` without asking which one you are in says "til ready" through
+ * the whole surge — which is the one moment it is emphatically not what is happening.
+ *
+ * Only the cooling state carries a number. While the surge runs the chain is burning
+ * end to end, and that is a better clock than a digit.
  */
 function standing(
   phase: ReturnType<typeof smitePhase>,
@@ -62,7 +66,7 @@ function standing(
   content: Content,
 ): string {
   if (phase.kind === 'ready') return copy.ready;
+  if (phase.kind === 'active') return copy.reigning;
 
-  const left = phase.kind === 'active' ? content.smite.durationMs : content.smite.cooldownMs;
-  return copy.until(`${Math.max(0, Math.ceil((phase.share * left) / 1000))}s`);
+  return copy.until(`${Math.max(0, Math.ceil((phase.share * content.smite.cooldownMs) / 1000))}s`);
 }
