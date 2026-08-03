@@ -4,10 +4,10 @@ import { BASE_DT_MS, catchUp, createState, step } from '../src/index.ts';
 import { fixture } from './fixtures/content.ts';
 import type { GameState } from '../src/types.ts';
 
-function seeded(minions: number, slums: number): GameState {
+function seeded(minions: number, warrens: number): GameState {
   const state = createState(fixture);
   state.gens.minion.owned = new Decimal(minions);
-  state.gens.slum.owned = new Decimal(slums);
+  state.gens.warren.owned = new Decimal(warrens);
   return state;
 }
 

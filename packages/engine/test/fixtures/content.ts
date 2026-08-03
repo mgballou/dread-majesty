@@ -14,16 +14,16 @@ export const fixture: Content = {
 
   tiers: [
     {
-      id: 'slum',
-      name: 'Slum',
-      plural: 'Slums',
+      id: 'warren',
+      name: 'Warren',
+      plural: 'Warrens',
       produces: 'minion',
       yield: '100',
       cycleMs: 60 * SECOND,
       costResource: 'evil',
       baseCost: '1500',
       costRate: 1.089,
-      art: 'tier/slum',
+      art: 'tier/warren',
     },
     {
       id: 'minion',

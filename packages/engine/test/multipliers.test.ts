@@ -6,7 +6,7 @@ import { fixture, fixtureWithMilestones } from './fixtures/content.ts';
 function seeded(minions: number, content = fixtureWithMilestones) {
   const state = createState(content);
   state.gens.minion.owned = new Decimal(minions);
-  state.gens.slum.owned = new Decimal(0);
+  state.gens.warren.owned = new Decimal(0);
   return state;
 }
 

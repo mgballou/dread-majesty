@@ -1,4 +1,4 @@
-export const TIER_IDS = ['minion', 'slum', 'legion', 'fortress'] as const;
+export const TIER_IDS = ['minion', 'warren', 'legion', 'fortress'] as const;
 export type TierId = (typeof TIER_IDS)[number];
 
 export const RESOURCE_IDS = ['evil'] as const;
