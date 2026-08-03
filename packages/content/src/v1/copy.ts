@@ -278,7 +278,6 @@ export const v1Copy = {
     cancel: 'Not yet',
     filled: 'Appointed',
     beyond: 'Beyond you',
-
   },
 
   stage: {
