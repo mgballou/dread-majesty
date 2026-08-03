@@ -25,15 +25,17 @@
 }
 
 /*
- * The buy panes. Two abreast where there is room for two, one where there is not.
+ * The deck, then the reset.
  *
- * `auto-fit` rather than a fixed pair of tracks, because the prestige panel is held
- * back until souls are in reach — a fixed second column would leave a hole beside the
- * rail for the first three hours.
+ * One column, deliberately. The deck holds four panels behind four tabs and every one
+ * of them wants the full width — the muster's rows are three columns wide on their
+ * own. The prestige panel sits under it because a reset is a rare, considered act and
+ * has no business competing for the eye with the thing the player does every minute.
+ * It is also held back until souls are in reach, so for the first hours there is
+ * nothing beneath the deck at all.
  */
 .shell__side {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(22rem, 100%), 1fr));
   gap: var(--space-4);
   align-items: start;
 }
@@ -44,31 +46,9 @@
 }
 
 /*
- * The records live in the footer, not in the right-hand column.
+ * One column on a phone, in the order the game is played: rate, chain, deck.
  *
- * They used to sit under the prestige panel and open inline beneath it, which put
- * the reveal below the fold on any normal window — pressing the button looked like
- * nothing happening. They are dialogs now, and the footer is where a thing that
- * takes over the screen should be reached from.
- */
-.shell__foot {
-  display: flex;
-  justify-content: center;
-  margin-block-start: var(--space-8);
-  padding-block-start: var(--space-4);
-  border-block-start: 1px solid var(--line);
-}
-
-.shell__records {
-  display: flex;
-  gap: var(--space-2);
-}
-
-/*
- * One column on a phone, in the order the game is played: rate, chain, buy, records.
- *
- * The chain is horizontal at every width, so nothing has to rearrange itself here —
- * only the buy panes, which stop sitting side by side.
+ * The chain is horizontal at every width, so nothing has to rearrange itself here.
  */
 @media (width <= 52rem) {
   /* The viewport reaches under the notch and the home bar; this puts it back. */
@@ -82,10 +62,6 @@
 
   .shell__body {
     gap: var(--space-4);
-  }
-
-  .shell__foot {
-    margin-block-start: var(--space-6);
   }
 }
 

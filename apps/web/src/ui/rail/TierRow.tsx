@@ -1,13 +1,13 @@
 import Decimal from 'break_eternity.js';
 import type { ReactNode } from 'react';
 import type { Content, Copy, MilestoneCopy, TierDef, TierId } from '@dm/content';
-import { milestoneProgress, type GameState } from '@dm/engine';
+import { isAppointed, milestoneProgress, type GameState } from '@dm/engine';
 import { TierArt } from '../art/TierArt.tsx';
 import { Banner } from '../Banner.tsx';
 import { formatCount, formatDuration, formatNumber } from '../format.ts';
 import { Meter } from '../Meter.tsx';
 import { quantityLabel, type BuyQuantity } from './quantity.ts';
-import type { RailAppointment, RailOptionKind, RailPurchase } from './railPlan.ts';
+import type { RailPurchase, SpendEmphasis } from './railPlan.ts';
 
 /** Matches `--rail-art` in BuyRail.css, so the signpost row is the height of a row. */
 export const ROW_ART_SIZE = 40;
@@ -15,61 +15,46 @@ export const ROW_ART_SIZE = 40;
 /** What the rail and everything it renders reads out of the copy module. */
 export type RailScreenCopy = Pick<Copy, 'rail' | 'milestone' | 'overseer'>;
 
-/**
- * Which of a row's two spends, if either, the plan lifted.
- *
- * A row now offers a purchase and an appointment, so knowing *that* the row won the
- * accent is no longer enough — the rail has to know which control to fill. Hence the
- * union rather than a third string.
- */
-export type RowEmphasis =
-  { kind: 'none' } | { kind: 'best'; on: RailOptionKind } | { kind: 'saving'; on: RailOptionKind };
-
 interface TierRowProps {
   tier: TierDef;
   state: GameState;
   content: Content;
   purchase: RailPurchase;
-  /** Null once the post is filled. There is nothing left to offer. */
-  appointment: RailAppointment | null;
-  emphasis: RowEmphasis;
+  emphasis: SpendEmphasis;
   quantity: BuyQuantity;
   onPurchase: (tierId: TierId, quantity: BuyQuantity) => void;
-  onAppoint: (tierId: TierId) => void;
   copy: RailScreenCopy;
 }
 
 /**
- * One generator, at secondary weight unless the plan lifted something on it.
+ * One generator, at secondary weight unless the plan lifted this row.
  *
  * Everything the buy decision needs is on the row: what it makes and how often, how
- * far the cycle has run, how far the next milestone is, what this quantity costs, and
- * whether anybody is watching the place. Milestone distance is the reason the row is
- * not just arithmetic (spec §5.3).
+ * far the cycle has run, how far the next milestone is, and what this quantity costs.
+ * Milestone distance is the reason the row is not just arithmetic (spec §5.3).
  *
- * **Rousing is not here.** The verb that starts a manual tier sits on that tier's node
- * on the stage, on the thing it acts on (spec §6). The rail carries the standing
- * arrangement — hired or not hired — and nothing that has to be pressed again.
+ * **Neither rousing nor appointing is here.** The verb that starts a manual tier sits
+ * on that tier's node on the stage, on the thing it acts on (spec §6). Hiring somebody
+ * so it never stops is a post, filled once and for ever, and it lives with the other
+ * posts in the miscreants panel. What is left on the row is one word saying whether
+ * anybody holds this one — the standing arrangement, and nothing to press.
  */
 export function TierRow({
   tier,
   state,
   content,
   purchase,
-  appointment,
   emphasis,
   quantity,
   onPurchase,
-  onAppoint,
   copy,
 }: TierRowProps): ReactNode {
   const gen = state.gens[tier.id];
   const shortfall = purchase.cost.sub(state.resources[tier.costResource]);
-  const overseer = copy.overseer.names[tier.id];
   const mark = flag(emphasis, copy);
 
   return (
-    <li className={`rail__slot rail__row rail__row--${emphasis.kind}`} data-tier={tier.id}>
+    <li className={`rail__slot rail__row rail__row--${emphasis}`} data-tier={tier.id}>
       <TierArt slot={tier.art} size={ROW_ART_SIZE} decorative />
 
       <div className="rail__body">
@@ -78,6 +63,9 @@ export function TierRow({
             {tier.plural}
           </Banner>
           {mark !== null && <span className="rail__flag">{mark}</span>}
+          {isAppointed(state, tier.id) && (
+            <span className="rail__flag rail__flag--overseen">{copy.overseer.filled}</span>
+          )}
           <span className="rail__owned">{copy.rail.held(formatCount(gen.owned))}</span>
         </div>
 
@@ -93,39 +81,12 @@ export function TierRow({
         <p className="rail__line rail__line--milestone">
           {milestoneLine(state, content, tier, copy.milestone)}
         </p>
-
-        <div className="rail__oversight" role="group" aria-label={copy.overseer.title}>
-          {appointment === null ? (
-            <div className="rail__filled">
-              <p className="rail__line">{copy.overseer.appointed(overseer)}</p>
-              <p className="rail__line rail__line--milestone">{copy.overseer.automatic}</p>
-            </div>
-          ) : (
-            <>
-              <p className="rail__line">{copy.overseer.manual}</p>
-              <button
-                type="button"
-                className={`button rail__appoint${lifted(emphasis, 'appoint') ? ' button--primary' : ''}`}
-                disabled={!appointment.affordable}
-                onClick={() => onAppoint(tier.id)}
-              >
-                <span>{copy.overseer.appoint(overseer)}</span>
-                {/* A whitespace-only child is never rendered as a flex item, so this
-                    costs nothing on screen and buys a spoken name that reads as a
-                    sentence rather than running the price into the title. */}{' '}
-                <span className="rail__appoint-cost">
-                  {copy.overseer.cost(formatNumber(appointment.cost))}
-                </span>
-              </button>
-            </>
-          )}
-        </div>
       </div>
 
       <div className="rail__buy">
         <button
           type="button"
-          className={`button button--numeric${lifted(emphasis, 'purchase') ? ' button--primary' : ''}`}
+          className={`button button--numeric${emphasis === 'best' ? ' button--primary' : ''}`}
           disabled={!purchase.affordable}
           aria-label={copy.rail.buy({
             count: String(purchase.count),
@@ -148,21 +109,10 @@ export function TierRow({
   );
 }
 
-function lifted(emphasis: RowEmphasis, on: RailOptionKind): boolean {
-  return emphasis.kind === 'best' && emphasis.on === on;
-}
-
-/**
- * Colour never carries a state alone. The lifted row says so in words.
- *
- * When the accent sits on the appointment the mark names oversight rather than
- * repeating "advised", because the filled button beneath it already says the verb in
- * full — two readings of the same thing, and neither is only a tone.
- */
-function flag(emphasis: RowEmphasis, copy: RailScreenCopy): string | null {
-  if (emphasis.kind === 'none') return null;
-  if (emphasis.on === 'appoint') return copy.overseer.title;
-  return emphasis.kind === 'best' ? copy.rail.best : copy.rail.saving;
+/** Colour never carries a state alone. The lifted row says so in words. */
+function flag(emphasis: SpendEmphasis, copy: RailScreenCopy): string | null {
+  if (emphasis === 'none') return null;
+  return emphasis === 'best' ? copy.rail.best : copy.rail.saving;
 }
 
 function produceLine(tier: TierDef, content: Content): string {

@@ -1,0 +1,203 @@
+import Decimal from 'break_eternity.js';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { CURRENT, CURRENT_COPY } from '@dm/content';
+import type { TierId } from '@dm/content';
+import { createState, type GameState } from '@dm/engine';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { Miscreants } from './Miscreants.tsx';
+import { railPlan } from './railPlan.ts';
+
+let state: GameState;
+
+const OVERSEER = CURRENT_COPY.overseer;
+
+beforeEach(() => {
+  state = createState(CURRENT);
+});
+
+function draw(isUnlocked: (id: TierId) => boolean = () => true) {
+  const plan = railPlan({ state, content: CURRENT, quantity: 1, isUnlocked });
+  const onAppoint = vi.fn();
+
+  return {
+    onAppoint,
+    ...render(
+      <Miscreants
+        content={CURRENT}
+        state={state}
+        plan={plan}
+        onAppoint={onAppoint}
+        copy={CURRENT_COPY}
+      />,
+    ),
+    user: userEvent.setup(),
+  };
+}
+
+describe('Miscreants', () => {
+  it('shows a post for every rung of the chain', () => {
+    draw();
+
+    expect(screen.getAllByRole('listitem')).toHaveLength(CURRENT.tiers.length);
+  });
+
+  it('names the Overseer of each post', () => {
+    draw();
+
+    expect(screen.getByText(OVERSEER.names.minion)).toBeInTheDocument();
+  });
+
+  it('finally says who the holder is', () => {
+    draw();
+
+    expect(screen.getByText(OVERSEER.notes.minion)).toBeInTheDocument();
+  });
+
+  it('says what the panel is for', () => {
+    draw();
+
+    expect(screen.getByText(OVERSEER.what)).toBeInTheDocument();
+  });
+
+  it('marks a post with a diamond, never a circle', () => {
+    const { container } = draw();
+
+    expect(container.querySelectorAll('circle')).toHaveLength(0);
+  });
+
+  it('draws one mark per post', () => {
+    const { container } = draw();
+
+    expect(container.querySelectorAll('.miscreant__mark')).toHaveLength(CURRENT.tiers.length);
+  });
+
+  it('says outright that a post is beyond the purse', () => {
+    draw();
+
+    expect(screen.getAllByText(OVERSEER.beyond)).toHaveLength(CURRENT.tiers.length);
+  });
+
+  it('will not open a post the purse cannot reach', () => {
+    draw();
+
+    expect(screen.getByRole('button', { name: new RegExp(OVERSEER.names.minion) })).toBeDisabled();
+  });
+
+  it('says what a post costs before it is opened', () => {
+    draw();
+
+    const cost = OVERSEER.cost('1K');
+
+    expect(screen.getByText(cost)).toBeInTheDocument();
+  });
+
+  it('opens a post the purse can reach', async () => {
+    state.resources.evil = new Decimal(1000);
+
+    const { user } = draw();
+    await user.click(screen.getByRole('button', { name: new RegExp(OVERSEER.names.minion) }));
+
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+  });
+
+  it('asks before it spends', async () => {
+    state.resources.evil = new Decimal(1000);
+
+    const { onAppoint, user } = draw();
+
+    await user.click(screen.getByRole('button', { name: new RegExp(OVERSEER.names.minion) }));
+
+    expect(onAppoint).not.toHaveBeenCalled();
+  });
+
+  it('heads the question with the Overseer it means', async () => {
+    state.resources.evil = new Decimal(1000);
+
+    const { user } = draw();
+    await user.click(screen.getByRole('button', { name: new RegExp(OVERSEER.names.minion) }));
+
+    expect(screen.getByText(OVERSEER.confirmTitle(OVERSEER.names.minion))).toBeInTheDocument();
+  });
+
+  it('appoints when the question is answered', async () => {
+    state.resources.evil = new Decimal(1000);
+
+    const { onAppoint, user } = draw();
+    await user.click(screen.getByRole('button', { name: new RegExp(OVERSEER.names.minion) }));
+
+    await user.click(screen.getByRole('button', { name: OVERSEER.confirmAction }));
+
+    expect(onAppoint).toHaveBeenCalledWith('minion');
+  });
+
+  it('appoints nobody when the question is refused', async () => {
+    state.resources.evil = new Decimal(1000);
+
+    const { onAppoint, user } = draw();
+    await user.click(screen.getByRole('button', { name: new RegExp(OVERSEER.names.minion) }));
+
+    await user.click(screen.getByRole('button', { name: OVERSEER.cancel }));
+
+    expect(onAppoint).not.toHaveBeenCalled();
+  });
+
+  it('puts the question away once it is answered', async () => {
+    state.resources.evil = new Decimal(1000);
+
+    const { user } = draw();
+    await user.click(screen.getByRole('button', { name: new RegExp(OVERSEER.names.minion) }));
+
+    await user.click(screen.getByRole('button', { name: OVERSEER.cancel }));
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('says outright that a post is filled', () => {
+    state.overseers.minion = true;
+
+    draw();
+
+    expect(screen.getByText(OVERSEER.filled)).toBeInTheDocument();
+  });
+
+  it('will not reopen a post already filled', () => {
+    state.overseers.minion = true;
+
+    draw();
+
+    expect(screen.getByRole('button', { name: new RegExp(OVERSEER.names.minion) })).toBeDisabled();
+  });
+
+  it('still shows a post for a rung the player has not reached', () => {
+    draw((id) => id === 'minion');
+
+    expect(screen.getByText(OVERSEER.names.fortress)).toBeInTheDocument();
+  });
+
+  it('lifts the appointment when it is the best spend going', () => {
+    state.gens.minion.owned = new Decimal(400);
+    state.resources.evil = new Decimal(1000);
+
+    const { container } = draw();
+
+    expect(container.querySelectorAll('.miscreant__post--best')).toHaveLength(1);
+  });
+
+  it('says in words that the lifted post is the advised spend, never tone alone', () => {
+    state.gens.minion.owned = new Decimal(400);
+    state.resources.evil = new Decimal(1000);
+
+    draw();
+
+    expect(screen.getByText(CURRENT_COPY.rail.best)).toBeInTheDocument();
+  });
+
+  it('lifts nothing when the best spend is a purchase', () => {
+    state.resources.evil = new Decimal(2600);
+
+    const { container } = draw();
+
+    expect(container.querySelectorAll('.miscreant__post--best')).toHaveLength(0);
+  });
+});

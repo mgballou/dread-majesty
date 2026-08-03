@@ -76,6 +76,22 @@ interface RailPlanInput {
   isUnlocked: (tierId: TierId) => boolean;
 }
 
+/** Whether the plan lifted a row, and on what grounds. */
+export type SpendEmphasis = 'none' | 'best' | 'saving';
+
+/**
+ * Whether one row of one panel is the row the plan lifted.
+ *
+ * Purchases and appointments are ranked together but no longer drawn together: the
+ * muster holds one and the miscreants the other. Both ask the same question of the
+ * same plan, so both ask it here, and the plan can only ever answer yes once.
+ */
+export function spendEmphasis(plan: RailPlan, kind: RailOptionKind, tierId: TierId): SpendEmphasis {
+  if (plan.best?.kind === kind && plan.best.tierId === tierId) return 'best';
+  if (plan.saving?.kind === kind && plan.saving.tierId === tierId) return 'saving';
+  return 'none';
+}
+
 /**
  * What the rail should say, and which single row should be lifted out of it.
  *

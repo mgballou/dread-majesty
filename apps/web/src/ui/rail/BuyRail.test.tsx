@@ -3,11 +3,13 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { CURRENT, CURRENT_COPY } from '@dm/content';
 import type { TierId } from '@dm/content';
-import { bulkCost, createState, overseerCost, type GameState } from '@dm/engine';
+import { bulkCost, createState, type GameState } from '@dm/engine';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { setReducedMotion } from '../../../test/setup.ts';
 import { formatNumber } from '../format.ts';
 import { BuyRail } from './BuyRail.tsx';
+import { railPlan } from './railPlan.ts';
+import type { BuyQuantity } from './quantity.ts';
 
 let state: GameState;
 
@@ -29,29 +31,23 @@ function buyName(tierId: TierId, count: number): string {
   });
 }
 
-function appointName(tierId: TierId): string {
-  const name = CURRENT_COPY.overseer.appoint(CURRENT_COPY.overseer.names[tierId]);
-  const cost = CURRENT_COPY.overseer.cost(formatNumber(overseerCost(CURRENT, tierId)!));
+function draw(isUnlocked: (id: TierId) => boolean = () => true, quantity: BuyQuantity = 1) {
+  const plan = railPlan({ state, content: CURRENT, quantity, isUnlocked });
+  const onPurchase = vi.fn();
+  const onQuantity = vi.fn();
 
-  return `${name} ${cost}`;
-}
-
-function draw(
-  isUnlocked: (id: TierId) => boolean = () => true,
-  onPurchase = vi.fn(),
-  onAppoint = vi.fn(),
-) {
   return {
     onPurchase,
-    onAppoint,
+    onQuantity,
     ...render(
       <BuyRail
         content={CURRENT}
         state={state}
-        version={1}
+        plan={plan}
+        quantity={quantity}
+        onQuantity={onQuantity}
         isUnlocked={isUnlocked}
         onPurchase={onPurchase}
-        onAppoint={onAppoint}
         copy={CURRENT_COPY}
       />,
     ),
@@ -59,12 +55,6 @@ function draw(
 }
 
 describe('BuyRail', () => {
-  it('names the panel out of the copy module', () => {
-    draw();
-
-    expect(screen.getByText(CURRENT_COPY.rail.title)).toBeInTheDocument();
-  });
-
   it('names the run of generators', () => {
     draw();
 
@@ -144,7 +134,7 @@ describe('BuyRail', () => {
 
     const { container } = draw();
 
-    expect(container.querySelectorAll('.button:not(.button--primary)')).toHaveLength(7);
+    expect(container.querySelectorAll('.button:not(.button--primary)')).toHaveLength(3);
   });
 
   it('shows only the tiers the player has met, and one row beyond them', () => {
@@ -219,32 +209,18 @@ describe('BuyRail', () => {
   it('carries the chosen quantity into the callback', async () => {
     state.resources.evil = new Decimal(2600);
 
-    const { onPurchase } = draw();
-    await userEvent.click(screen.getByRole('radio', { name: TEN_AT_A_TIME }));
+    const { onPurchase } = draw(() => true, 10);
     await userEvent.click(screen.getByRole('button', { name: buyName('minion', 10) }));
 
     expect(onPurchase).toHaveBeenCalledWith('minion', 10);
   });
 
-  it('changes the price on the row when the quantity changes', async () => {
-    state.resources.evil = new Decimal(2600);
-    const ten = buyName('minion', 10);
+  it('hands the chosen quantity up rather than keeping it', async () => {
+    const { onQuantity } = draw();
 
-    draw();
     await userEvent.click(screen.getByRole('radio', { name: TEN_AT_A_TIME }));
 
-    expect(screen.getByRole('button', { name: ten })).toBeInTheDocument();
-  });
-
-  it('remembers the quantity across a remount', async () => {
-    const hundred = CURRENT_COPY.rail.quantityOption('100');
-    const first = draw();
-    await userEvent.click(screen.getByRole('radio', { name: hundred }));
-    first.unmount();
-
-    draw();
-
-    expect(screen.getByRole('radio', { name: hundred })).toBeChecked();
+    expect(onQuantity).toHaveBeenCalledWith(10);
   });
 
   it('never spends the accent on the quantity setting', async () => {
@@ -254,6 +230,12 @@ describe('BuyRail', () => {
     await userEvent.click(screen.getByRole('radio', { name: TEN_AT_A_TIME }));
 
     expect(container.querySelectorAll('.button--primary')).toHaveLength(1);
+  });
+
+  it('names the quantity setting where it now sits, inside the list it governs', () => {
+    draw();
+
+    expect(screen.getByRole('group', { name: CURRENT_COPY.rail.quantity })).toBeInTheDocument();
   });
 
   it('sweeps the cycle between slices under normal motion', () => {
@@ -278,85 +260,45 @@ describe('BuyRail', () => {
     expect(screen.getAllByRole('progressbar')).toHaveLength(4);
   });
 
-  it('says outright that nobody oversees a tier', () => {
+  it('no longer says a word about nobody watching the place', () => {
     draw();
 
-    expect(screen.getAllByText(CURRENT_COPY.overseer.manual)).toHaveLength(4);
+    expect(screen.queryByText(CURRENT_COPY.overseer.manual)).not.toBeInTheDocument();
   });
 
-  it('offers the appointment on a tier nobody oversees', () => {
-    draw();
-
-    expect(screen.getByRole('button', { name: appointName('minion') })).toBeInTheDocument();
-  });
-
-  it('disables an appointment the purse cannot reach', () => {
-    draw();
-
-    expect(screen.getByRole('button', { name: appointName('minion') })).toBeDisabled();
-  });
-
-  it('fires the appointment callback with the tier', async () => {
+  it('offers no appointment, because appointments are not the muster', () => {
     state.resources.evil = new Decimal(2600);
 
-    const { onAppoint } = draw();
-    await userEvent.click(screen.getByRole('button', { name: appointName('minion') }));
+    draw();
 
-    expect(onAppoint).toHaveBeenCalledWith('minion');
+    const appoint = CURRENT_COPY.overseer.appoint(CURRENT_COPY.overseer.names.minion);
+
+    expect(screen.queryByRole('button', { name: new RegExp(appoint) })).not.toBeInTheDocument();
   });
 
-  it('offers no appointment once the post is filled', () => {
+  it('still says in a word that somebody holds a tier', () => {
     state.overseers.minion = true;
 
     draw();
 
-    expect(screen.queryByRole('button', { name: appointName('minion') })).not.toBeInTheDocument();
+    expect(screen.getByText(CURRENT_COPY.overseer.filled)).toBeInTheDocument();
   });
 
-  it('names the Overseer already in post', () => {
-    state.overseers.minion = true;
-
-    draw();
-
-    expect(
-      screen.getByText(CURRENT_COPY.overseer.appointed(CURRENT_COPY.overseer.names.minion)),
-    ).toBeInTheDocument();
-  });
-
-  it('says outright that an overseen tier runs without the player', () => {
-    state.overseers.minion = true;
-
-    draw();
-
-    expect(screen.getByText(CURRENT_COPY.overseer.automatic)).toBeInTheDocument();
-  });
-
-  it('lets an appointment take the accent when it is the best spend going', () => {
-    state.gens.minion.owned = new Decimal(400);
-    state.resources.evil = new Decimal(1000);
-
-    draw();
-
-    expect(screen.getByRole('button', { name: appointName('minion') })).toHaveClass(
-      'button--primary',
-    );
-  });
-
-  it('still lifts exactly one spend when that spend is an appointment', () => {
+  it('lifts nothing when the best spend is an appointment', () => {
     state.gens.minion.owned = new Decimal(400);
     state.resources.evil = new Decimal(1000);
 
     const { container } = draw();
 
-    expect(container.querySelectorAll('.button--primary')).toHaveLength(1);
+    expect(container.querySelectorAll('.button--primary')).toHaveLength(0);
   });
 
-  it('says in words that the lifted spend is the appointment, never tone alone', () => {
+  it('calls no row the best one when the best spend is an appointment', () => {
     state.gens.minion.owned = new Decimal(400);
     state.resources.evil = new Decimal(1000);
 
     draw();
 
-    expect(screen.getByText(CURRENT_COPY.overseer.title)).toBeInTheDocument();
+    expect(screen.queryByText(CURRENT_COPY.rail.best)).not.toBeInTheDocument();
   });
 });

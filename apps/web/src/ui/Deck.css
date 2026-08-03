@@ -1,0 +1,188 @@
+/*
+ * The deck of panels. See Deck.tsx and ui-sensibility §6, §9.
+ *
+ * Three component tokens, and each earns its place: the chevron point has to be read
+ * by both the clip shape and the padding that keeps a title off the tip, and the body
+ * needs a floor no run of content can be trusted to hold on its own.
+ */
+
+.deck {
+  --deck-point: var(--space-4);
+  --deck-edge: 1px;
+
+  /*
+   * The height of the open panel. Fixed, not a floor.
+   *
+   * A floor cannot do this job: the deeds run to twenty-five entries and stand five
+   * times taller than the ledger, so any height that stopped those two shifting would
+   * be a screen and a half of empty ground under everything else. One height, and
+   * whatever overruns it scrolls inside its own panel. Nothing on the page moves when
+   * a tab changes, which is the whole point of the region.
+   *
+   * Against the viewport rather than a flat measure, because it is a window onto a
+   * list and a window taller than the screen is not a window.
+   */
+  --deck-body: clamp(22rem, 58vh, 34rem);
+
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--space-2);
+  overflow: hidden;
+}
+
+.deck__strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  padding: var(--space-2);
+  background: var(--surface-raised);
+  border-block-end: 1px solid var(--accent-line);
+}
+
+/*
+ * The button carries no chrome at all, so the focus ring draws on it un-clipped.
+ * The chevron lives on the two spans inside — a clip-path on the focusable element
+ * would cut the ring off, and a focus indicator removed with no replacement is a
+ * failure outright (§13).
+ */
+.deck__tab {
+  flex: 1 1 9rem;
+  min-inline-size: 0;
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.deck__edge {
+  display: block;
+  padding: var(--deck-edge);
+  background: var(--line);
+}
+
+.deck__field {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-block-size: 2.5rem;
+  padding-block: var(--space-2);
+  padding-inline: var(--space-3) calc(var(--space-2) + var(--deck-point));
+  font-family: var(--font-text);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: start;
+  color: var(--ink-dim);
+  background: var(--surface-raised);
+  transition: color var(--duration-fast) ease-out;
+}
+
+.deck__tab:hover .deck__field {
+  color: var(--ink-muted);
+}
+
+/*
+ * The open tab. A structural mark and a lighter ground, never a fill — gold at line
+ * weight says "you are here"; gold at full strength would say "press me" (§5, §7).
+ */
+.deck__tab[aria-selected='true'] .deck__edge {
+  background: var(--accent-line);
+}
+
+.deck__tab[aria-selected='true'] .deck__field {
+  color: var(--ink);
+  background: var(--surface);
+}
+
+.deck__glyph {
+  color: var(--accent-line);
+}
+
+.deck__title {
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.deck__trailing {
+  margin-inline-start: auto;
+  font-family: var(--font-numeric);
+  font-size: var(--text-xs);
+  letter-spacing: normal;
+  color: var(--ink-muted);
+}
+
+/*
+ * Something to act on, behind a shut tab.
+ *
+ * No accent and no chrome: this is navigation, and a chip with a rule round it takes
+ * width the title needs. The word alone, brighter than everything beside it, does the
+ * work — and the accented control is on screen a press later.
+ */
+.deck__mark {
+  flex: none;
+  font-size: var(--text-xs);
+  color: var(--ink);
+}
+
+.deck__body {
+  block-size: var(--deck-body);
+  background: var(--surface);
+}
+
+/* Each panel is its own scroller, so each keeps its own place across a tab change. */
+.deck__panel {
+  block-size: 100%;
+  padding: var(--space-4);
+  overflow-y: auto;
+}
+
+/* The shut panels stay mounted. Nothing may render them back into the layout. */
+.deck__panel[hidden] {
+  display: none;
+}
+
+@supports (clip-path: polygon(0 0, 100% 0, 100% 100%)) {
+  .deck__edge,
+  .deck__field {
+    --deck-shape: polygon(
+      0 0,
+      calc(100% - var(--deck-point)) 0,
+      100% 50%,
+      calc(100% - var(--deck-point)) 100%,
+      0 100%
+    );
+
+    clip-path: var(--deck-shape);
+  }
+}
+
+/*
+ * The tabs give up the row before they give up the words.
+ *
+ * A chevron 4rem wide is a shape with no room for a name in it, and a name cut to
+ * "THE MIS…" is worse than no chevron at all — these four are the whole navigation of
+ * the game. So they go two abreast on a tablet and stack outright on a phone. Four
+ * rows of tab is real height to spend; a set of tabs nobody can read is worse.
+ */
+@media (width <= 52rem) {
+  .deck__tab {
+    flex: 1 1 40%;
+  }
+
+  .deck__panel {
+    padding: var(--space-3);
+  }
+}
+
+@media (width <= 34rem) {
+  .deck__tab {
+    flex: 1 1 100%;
+  }
+
+  .deck__field {
+    min-block-size: 2.25rem;
+  }
+}

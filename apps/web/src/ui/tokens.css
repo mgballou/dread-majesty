@@ -149,6 +149,18 @@
 }
 
 body {
+  /*
+   * No double-tap zoom, and no 300ms wait before a tap registers.
+   *
+   * `manipulation` keeps panning and pinch — it only drops the double-tap gesture,
+   * which is the one a game of repeated tapping fires by accident constantly, and
+   * dropping it is also what removes the click delay browsers keep in case a second
+   * tap is coming. Pinch-zoom stays on purpose: iOS Safari will not let a page take it
+   * away, and taking it away is an accessibility failure anyway.
+   */
+  touch-action: manipulation;
+  /* iOS inflates text on rotation unless told not to. */
+  -webkit-text-size-adjust: 100%;
   margin: 0;
   background: var(--ground);
   color: var(--ink);
