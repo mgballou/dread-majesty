@@ -177,3 +177,28 @@ export function isTierUnlocked(state: GameState, tierId: TierId): boolean {
 }
 
 export { globalMultiplier };
+
+/** Whether a blow may be struck right now. */
+export function canSmite(state: GameState): boolean {
+  return state.smiteCooldownMs <= 0;
+}
+
+/**
+ * How far through the buff or the cooldown the player is, as a share from 0 to 1.
+ *
+ * A share rather than a count of milliseconds, because every caller is drawing a bar
+ * or a ring with it and none of them should have to know the content's durations.
+ * Returns 0 for a state that is neither buffed nor cooling, which is the resting case.
+ */
+export function smitePhase(
+  state: GameState,
+  content: Content,
+): { readonly kind: 'active' | 'cooling' | 'ready'; readonly share: number } {
+  if (state.smiteActiveMs > 0) {
+    return { kind: 'active', share: state.smiteActiveMs / content.smite.durationMs };
+  }
+  if (state.smiteCooldownMs > 0) {
+    return { kind: 'cooling', share: state.smiteCooldownMs / content.smite.cooldownMs };
+  }
+  return { kind: 'ready', share: 0 };
+}

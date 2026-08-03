@@ -45,6 +45,12 @@ export interface SmiteCopy {
    * way to learn what they hold. `amount` arrives formatted.
    */
   readonly spoken: (amount: string) => string;
+  /** The verb while the buff is running. `seconds` arrives formatted. */
+  readonly surging: (seconds: string) => string;
+  /** The verb while it is cooling and cannot be struck. `seconds` arrives formatted. */
+  readonly cooling: (seconds: string) => string;
+  /** One line saying what a blow is worth, for the hint. `multiplier` arrives formatted. */
+  readonly worth: (args: { readonly multiplier: string; readonly seconds: string }) => string;
   /** Shown one at a time after a smite. Never empty. */
   readonly results: readonly string[];
 }

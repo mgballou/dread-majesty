@@ -29,7 +29,6 @@ function node(overrides: Partial<Parameters<typeof TierNode>[0]> = {}): ReactEle
       copy={CURRENT_COPY.stage}
       oversight={OVERSIGHT}
       feed={null}
-      surge={null}
       surgeIndex={0}
       {...overrides}
     />
@@ -64,7 +63,10 @@ describe('TierNode', () => {
   it('takes its tone from the manifest, never the accent', () => {
     const { container } = render(node());
 
-    expect(container.querySelector('.stage-node')).toHaveStyle({ color: 'var(--tone-tier-2)' });
+    expect(container.querySelector('.stage-node')).toHaveAttribute(
+      'style',
+      expect.stringContaining('--node-tone: var(--tone-tier-2)'),
+    );
   });
 
   it('stays on the stage as a placeholder when the rung is not yet reached', () => {

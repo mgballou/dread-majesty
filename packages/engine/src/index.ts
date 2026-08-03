@@ -23,6 +23,8 @@ export {
   isRousable,
   overseerCost,
   canAppoint,
+  canSmite,
+  smitePhase,
 } from './selectors.ts';
 export type { MilestoneProgress } from './selectors.ts';
 

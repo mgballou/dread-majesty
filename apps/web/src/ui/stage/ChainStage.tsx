@@ -1,20 +1,25 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { ART, type ArtSlot, type Content, type Copy, type TierDef, type TierId } from '@dm/content';
-import type { GameState } from '@dm/engine';
+import { smitePhase, type GameState } from '@dm/engine';
 import { ChainLink } from './ChainLink.tsx';
 import { EvilNode, EVIL_ART } from './EvilNode.tsx';
 import { TierNode, type Feed } from './TierNode.tsx';
 import './ChainStage.css';
 
 /**
- * How long an evocation lasts before the chain forgets it.
+ * How long the chain takes to give the Evil tone back once a blow has run out.
  *
- * Long enough for the call to reach the far end and the answer to come back at the
- * step the stylesheet uses, plus one beat. It is also what holds the mark on screen
- * under reduced motion, where nothing animates and the tint simply waits out the
- * window instead.
+ * The light does not vanish; it falls back the way it came, far end first. This is the
+ * window that release runs in, and it must outlast the longest delay the stylesheet can
+ * hand out — one step per rung, plus the transition itself.
  */
-const SURGE_MS = 900;
+const RELEASE_MS = 1200;
+
+/**
+ * How long a manual scroll of the chain is respected before the chain will re-anchor
+ * itself. Long enough that reading along the chain is never interrupted.
+ */
+const RESPECT_MS = 12_000;
 
 /** What the chain and everything it draws reads out of the copy module. */
 export type StageScreenCopy = Pick<Copy, 'evil' | 'stage' | 'overseer' | 'smite'>;
@@ -101,23 +106,25 @@ export function ChainStage({
   const rungs = climbed(content, isUnlocked);
   const last = content.tiers[content.tiers.length - 1];
 
-  const [surge, setSurge] = useState<number | null>(null);
-  const struck = useRef(0);
-
-  useEffect(() => {
-    if (surge === null) return undefined;
-    const timer = setTimeout(() => setSurge(null), SURGE_MS);
-    return () => clearTimeout(timer);
-  }, [surge]);
+  // The wave is the buff, not an animation with a life of its own: the chain burns for
+  // exactly as long as the blow lasts, so the colour of the chain *is* the readout.
+  const smite = smitePhase(state, content);
+  const surge = useSurge(smite.kind === 'active');
 
   const track = useAnchoredOnWork(rungs, isRousable);
 
-  // The wave, in beats. The call runs out from Evil, so the rung nearest it lights
-  // first; the answer runs back along the runs, so the run furthest out lights first.
+  // The wave runs out from Evil, so the rung nearest it lights first and the far end
+  // last. Rungs and runs interleave, which is why the span is twice the rung count.
   const beats = rungs.length;
+  const span = beats * 2;
 
   return (
-    <section className="stage" aria-label={copy.stage.chain}>
+    <section
+      className="stage"
+      aria-label={copy.stage.chain}
+      {...(surge === null ? {} : { 'data-surge': surge })}
+      style={{ ['--surge-span' as string]: span }}
+    >
       <ol className="stage__track" role="list" ref={track}>
         {rungs.map((tier, index) => (
           <li className="stage__rung" key={tier.id} data-tier={tier.id}>
@@ -137,15 +144,14 @@ export function ChainStage({
                 onRouse: () => onRouse(tier.id),
               }}
               feed={feedFrom({ producer: rungs[index - 1], state, version })}
-              surge={surge}
-              surgeIndex={beats - 1 - index}
+              surgeIndex={(beats - 1 - index) * 2 + 1}
             />
             <ChainLink
               produced={state.gens[tier.id].lifetimeProduced}
               version={version}
               tone={toneOf(tier.art)}
-              surge={surge}
-              surgeIndex={beats + index}
+              surging={surge !== null}
+              surgeIndex={(beats - 1 - index) * 2}
             />
           </li>
         ))}
@@ -157,17 +163,40 @@ export function ChainStage({
         copy={copy.smite}
         report={report(state, copy.smite.results)}
         isTheAction={smiteIsTheAction}
-        surge={surge}
-        surgeIndex={beats * 2}
+        phase={smite}
+        content={content}
         feed={feedFrom({ producer: last, state, version })}
-        onSmite={() => {
-          struck.current += 1;
-          setSurge(struck.current);
-          onSmite();
-        }}
+        onSmite={onSmite}
       />
     </section>
   );
+}
+
+/**
+ * Which part of the wave the chain is in: lighting and burning, giving the colour back,
+ * or neither.
+ *
+ * The lit phase is owned by the engine — it is exactly the buff. Only the release is
+ * owned here, because nothing in the state says "was burning a moment ago", and the
+ * light has to fall back rather than snap off.
+ */
+function useSurge(active: boolean): 'lit' | 'releasing' | null {
+  const [releasing, setReleasing] = useState(false);
+  const was = useRef(false);
+
+  useEffect(() => {
+    if (was.current && !active) setReleasing(true);
+    was.current = active;
+  }, [active]);
+
+  useEffect(() => {
+    if (!releasing) return undefined;
+    const timer = setTimeout(() => setReleasing(false), RELEASE_MS);
+    return () => clearTimeout(timer);
+  }, [releasing]);
+
+  if (active) return 'lit';
+  return releasing ? 'releasing' : null;
 }
 
 /**
@@ -196,24 +225,48 @@ function report(state: GameState, results: readonly string[]): string {
 function useAnchoredOnWork(
   rungs: readonly TierDef[],
   isRousable: (tierId: TierId) => boolean,
-): React.RefObject<HTMLOListElement | null> {
+): RefObject<HTMLOListElement | null> {
   const track = useRef<HTMLOListElement>(null);
+  const scrolledAt = useRef(0);
+  const ours = useRef(false);
 
   // Falls back to the head of the chain, never to wherever the browser last left the
   // scroll. With nothing to rouse there is no work to point at, and the top of the
   // chain is the thing worth looking at — not the cheap end that runs itself.
   const wants = rungs.find((tier) => isRousable(tier.id))?.id ?? rungs[0]?.id ?? null;
 
+  // A player reading along the chain outranks the anchor. Their own scrolls are marked
+  // by elimination: anything this hook did not cause was theirs.
   useEffect(() => {
     const element = track.current;
-    if (!element || wants === null) return;
-    if (element.scrollWidth <= element.clientWidth) return;
-    if (typeof element.scrollTo !== 'function') return;
+    if (!element) return undefined;
+
+    const onScroll = (): void => {
+      if (ours.current) return;
+      scrolledAt.current = performance.now();
+    };
+
+    element.addEventListener('scroll', onScroll, { passive: true });
+    return () => element.removeEventListener('scroll', onScroll);
+  }, []);
+
+  useEffect(() => {
+    const element = track.current;
+    if (!element || wants === null) return undefined;
+    if (element.scrollWidth <= element.clientWidth) return undefined;
+    if (typeof element.scrollTo !== 'function') return undefined;
+    if (performance.now() - scrolledAt.current < RESPECT_MS) return undefined;
 
     const rung = element.querySelector(`[data-tier="${wants}"]`);
-    if (!(rung instanceof HTMLElement)) return;
+    if (!(rung instanceof HTMLElement)) return undefined;
 
+    ours.current = true;
     element.scrollTo({ left: rung.offsetLeft, behavior: 'smooth' });
+    const settle = setTimeout(() => {
+      ours.current = false;
+    }, 600);
+
+    return () => clearTimeout(settle);
   }, [wants]);
 
   return track;

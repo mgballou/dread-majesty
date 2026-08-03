@@ -12,6 +12,9 @@
  */
 
 .stage-link {
+  color: var(--node-tone, inherit);
+  transition: color var(--duration-base) ease-out;
+
   --stage-link-run: calc(var(--space-8) + var(--space-3));
   --stage-link-spread: calc(var(--stage-link-run) * 0.6);
   --stage-link-head: var(--space-2);
@@ -143,52 +146,31 @@
 }
 
 /*
- * The answer coming back.
- *
- * When the player evokes, the call runs out through the generators and the reply runs
- * back down the chain to Evil. This is the reply crossing one run: the same hairline,
- * in the Evil tone rather than the tier's, travelling the other way. Its delay is set
- * per link by `--surge-index`, so the whole chain reads as one wave rather than every
- * run lighting at once.
+ * The evocation, sustained. See the matching block in TierNode.css — the runs are half
+ * the wave and carry exactly the same delays, so the light crosses the gaps rather than
+ * hopping between rungs.
  */
-.stage-link__evoke {
-  position: absolute;
-  inset-block-start: calc(var(--stage-node-medallion, 5rem) / 2 - 1px);
-  inset-inline-start: 0;
-  block-size: 2px;
-  inline-size: var(--stage-link-spread);
-  border-radius: 1px;
-  background: linear-gradient(to left, transparent, var(--tone-resource));
+.stage[data-surge] .stage-link {
+  color: var(--tone-resource);
+  transition-delay: calc(var(--surge-step) * var(--surge-index));
 }
 
-.stage-link[data-motion='full'] .stage-link__evoke {
-  animation: stage-link-evoke var(--duration-base) ease-out
-    calc(var(--surge-step) * var(--surge-index)) both;
+.stage[data-surge='releasing'] .stage-link {
+  color: var(--node-tone, inherit);
+  transition-delay: calc(var(--surge-step) * (var(--surge-span) - var(--surge-index)));
 }
 
-/*
- * Reduced motion: the run simply takes the Evil tone for as long as the evocation
- * lasts, end to end and all at once. It does not travel, and nothing goes missing —
- * the chain still visibly answers.
- */
-.stage-link[data-motion='reduced'] .stage-link__evoke {
-  inset-inline: 0;
-  inline-size: auto;
-  background: var(--tone-resource);
+/* The hairline is line work in the structural colour at rest, and part of the wave
+   while one is running. */
+.stage[data-surge] .stage-link::before {
+  background: currentColor;
+  transition: background var(--duration-base) ease-out;
+  transition-delay: inherit;
 }
 
-@keyframes stage-link-evoke {
-  from {
-    opacity: 0;
-    transform: translateX(var(--stage-link-run));
-  }
-
-  20% {
-    opacity: 1;
-  }
-
-  to {
-    opacity: 0;
-    transform: translateX(calc(var(--stage-link-spread) * -1));
+/* The run shortens with the nodes, so the chain keeps its proportions on a phone. */
+@media (width <= 52rem) {
+  .stage-link {
+    --stage-link-run: var(--space-6);
   }
 }

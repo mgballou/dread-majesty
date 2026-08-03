@@ -22,6 +22,11 @@ export const BASE_DT_MS = 100;
  * @param dtMs Integer milliseconds. Fractions break exact cycle completion.
  */
 export function step(state: GameState, content: Content, dtMs: number): StepReport {
+  // Spent before anything is produced, so a slice that ends the buff does not also
+  // get paid at the raised rate. The countdowns are the only clock the engine has.
+  state.smiteActiveMs = Math.max(0, state.smiteActiveMs - dtMs);
+  state.smiteCooldownMs = Math.max(0, state.smiteCooldownMs - dtMs);
+
   const owned = snapshotCounts(state, content);
   const delta: Partial<Record<ProducibleId, Decimal>> = {};
   const completions: Partial<Record<TierId, number>> = {};
@@ -116,5 +121,6 @@ export function tierMultiplier(state: GameState, content: Content, owned: Decima
  */
 export function globalMultiplier(state: GameState, content: Content): Decimal {
   const fromSouls = new Decimal(1).add(state.souls.mul(content.prestige.perSoul));
-  return fromSouls.mul(achievementMultiplier(state, content));
+  const fromSmite = state.smiteActiveMs > 0 ? content.smite.multiplier : 1;
+  return fromSouls.mul(achievementMultiplier(state, content)).mul(fromSmite);
 }

@@ -317,18 +317,33 @@ would naturally take their first reset somewhere in the 6–12h band, for a ×1.
 
 ### 5.5 Smite
 
-One of the two tap verbs, and the one that pays. Yields Evil worth roughly 3 seconds
-of current production, floor 1. It matters for the first ten minutes and then does
-not, which is the intent. It is never an upgradeable path.
+One of the two tap verbs, and the one that pays. **A blow lands a little Evil at once
+and then doubles everything for fifteen seconds, once a minute.**
 
-It reads **potential** production — what the tiers would make if every one of them
-were running — not what they are making this instant. Otherwise a player who has not
-yet roused anything gets the floor of 1 for ever, and Smite stops being the thing that
-carries the opening.
+- The instant part is worth roughly 3 seconds of production, floor 1. It reads
+  *potential* production — what every tier would make if it were running — not what is
+  turning this instant. Otherwise a player who has roused nothing gets the floor of 1
+  for ever, and that is exactly the player the opening minutes contain.
+- The lasting part is ×2 to every tier for 15s, on a 60s cooldown. Fifteen seconds is
+  longer than a Minion cycle (4s) and well short of a Warren's (90s): long enough to
+  feel like it covered something, short of letting one press carry a tier.
+- Striking again restarts the buff rather than stacking it. Two blows can never be
+  worth more than two blows.
+- A reset clears the buff and **keeps** the cooldown, so a reset is not a free blow.
 
-Smite survives §5.6 because the two verbs mean different things. Smite pays now.
-Rousing a tier starts that tier's production. Rousing the Minions and then smiting
-while their 4 seconds run is the opening loop.
+A player who never misses a cooldown runs about 25% ahead of the idle economy. That is
+the reward for being at the keyboard, and it is why **the harness does not smite** —
+§5.2's table measures the game that runs without you.
+
+The two verbs mean different things and neither replaces the other. Rousing a tier
+starts that tier's production. Smiting makes all of it worth more. It is no longer a
+thing that stops mattering after ten minutes, and it is the natural place to hang
+progression and soul-bought upgrades later.
+
+**The chain is the readout.** While a blow runs, the Evil tone travels out from the
+Evil node along every rung and run, holds across the whole chain for the duration, and
+falls back the way it came when it expires. Cascade motes are suppressed for the
+duration — the chain says one thing at a time. See §6.
 
 ### 5.6 Manual cycles and Overseers
 

@@ -12,6 +12,7 @@ export type {
   Content,
   TierDef,
   PrestigeDef,
+  SmiteDef,
   MilestoneDef,
   AchievementDef,
   AchievementCondition,

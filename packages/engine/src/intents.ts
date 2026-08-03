@@ -60,12 +60,24 @@ function smite(
   content: Content,
   intent: Extract<Intent, { kind: 'smite' }>,
 ): IntentResult {
+  if (state.smiteCooldownMs > 0) return { ok: false, intent, reason: 'smite-cooling' };
+
+  // The instant part, which is what keeps a blow worth striking before anything is
+  // running: a multiplier on nothing is nothing, and the opening minutes are exactly
+  // when the player has nothing (spec §5.5). It reads potential production, not what
+  // is turning this instant, for the same reason.
   const perSecond = productionPerSecond(state, content, 'evil');
-  const gain = Decimal.max(1, perSecond.mul(content.smiteSeconds)).floor();
+  const gain = Decimal.max(1, perSecond.mul(content.smite.seconds)).floor();
 
   state.resources.evil = state.resources.evil.add(gain);
   state.lifetimeEvil = state.lifetimeEvil.add(gain);
   state.stats.smites += 1;
+
+  // The lasting part. Set, not added: striking again the moment the cooldown lifts
+  // restarts the buff rather than stacking it, so two blows can never be worth more
+  // than two blows.
+  state.smiteActiveMs = content.smite.durationMs;
+  state.smiteCooldownMs = content.smite.cooldownMs;
 
   return { ok: true, intent, detail: `Smote for ${gain.toString()} Evil` };
 }
@@ -149,6 +161,9 @@ function prestige(
   state.earnedAchievements = carried.earnedAchievements;
   state.unlocked = carried.unlocked;
   state.overseers = carried.overseers;
+  // The run is over, so the buff goes with it. The cooldown does not: it is a limit on
+  // how often a player may strike, and resetting would hand out a free blow per reset.
+  state.smiteActiveMs = 0;
   state.stats = carried.stats;
 
   return { ok: true, intent, detail: `Claimed ${gain.toString()} Damned Souls` };
