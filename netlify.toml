@@ -1,0 +1,30 @@
+# Netlify build. The repo stays private; the site is public.
+#
+# pnpm is picked up from `packageManager` in the root package.json via corepack, so
+# the version here and the version in CI cannot drift.
+
+[build]
+  command = "pnpm build"
+  publish = "apps/web/dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# The app has no router today, but a deep link should still land on the game rather
+# than on a 404 the moment one arrives.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Vite fingerprints everything under /assets, so it can be cached for ever. The HTML
+# must not be, or a deploy never reaches anybody who has the page open.
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
