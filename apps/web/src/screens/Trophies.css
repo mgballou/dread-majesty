@@ -1,0 +1,56 @@
+/* See Trophies.tsx. */
+
+.trophies {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: var(--space-1);
+}
+
+.trophy {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--space-1);
+  color: var(--ink-dim);
+}
+
+.trophy--earned {
+  color: var(--ink);
+  background: var(--surface-panel);
+}
+
+.trophy__mark {
+  width: 1rem;
+  text-align: center;
+}
+
+.trophy__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.trophy__name {
+  font-size: var(--text-base);
+}
+
+.trophy__note {
+  font-size: var(--text-xs);
+  color: var(--ink-dim);
+}
+
+.trophy__state {
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-dim);
+}
+
+.trophy--earned .trophy__state {
+  color: var(--tone-positive);
+}

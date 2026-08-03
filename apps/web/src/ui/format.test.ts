@@ -1,6 +1,6 @@
 import Decimal from 'break_eternity.js';
 import { describe, expect, it } from 'vitest';
-import { formatCount, formatNumber } from './format.ts';
+import { formatCount, formatDuration, formatNumber } from './format.ts';
 
 describe('formatNumber', () => {
   it('shows plain digits below a thousand', () => {
@@ -23,5 +23,24 @@ describe('formatNumber', () => {
   it('formats counts without a decimal tail below a thousand', () => {
     expect(formatCount(new Decimal(205))).toBe('205');
     expect(formatCount(new Decimal(1))).toBe('1');
+  });
+});
+
+describe('formatDuration', () => {
+  it('shows seconds alone under a minute', () => {
+    expect(formatDuration(45_000)).toBe('45s');
+  });
+
+  it('shows the two largest units that carry meaning', () => {
+    expect(formatDuration(8_040_000)).toBe('2h 14m');
+    expect(formatDuration(93_600_000)).toBe('1d 2h');
+  });
+
+  it('drops a trailing unit that is zero', () => {
+    expect(formatDuration(7_200_000)).toBe('2h');
+  });
+
+  it('treats a negative span as none at all', () => {
+    expect(formatDuration(-5000)).toBe('0s');
   });
 });

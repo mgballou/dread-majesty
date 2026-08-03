@@ -1,16 +1,18 @@
 import Decimal from 'break_eternity.js';
 import { describe, expect, it } from 'vitest';
-import { BASE_DT_MS, createState, milestoneProgress, step } from '../src/index.ts';
+import { BASE_DT_MS, milestoneProgress, step } from '../src/index.ts';
 import { fixture, fixtureWithMilestones } from './fixtures/content.ts';
+import { appointed } from './fixtures/state.ts';
+import type { GameState } from '../src/types.ts';
 
 function seeded(minions: number, content = fixtureWithMilestones) {
-  const state = createState(content);
+  const state = appointed(content);
   state.gens.minion.owned = new Decimal(minions);
   state.gens.warren.owned = new Decimal(0);
   return state;
 }
 
-function runOneCycle(state: ReturnType<typeof createState>, content = fixtureWithMilestones) {
+function runOneCycle(state: GameState, content = fixtureWithMilestones) {
   for (let elapsed = 0; elapsed < 24_000; elapsed += BASE_DT_MS) step(state, content, BASE_DT_MS);
 }
 

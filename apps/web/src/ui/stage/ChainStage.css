@@ -1,0 +1,17 @@
+/* The chain, drawn top to bottom. See ChainStage.tsx. */
+
+.stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0;
+  padding: var(--space-4) 0;
+  list-style: none;
+}
+
+.stage__rung {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  inline-size: 100%;
+}

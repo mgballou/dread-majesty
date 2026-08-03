@@ -1,0 +1,33 @@
+/*
+ * The cycle ring. See CycleRing.tsx.
+ *
+ * The sweep inherits `currentColor`, which the node sets from the art manifest's
+ * tone — no screen decides what colour a tier is, and the accent is never spent
+ * here. Nothing on the stage is an action.
+ */
+
+.stage-ring {
+  position: absolute;
+  inset: 0;
+}
+
+.stage-ring__art {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  /* Twelve o'clock is where a cycle starts. */
+  rotate: -90deg;
+}
+
+.stage-ring__track {
+  fill: none;
+  stroke: var(--line);
+  stroke-width: 2;
+}
+
+.stage-ring__sweep {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
