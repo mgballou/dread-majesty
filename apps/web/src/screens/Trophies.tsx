@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react';
 import type { AchievementDef, Content, Copy } from '@dm/content';
 import type { GameState } from '@dm/engine';
-import { Panel } from '../ui/Panel.tsx';
 import './Trophies.css';
 
 interface TrophiesProps {
@@ -19,16 +18,18 @@ interface TrophiesProps {
  *
  * State carries its own tone here: earned or not is the only distinction, and it is
  * carried by a word and a mark as well as by weight, never by colour alone.
+ *
+ * It draws no title and no count of its own. It is one panel of the deck now, and the
+ * tab that opened it is the heading — a second plaque under the first would be a
+ * heading competing with the structure that already gave it its weight (§6).
  */
 export function Trophies({ state, content, copy }: TrophiesProps): ReactNode {
   const earned = new Set(state.earnedAchievements);
 
   return (
-    <Panel
-      title={copy.title}
-      glyph="✧"
-      trailing={copy.progress(String(earned.size), String(content.achievements.length))}
-    >
+    <div className="deeds">
+      <p className="deeds__what">{copy.what}</p>
+
       <ul className="trophies">
         {content.achievements.map((achievement) => (
           <Trophy
@@ -39,7 +40,7 @@ export function Trophies({ state, content, copy }: TrophiesProps): ReactNode {
           />
         ))}
       </ul>
-    </Panel>
+    </div>
   );
 }
 

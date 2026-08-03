@@ -1,0 +1,27 @@
+/* The question, over the game. See Confirm.tsx. */
+
+.confirm {
+  display: grid;
+  gap: var(--space-3);
+  justify-items: start;
+}
+
+.confirm__title {
+  max-inline-size: 100%;
+}
+
+.confirm__body {
+  display: grid;
+  gap: var(--space-2);
+  font-size: var(--text-base);
+  color: var(--ink-muted);
+}
+
+.confirm__body p {
+  margin: 0;
+}
+
+/* The one action, and while this is up it is the only one on the screen. */
+.confirm__act {
+  justify-self: stretch;
+}

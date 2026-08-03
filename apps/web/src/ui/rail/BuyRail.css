@@ -6,6 +6,22 @@
  * art's. Neither is a promise a pair of hand-written measurements keeps.
  */
 
+.muster {
+  display: grid;
+  gap: var(--space-3);
+}
+
+/*
+ * The quantity strip.
+ *
+ * Its own region at the head of the list it governs, set off by a rule because the
+ * two share a surface and space alone would not read as a break (ui-sensibility §5).
+ */
+.muster__setting {
+  padding-block-end: var(--space-3);
+  border-block-end: 1px solid var(--line);
+}
+
 .rail {
   --rail-row: 8rem;
   --rail-art: 2.5rem;
@@ -74,6 +90,12 @@
   color: var(--ink-muted);
 }
 
+/* Somebody holds this post. A standing fact, said in one word — the offer to fill it
+   lives with the other posts, in the miscreants panel. */
+.rail__flag--overseen {
+  color: var(--ink-dim);
+}
+
 .rail__owned {
   margin-inline-start: auto;
   font-family: var(--font-numeric);
@@ -94,55 +116,6 @@
 /* Placement only. The meter owns its own height, track and sweep. */
 .rail__cycle {
   margin-block: var(--space-2);
-}
-
-/* Who is watching the place. The line and the offer sit on one strip at the foot of
-   the row, separated by space rather than by a rule (ui-sensibility §5). */
-.rail__oversight {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-2) var(--space-3);
-  margin-block-start: var(--space-3);
-}
-
-/*
- * The line must be allowed to take the width it needs.
- *
- * Without a basis it collapses to min-content beside an unshrinkable button and
- * sets one word per line. The basis is the width below which the strip gives up and
- * wraps the button underneath instead — the Overseers have long titles and the rail
- * is the narrower of the two columns.
- */
-.rail__oversight .rail__line {
-  flex: 1 1 13rem;
-  min-inline-size: 0;
-  margin: 0;
-}
-
-/* The post is filled, so there is no offer to sit beside — the two lines stack. */
-.rail__filled {
-  display: grid;
-  gap: var(--space-1);
-}
-
-/*
- * Allowed to shrink and to wrap. The Overseers have long titles, the rail is the
- * narrower column, and a button that refuses to give ground pushes the page sideways
- * on a phone.
- */
-.rail__appoint {
-  flex: 0 1 auto;
-  max-inline-size: 100%;
-  font-size: var(--text-sm);
-  white-space: normal;
-  text-align: start;
-}
-
-.rail__appoint-cost {
-  font-family: var(--font-numeric);
-  font-size: var(--text-xs);
 }
 
 .rail__buy {
@@ -184,10 +157,6 @@
     flex: 1 1 100%;
     justify-items: stretch;
   }
-
-  .rail__oversight {
-    flex: 1 1 100%;
-  }
 }
 
 .rail__upcoming-art {
@@ -202,22 +171,42 @@
 /* --- the quantity setting. Never the action, so never the accent. --- */
 
 .quantity {
-  display: flex;
-  gap: var(--space-1);
+  display: block;
   margin: 0;
   padding: 0;
   border: none;
 }
 
+.quantity__legend {
+  padding: 0;
+  font-size: var(--text-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+
+/* Four ticks across the strip, evenly. The set is fixed at four, so an even share is
+   an even share for the whole life of the game. */
+.quantity__ticks {
+  display: flex;
+  gap: var(--space-2);
+  margin-block-start: var(--space-2);
+}
+
+.quantity__option {
+  flex: 1 1 0;
+  min-inline-size: 0;
+}
+
 .quantity__label {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 2.75rem;
-  min-height: 1.5rem;
+  inline-size: 100%;
+  min-block-size: 2.25rem;
   padding: 0 var(--space-2);
   font-family: var(--font-numeric);
-  font-size: var(--text-xs);
+  font-size: var(--text-sm);
   color: var(--ink-dim);
   border: 1px solid var(--line);
   border-radius: var(--space-1);
@@ -236,7 +225,6 @@
 }
 
 /* The visible label goes; the name never does. */
-.quantity__legend,
 .quantity__name,
 .quantity__input {
   position: absolute;

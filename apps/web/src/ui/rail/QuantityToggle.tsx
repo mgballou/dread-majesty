@@ -19,6 +19,10 @@ interface QuantityToggleProps {
  * Real radio inputs, visually restyled. The platform gives arrow-key movement, a
  * single tab stop for the group and a label bound to each control for free; a row of
  * buttons with `aria-pressed` would be a hand-rolled version of all three.
+ *
+ * The legend is visible now that the control sits inside the list it governs rather
+ * than in the panel band above it. In the band the title said what the region was and
+ * the toggle read as furniture; on its own strip it needs to say what it does.
  */
 export function QuantityToggle({ quantity, onChange, copy }: QuantityToggleProps): ReactNode {
   const group = useId();
@@ -27,28 +31,30 @@ export function QuantityToggle({ quantity, onChange, copy }: QuantityToggleProps
     <fieldset className="quantity">
       <legend className="quantity__legend">{copy.quantity}</legend>
 
-      {BUY_QUANTITIES.map((option) => {
-        const id = `${group}-${option}`;
-        const name = quantityName(option, copy);
+      <div className="quantity__ticks">
+        {BUY_QUANTITIES.map((option) => {
+          const id = `${group}-${option}`;
+          const name = quantityName(option, copy);
 
-        return (
-          <div className="quantity__option" key={option}>
-            <input
-              className="quantity__input"
-              type="radio"
-              id={id}
-              name={group}
-              value={String(option)}
-              checked={option === quantity}
-              onChange={() => onChange(option)}
-            />
-            <label className="quantity__label" htmlFor={id} title={name}>
-              <span aria-hidden="true">{quantityLabel(option)}</span>
-              <span className="quantity__name">{name}</span>
-            </label>
-          </div>
-        );
-      })}
+          return (
+            <div className="quantity__option" key={option}>
+              <input
+                className="quantity__input"
+                type="radio"
+                id={id}
+                name={group}
+                value={String(option)}
+                checked={option === quantity}
+                onChange={() => onChange(option)}
+              />
+              <label className="quantity__label" htmlFor={id} title={name}>
+                <span aria-hidden="true">{quantityLabel(option)}</span>
+                <span className="quantity__name">{name}</span>
+              </label>
+            </div>
+          );
+        })}
+      </div>
     </fieldset>
   );
 }
