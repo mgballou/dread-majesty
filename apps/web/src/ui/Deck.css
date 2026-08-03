@@ -227,7 +227,6 @@
  * rows of tab is real height to spend; a set of tabs nobody can read is worse.
  */
 @media (width <= 52rem) {
-
   .deck__panel {
     padding: var(--space-3);
   }
