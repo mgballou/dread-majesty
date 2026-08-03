@@ -32,10 +32,10 @@ export const ART: Readonly<Record<string, ArtSlot>> = {
     fallback: { shape: 'banner', tone: 'tier-3' },
     alt: 'A dark legion beneath a torn banner',
   },
-  'tier/slum': {
+  'tier/warren': {
     src: null,
     fallback: { shape: 'hovel', tone: 'tier-2' },
-    alt: 'A crooked slum of leaning roofs',
+    alt: 'A crooked warren of leaning roofs',
   },
   'tier/minion': {
     src: null,

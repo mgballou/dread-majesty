@@ -7,14 +7,14 @@ describe('save round trip', () => {
   it('restores state exactly', () => {
     const original = createState(fixture);
     original.gens.minion.owned = new Decimal('1e40');
-    original.gens.slum.owned = new Decimal(7);
+    original.gens.warren.owned = new Decimal(7);
     original.souls = new Decimal(31);
     step(original, fixture, 100);
 
     const restored = importSave(exportSave(original, 0));
 
     expect(restored.gens.minion.owned.toString()).toBe(original.gens.minion.owned.toString());
-    expect(restored.gens.slum.owned.toString()).toBe(original.gens.slum.owned.toString());
+    expect(restored.gens.warren.owned.toString()).toBe(original.gens.warren.owned.toString());
     expect(restored.souls.toString()).toBe(original.souls.toString());
     expect(restored.resources.evil.toString()).toBe(original.resources.evil.toString());
   });

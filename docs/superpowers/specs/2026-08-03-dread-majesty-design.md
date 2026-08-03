@@ -9,7 +9,7 @@
 ## 1. What this is
 
 An incremental/idle game. The player is a dark lord building a cascading production
-chain: Fortresses raise Dark Legions, Legions take ground that becomes Slums, Slums
+chain: Fortresses raise Dark Legions, Legions take ground that becomes Warrens, Warrens
 breed Minions, Minions generate Evil. Evil buys more of everything.
 
 The genre reference points are AdVenture Capitalist, AdVenture Communist and Idle
@@ -115,7 +115,7 @@ matter, and there is no tie-break rule to define, document or get wrong.
 
 > **This corrects the reference docs.** `project_init.md` §10 specifies
 > higher-tier-first ordering, which contradicts its own worked example: at t=120s
-> both a Slum and the Minion tier complete, and higher-tier-first would pay 205
+> both a Warren and the Minion tier complete, and higher-tier-first would pay 205
 > minions rather than the 105 the example states. The example is right — those
 > minions did not exist during the shift that just ended. Snapshot semantics produce
 > the example's answer and remove the question.
@@ -137,16 +137,21 @@ matter, and there is no tie-break rule to define, document or get wrong.
 
 ### 4.3 The worked example, which is the golden test
 
-1 Slum, 5 Minions, 120 seconds. Minion cycle 24s yielding 15 Evil each; Slum cycle
+1 Warren, 5 Minions, 120 seconds. Minion cycle 24s yielding 15 Evil each; Warren cycle
 60s yielding 100 Minions.
+
+> **These are fixture numbers and no longer match shipping content** (§5.2 retuned the
+> Warren to 1 Minion per 90s). That is correct and deliberate: the fixture belongs to
+> the tests, and a balance change must never be able to fail an engine test. Do not
+> "fix" the fixture to match `v1`.
 
 ```
 t=24s   5 minions   →       75 Evil
 t=48s   5 minions   →       75 Evil
-t=60s   1 slum      →      100 Minions   (owned becomes 105)
+t=60s   1 warren      →      100 Minions   (owned becomes 105)
 t=72s   105 minions →    1,575 Evil
 t=96s   105 minions →    1,575 Evil
-t=120s  105 minions →    1,575 Evil      and 1 slum → 100 Minions (owned becomes 205)
+t=120s  105 minions →    1,575 Evil      and 1 warren → 100 Minions (owned becomes 205)
         ─────────────────────────────
         total              4,875 Evil, 205 Minions
 ```
@@ -214,32 +219,49 @@ paste. Round-tripping a save must be lossless — assert it.
 | Tier | Produces | Notes |
 | --- | --- | --- |
 | Fortresses | Dark Legions | |
-| Dark Legions | Slums | |
-| Slums | Minions | |
+| Dark Legions | Warrens | |
+| Warrens | Minions | |
 | Minions | Evil | |
 
-Naming note, unresolved and low-stakes: *Slums* is modern-urban and sits oddly
-between *Legions* and *Minions*. **Warrens** is the same idea in the right register.
-Either is fine; pick one and be consistent.
+The tier below *Legions* is **Warrens**, settled. The reference docs called it
+*Slums*, which is modern-urban and sat oddly between *Legions* and *Minions*.
 
-### 5.2 Seeded numbers — explicitly unbalanced
+### 5.2 Numbers — first tuned pass
 
-These exist so the game runs. They are not balanced and must not be treated as
-balanced. `packages/content/src/v1/generators.ts` holds them.
+`packages/content/src/v1/generators.ts` holds them. Tuned against the harness, not
+guessed. A first pass, not a final answer.
 
 | Tier | Yield | Cycle | Base cost | Cost rate |
 | --- | ---: | ---: | ---: | ---: |
 | Minion | 15 Evil | 24s | 90 | 1.089 |
-| Slum | 100 Minions | 60s | 1,500 | 1.100 |
-| Dark Legion | 10 Slums | 150s | 25,000 | 1.112 |
-| Fortress | 5 Legions | 360s | 400,000 | 1.125 |
+| Warren | 1 Minion | 90s | 2,500 | 1.120 |
+| Dark Legion | 1 Warren | 10m | 2,000,000 | 1.180 |
+| Fortress | 1 Legion | 30m | 5,000,000,000 | 1.220 |
 
-Minion values come from the reference docs. Legion and Fortress values are unset in
-every reference doc and are invented here.
+What that produces:
+
+| | |
+| --- | --- |
+| First Warren | 26m |
+| First Dark Legion | 58m |
+| First Fortress | 2h 53m |
+| First prestige | 2h 46m |
+
+**Every tier above Minions aims for a payback period of tens of minutes.** One unit
+yields one unit of the tier below per cycle; the cost curve gates how far you can
+stack it. The reference docs' figures had a Warren yielding 100 Minions a minute,
+which paid back its own cost about ten times over per minute and detonated the
+economy inside half an hour — every tier unlocked by minute 23.
+
+Minion values are the reference docs' own and are kept: that opening pace reads well.
 
 **Cost rate varies per tier deliberately.** The reference docs use 1.089 for
 everything, which makes every tier feel identical. AdCap varies it per business for
-exactly this reason.
+exactly this reason, and here it is the main brake on the cascade.
+
+**Known rough edge:** the 30m→1h stretch jumps about 1,100× as the first Dark Legion
+lands. That is the moment the cascade becomes visible and it should feel like
+something, but it may want softening once real players have run at it.
 
 `cost(n) = floor(baseCost × rate^n)`. Bulk cost sums the individual next-costs.
 A closed form may replace the loop only if it is tested against the loop.
@@ -252,15 +274,18 @@ next milestone and its distance must be visible on every rail row.
 
 ### 5.4 Prestige — Damned Souls
 
-`souls = floor(K × sqrt(lifetimeEvil / SCALE))`, seeded `K = 150`, `SCALE = 1e11`.
-Each soul adds +2% to a global production multiplier, additively.
+`souls = floor(K × sqrt(lifetimeEvil / SCALE))`, tuned to `K = 150`, `SCALE = 5e14`.
+Each soul adds +2% to a global production multiplier, additively. The first soul
+lands at `SCALE / K²` lifetime Evil — about 2.2×10¹⁰, reached near the three-hour
+mark.
 
 - **Reset clears:** Evil, generator counts, cycle progress, milestone multipliers.
 - **Reset keeps:** souls, soul-purchased upgrades, achievements, unlock flags,
   lifetime statistics.
 
-Target: first prestige within a few hours. `K` and `SCALE` are for the harness to
-tune, not for anyone to guess at.
+The resulting curve: 4 souls at 4h, 34 at 8h, 225 at 12h, 2,657 at one day. A player
+would naturally take their first reset somewhere in the 6–12h band, for a ×1.7 to
+×5.5 boost.
 
 ### 5.5 Smite
 
@@ -270,10 +295,21 @@ an upgradeable path.
 
 ### 5.6 Balance harness
 
-`packages/engine/scripts/harness.ts`. Runs the engine headless with a scripted buying
-policy and reports time-to-first-prestige and time-to-first-of-each-tier. Roughly
-forty lines, and it turns balance from guessing into measuring. Build it in M1, not
-M4 — it is what tells you the seeded numbers are wrong.
+`packages/engine/scripts/harness.ts`. Runs the engine headless over seven simulated
+days and reports time-to-first-of-each-tier, time-to-first-prestige, and a checkpoint
+table of production, counts, lifetime Evil and souls at 15m through 7d.
+
+The buying policy is: every simulated second, buy one of every tier you can afford,
+richest first. Not optimal play, but far closer to it than only ever buying the top
+tier — a real player keeps stacking the cheap tiers while saving for the expensive
+ones. **The policy is the instrument's calibration.** Change it and every number in
+§5.2 shifts, so change it deliberately and re-record the results.
+
+Slices are 1s rather than the live 100ms. Every cycle duration in the content is a
+whole number of seconds, so completions stay exact and the run goes ten times faster.
+A sub-second cycle would break that and the harness must drop back to `BASE_DT_MS`.
+
+It is a script, never a test, and must never gate CI.
 
 ---
 
@@ -282,11 +318,14 @@ M4 — it is what tells you the seeded numbers are wrong.
 `ui-sensibility.md` is normative. Three things it forces that the genre normally gets
 wrong:
 
-**Stage — the chain, alive.** Five nodes: Fortresses, Legions, Slums, Minions, Evil.
+**Stage — the chain, alive.** Five nodes: Fortresses, Legions, Warrens, Minions, Evil.
 Each carries a count and a ring sweeping its cycle. On completion the ring snaps and
-motes travel down the link to the next node. When a Slum fires you *see* a hundred
-minions pour into the Minion node and the Minion ring quicken. No game in the genre
-shows its own cascade. This one does, and it is the reason the diagram beats a list.
+motes travel down the link to the next node. When a Warren fires you *see* minions
+pour into the Minion node and the Minion ring quicken. No game in the genre shows its
+own cascade. This one does, and it is the reason the diagram beats a list.
+
+Mote count is a display decision, not a headcount — a tier producing millions of units
+per cycle cannot draw a mote each. Pick a readable range and scale into it.
 
 **Rail — one accent, always.** `ui-sensibility.md` §3 forbids five equal buttons; the
 genre's scrolling list is nothing else. Every generator sits in the rail at secondary
@@ -344,7 +383,7 @@ The balance harness is a script, not a test. It must never gate CI.
 | Milestone | Content |
 | --- | --- |
 | **M0** | Monorepo, toolchain, CI green, private repo pushed. *Delivered with this spec.* |
-| **M1** | Engine complete for Minions and Slums: fixed step, costs, purchase, save, offline, harness. Every test in §7. **No UI at all.** |
+| **M1** | Engine complete for Minions and Warrens: fixed step, costs, purchase, save, offline, harness. Every test in §7. **No UI at all.** |
 | **M2** | Chain diagram and rail, one screen, local save. First build anyone else can touch. |
 | **M3** | Four tiers, milestone multipliers, prestige, achievements. |
 | **M4** | Art slots, sound, offline summary, number formatting, the writing pass that carries the tone. |
@@ -376,11 +415,17 @@ determinism rule in §4.4 already makes possible.
 
 Answer these during implementation. None blocks M1.
 
-1. **Slums or Warrens** (§5.1). Pick one in M1 so no content is written twice.
-2. **Legion and Fortress values** (§5.2) are invented. The harness decides them in M1.
-3. **`K` and `SCALE` for souls** (§5.4). Same — the harness decides.
-4. **Offline cap upgrade curve.** How far past 4 hours can it go, and at what cost?
-5. **Achievements**: cosmetic, or do they grant multipliers? Cosmetic is simpler and
+1. **Does the 30m→1h cliff need softening?** (§5.2) It is a 1,100× jump as the first
+   Dark Legion lands. Intentional as the moment the cascade becomes visible, but only
+   real players can say whether it reads as a payoff or a discontinuity.
+2. **Do milestones need more thresholds?** (§5.3) Six of them cap at ×64, reached
+   early and then permanent — at which point they are a flat multiplier rather than a
+   goal. AdCap keeps issuing them. Decide before M3.
+3. **Offline cap upgrade curve.** How far past 4 hours can it go, and at what cost?
+4. **Achievements**: cosmetic, or do they grant multipliers? Cosmetic is simpler and
    AdCap grants multipliers. Decide before M3.
-6. **Where does the writing live?** Copy belongs in `content`, but a tone this
+5. **Where does the writing live?** Copy belongs in `content`, but a tone this
    specific may want its own authoring pass rather than inline strings.
+
+Settled since the first draft: the tier is **Warrens** (§5.1), and the Legion,
+Fortress and prestige numbers are tuned (§5.2, §5.4).

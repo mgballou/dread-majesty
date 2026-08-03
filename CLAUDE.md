@@ -1,7 +1,7 @@
 # Dread Majesty
 
 An incremental game. Fortresses raise Dark Legions, Legions take ground that becomes
-Slums, Slums breed Minions, Minions generate Evil. Generators produce other
+Warrens, Warrens breed Minions, Minions generate Evil. Generators produce other
 generators, so production compounds — that cascade is the game.
 
 Tone is **false grimdark**: gothic trappings played straight, an earnest protagonist,
@@ -103,17 +103,17 @@ These are load-bearing. Breaking any one of them costs more than it saves.
 
 ## Naming
 
-| Concept                      | Pattern                                  | Example                                |
-| ---------------------------- | ---------------------------------------- | -------------------------------------- |
-| Engine mutator               | verb                                     | `step`, `apply`, `catchUp`             |
-| Selector                     | `noun` or `verbNoun`, pure and read-only | `nextCost`, `productionPerSecond`      |
-| Predicate                    | `canX` / `isX` / `hasX`                  | `canAfford`, `isUnlocked`              |
-| Type                         | noun                                     | `GameState`, `Content`, `TierDef`      |
-| Report returned by a mutator | `{X}Report`                              | `StepReport`, `OfflineReport`          |
-| Content id                   | lowercase singular                       | `minion`, `slum`, `legion`, `fortress` |
-| React component              | noun of what it shows                    | `ChainStage`, `BuyRail`, `TierNode`    |
-| Hook                         | `use{Noun}`                              | `useGameLoop`, `useReducedMotion`      |
-| Test file                    | mirrors the source path                  | `src/step.ts` → `test/step.test.ts`    |
+| Concept                      | Pattern                                  | Example                                  |
+| ---------------------------- | ---------------------------------------- | ---------------------------------------- |
+| Engine mutator               | verb                                     | `step`, `apply`, `catchUp`               |
+| Selector                     | `noun` or `verbNoun`, pure and read-only | `nextCost`, `productionPerSecond`        |
+| Predicate                    | `canX` / `isX` / `hasX`                  | `canAfford`, `isUnlocked`                |
+| Type                         | noun                                     | `GameState`, `Content`, `TierDef`        |
+| Report returned by a mutator | `{X}Report`                              | `StepReport`, `OfflineReport`            |
+| Content id                   | lowercase singular                       | `minion`, `warren`, `legion`, `fortress` |
+| React component              | noun of what it shows                    | `ChainStage`, `BuyRail`, `TierNode`      |
+| Hook                         | `use{Noun}`                              | `useGameLoop`, `useReducedMotion`        |
+| Test file                    | mirrors the source path                  | `src/step.ts` → `test/step.test.ts`      |
 
 ---
 

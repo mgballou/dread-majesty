@@ -1,7 +1,7 @@
 # Dread Majesty
 
 An incremental game. Fortresses raise Dark Legions, Legions take ground that becomes
-Slums, Slums breed Minions, Minions generate Evil.
+Warrens, Warrens breed Minions, Minions generate Evil.
 
 Generators produce other generators, so production compounds inside a single elapsed
 interval. That cascade is the game, and making it visible is the point of the
@@ -38,9 +38,11 @@ example from the original design docs is asserted number for number.
 more. The chain diagram and buy rail described in the spec are M2 work and should
 replace it wholesale.
 
-**The seeded balance numbers are wrong and known to be wrong.** The first harness run
-reaches every tier in 23 minutes and 4×10²⁶ Evil in three days. Fixing that is an M1
-task, and the harness is how you will know when it is fixed.
+**Balance has had one tuned pass**, measured with `pnpm harness` rather than guessed.
+Warrens at 26 minutes, Dark Legions at 58, Fortresses at 2h53m, first prestige at
+2h46m. The first draft reached every tier in 23 minutes, so this is a real change, but
+it is a first pass and wants real players. Re-run the harness after touching any
+number in `packages/content`.
 
 ## Reading order
 

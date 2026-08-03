@@ -4,10 +4,10 @@ import { BASE_DT_MS, createState, step } from '../src/index.ts';
 import { fixture, fixtureReversed } from './fixtures/content.ts';
 import type { GameState } from '../src/types.ts';
 
-function seeded(minions: number, slums: number): GameState {
+function seeded(minions: number, warrens: number): GameState {
   const state = createState(fixture);
   state.gens.minion.owned = new Decimal(minions);
-  state.gens.slum.owned = new Decimal(slums);
+  state.gens.warren.owned = new Decimal(warrens);
   return state;
 }
 
@@ -25,8 +25,8 @@ describe('the worked example', () => {
     expect(state.gens.minion.owned.toString()).toBe('205');
   });
 
-  it('pays the minion tier at its pre-slum count in the slice they share', () => {
-    // At t=120s a Slum and the Minion tier both complete. The 100 minions the slum
+  it('pays the minion tier at its pre-warren count in the slice they share', () => {
+    // At t=120s a Warren and the Minion tier both complete. The 100 minions the warren
     // produces did not exist during the shift that just ended, so the payout uses
     // 105, not 205. project_init.md §10's higher-tier-first rule gets this wrong;
     // its own example gets it right.
@@ -40,7 +40,7 @@ describe('the worked example', () => {
   });
 
   it('pays a full share to minions that arrived part-way through the shift', () => {
-    // The slum fires at t=60, mid-way through the minion shift running 48s to 72s.
+    // The warren fires at t=60, mid-way through the minion shift running 48s to 72s.
     // Those minions are paid in full at t=72. This matches AdVenture Capitalist.
     const state = seeded(5, 1);
 
