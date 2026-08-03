@@ -1,0 +1,5 @@
+node_modules
+dist
+pnpm-lock.yaml
+# Hand-authored prose. A code formatter has nothing to offer it.
+docs

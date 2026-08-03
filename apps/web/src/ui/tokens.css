@@ -1,0 +1,96 @@
+/*
+ * Three tiers, one direction: primitives -> semantic -> component.
+ *
+ * Nothing outside this file may name a primitive. Screens and components consume
+ * the semantic layer only. See docs/reference/ui-sensibility.md §4.
+ *
+ * One theme block, forced dark. A gothic game commits to a look. The parity test
+ * stays anyway — it costs nothing and pins the contract if a second theme arrives.
+ */
+
+:root {
+  /* --- primitives. never referenced outside this block. --- */
+  --raw-ink-950: #08070a;
+  --raw-ink-900: #0e0c12;
+  --raw-ink-850: #16131c;
+  --raw-ink-800: #1e1a26;
+  --raw-ink-700: #2b2536;
+  --raw-ink-500: #58506a;
+  --raw-bone-300: #b9b2c4;
+  --raw-bone-100: #ece8f1;
+  --raw-ember-500: #c2410c;
+  --raw-ember-400: #ea580c;
+  --raw-rot-500: #4d7c0f;
+  --raw-blood-500: #9f1239;
+
+  --raw-step-1: 0.25rem;
+  --raw-step-2: 0.5rem;
+  --raw-step-3: 0.75rem;
+  --raw-step-4: 1rem;
+  --raw-step-6: 1.5rem;
+  --raw-step-8: 2rem;
+
+  --raw-fast: 120ms;
+  --raw-base: 220ms;
+  --raw-slow: 420ms;
+
+  /* --- semantic. name the job, never the value. --- */
+  --ground: var(--raw-ink-950);
+  --surface: var(--raw-ink-900);
+  --surface-raised: var(--raw-ink-850);
+  --surface-panel: var(--raw-ink-800);
+  --well: var(--raw-ink-950);
+
+  --line: var(--raw-ink-700);
+  --line-strong: var(--raw-ink-500);
+
+  --ink: var(--raw-bone-100);
+  --ink-muted: var(--raw-bone-300);
+  --ink-dim: var(--raw-ink-500);
+
+  /* One colour means act. Nothing else may wear it. */
+  --accent: var(--raw-ember-400);
+  --accent-pressed: var(--raw-ember-500);
+  --on-accent: var(--raw-ink-950);
+
+  --tone-positive: var(--raw-rot-500);
+  --tone-danger: var(--raw-blood-500);
+
+  --space-1: var(--raw-step-1);
+  --space-2: var(--raw-step-2);
+  --space-3: var(--raw-step-3);
+  --space-4: var(--raw-step-4);
+  --space-6: var(--raw-step-6);
+  --space-8: var(--raw-step-8);
+
+  --duration-fast: var(--raw-fast);
+  --duration-base: var(--raw-base);
+  --duration-slow: var(--raw-slow);
+
+  --font-text: ui-serif, Georgia, 'Times New Roman', serif;
+  --font-numeric: ui-monospace, 'SF Mono', Menlo, monospace;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 1ms;
+    --duration-base: 1ms;
+    --duration-slow: 1ms;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--font-text);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}

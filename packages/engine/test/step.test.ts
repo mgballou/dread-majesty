@@ -1,0 +1,101 @@
+import Decimal from 'break_eternity.js';
+import { describe, expect, it } from 'vitest';
+import { BASE_DT_MS, createState, step } from '../src/index.ts';
+import { fixture, fixtureReversed } from './fixtures/content.ts';
+import type { GameState } from '../src/types.ts';
+
+function seeded(minions: number, slums: number): GameState {
+  const state = createState(fixture);
+  state.gens.minion.owned = new Decimal(minions);
+  state.gens.slum.owned = new Decimal(slums);
+  return state;
+}
+
+function run(state: GameState, content = fixture, ms = 120_000, dt = BASE_DT_MS): void {
+  for (let elapsed = 0; elapsed < ms; elapsed += dt) step(state, content, dt);
+}
+
+describe('the worked example', () => {
+  it('produces 4,875 Evil and 205 Minions over 120 seconds', () => {
+    const state = seeded(5, 1);
+
+    run(state);
+
+    expect(state.resources.evil.toString()).toBe('4875');
+    expect(state.gens.minion.owned.toString()).toBe('205');
+  });
+
+  it('pays the minion tier at its pre-slum count in the slice they share', () => {
+    // At t=120s a Slum and the Minion tier both complete. The 100 minions the slum
+    // produces did not exist during the shift that just ended, so the payout uses
+    // 105, not 205. project_init.md §10's higher-tier-first rule gets this wrong;
+    // its own example gets it right.
+    const state = seeded(5, 1);
+
+    run(state, fixture, 119_900);
+    const beforeFinalSlice = state.resources.evil;
+    step(state, fixture, BASE_DT_MS);
+
+    expect(state.resources.evil.sub(beforeFinalSlice).toString()).toBe('1575');
+  });
+
+  it('pays a full share to minions that arrived part-way through the shift', () => {
+    // The slum fires at t=60, mid-way through the minion shift running 48s to 72s.
+    // Those minions are paid in full at t=72. This matches AdVenture Capitalist.
+    const state = seeded(5, 1);
+
+    run(state, fixture, 72_000);
+
+    expect(state.resources.evil.toString()).toBe('1725'); // 75 + 75 + 1575
+  });
+});
+
+describe('slice semantics', () => {
+  it('gives the same result whatever order the tiers are iterated in', () => {
+    const forward = seeded(5, 1);
+    const reversed = seeded(5, 1);
+
+    run(forward, fixture);
+    run(reversed, fixtureReversed);
+
+    expect(forward.resources.evil.toString()).toBe(reversed.resources.evil.toString());
+    expect(forward.gens.minion.owned.toString()).toBe(reversed.gens.minion.owned.toString());
+  });
+
+  it('is unchanged by slice width below the shortest cycle', () => {
+    const fine = seeded(5, 1);
+    const coarse = seeded(5, 1);
+
+    run(fine, fixture, 120_000, 100);
+    run(coarse, fixture, 120_000, 200);
+
+    expect(fine.resources.evil.toString()).toBe(coarse.resources.evil.toString());
+    expect(fine.gens.minion.owned.toString()).toBe(coarse.gens.minion.owned.toString());
+  });
+
+  it('does not let an idle tier bank progress and pay it out on purchase', () => {
+    const state = seeded(0, 0);
+
+    run(state, fixture, 600_000);
+
+    // The cycle timer is a world clock: it wraps whether or not anything is owned.
+    expect(state.gens.minion.progressMs).toBeLessThan(24_000);
+
+    state.gens.minion.owned = new Decimal(1);
+    run(state, fixture, 24_000);
+
+    // At most two completions in the 24s after buying — never the 25 cycles that
+    // ten idle minutes would have banked.
+    expect(state.resources.evil.lte(30)).toBe(true);
+  });
+
+  it('accumulates exact cycles across thousands of slices', () => {
+    // Fractional progress accumulation would land on 0.9999999999999999 here and
+    // silently skip a cycle. Integer milliseconds do not.
+    const state = seeded(1, 0);
+
+    run(state, fixture, 24_000);
+
+    expect(state.resources.evil.toString()).toBe('15');
+  });
+});
