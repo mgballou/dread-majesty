@@ -15,6 +15,7 @@ Web first and free. Steam via Tauri if it finds an audience.
 pnpm install
 pnpm dev        # http://localhost:5173
 pnpm check      # typecheck + lint + test
+pnpm build      # production bundle
 pnpm harness    # headless balance run
 ```
 
@@ -30,19 +31,37 @@ apps/web/           React + Vite. renders engine state, sends intents.
 
 ## Where things stand
 
-**M0.** The engine core is real and tested: fixed-timestep simulation, cost curve,
-purchases, milestone and prestige multipliers, offline catch-up, saves. The worked
-example from the original design docs is asserted number for number.
+**M1 through M4 have had a first pass.** The game is playable end to end.
 
-`apps/web` is a shell, deliberately. It proves the loop runs end to end and nothing
-more. The chain diagram and buy rail described in the spec are M2 work and should
-replace it wholesale.
+The engine is complete and tested: fixed-timestep simulation, an exact cost curve and
+max-buy, purchases, manual cycles and Overseers, milestone and prestige multipliers,
+achievements, unlock latching, offline catch-up, and versioned saves with a migration
+chain. The worked example from the original design docs is asserted number for number.
 
-**Balance has had one tuned pass**, measured with `pnpm harness` rather than guessed.
-Warrens at 26 minutes, Dark Legions at 58, Fortresses at 2h53m, first prestige at
-2h46m. The first draft reached every tier in 23 minutes, so this is a real change, but
-it is a first pass and wants real players. Re-run the harness after touching any
-number in `packages/content`.
+**A tier does not run until somebody makes it run.** Every tier starts manual: you
+rouse it from its node on the chain, it runs one cycle, pays out and stops. Appointing
+that tier's Overseer, for Evil, automates it for good. That is the opening loop, and
+it is bought off tier by tier.
+
+`apps/web` is the designed interface, not a shell: the live chain diagram, the buy
+rail with exactly one accented spend, the prestige panel, the deeds wall, the ledger,
+and the offline-return screen. Saves go to IndexedDB and export as a pasteable blob.
+Sound is synthesised in code and muted until asked for.
+
+There is a dev workbench at the foot of the page — jump to any point of progression,
+set any resource, appoint or dismiss every Overseer, simulate an absence. It is
+stripped from production builds and it deliberately looks nothing like the game.
+
+Every player-facing string lives in `packages/content/src/v1/copy.ts`. Adding an
+achievement without copy fails typecheck.
+
+**Balance has had two tuned passes**, measured with `pnpm harness` rather than
+guessed. Warrens at 28 minutes, Dark Legions at 1h01m, Fortresses at 2h37m, first
+prestige at 2h29m. It is still a first answer and wants real players. Re-run the
+harness after touching any number in `packages/content`.
+
+Not done: real art (every slot renders a generated SVG fallback), and everything in
+M5 and M6.
 
 ## Reading order
 

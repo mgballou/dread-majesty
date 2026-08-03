@@ -1,12 +1,13 @@
 import Decimal from 'break_eternity.js';
-import type { Content } from '@dm/content';
+import type { Content, TierId } from '@dm/content';
+import { newlyEarnedAchievements } from './achievements.ts';
 import { bulkCost, findTier, maxAffordable } from './cost.ts';
-import { productionPerSecond, prestigeGain } from './selectors.ts';
+import { isUnlockReached, productionPerSecond, prestigeGain } from './selectors.ts';
 import { createState } from './state.ts';
 import type { GameState, Intent, IntentResult } from './types.ts';
 
 /**
- * Apply a player intent.
+ * Apply an intent.
  *
  * Mutates `state` in place. With `step`, one of only two functions permitted to.
  */
@@ -16,8 +17,16 @@ export function apply(state: GameState, content: Content, intent: Intent): Inten
       return purchase(state, content, intent);
     case 'smite':
       return smite(state, content, intent);
+    case 'rouse':
+      return rouse(state, content, intent);
+    case 'appoint':
+      return appoint(state, content, intent);
     case 'prestige':
       return prestige(state, content, intent);
+    case 'record-achievements':
+      return recordAchievements(state, content, intent);
+    case 'record-unlocks':
+      return recordUnlocks(state, content, intent);
   }
 }
 
@@ -61,6 +70,56 @@ function smite(
   return { ok: true, intent, detail: `Smote for ${gain.toString()} Evil` };
 }
 
+/**
+ * Start one manual cycle.
+ *
+ * The tap verb that is not Smite. Smite pays now; rousing starts a tier producing.
+ * An appointed tier has nothing to rouse — it never stopped.
+ */
+function rouse(
+  state: GameState,
+  content: Content,
+  intent: Extract<Intent, { kind: 'rouse' }>,
+): IntentResult {
+  const tier = findTier(content, intent.tierId);
+  if (!tier) return { ok: false, intent, reason: 'unknown-tier' };
+  if (state.overseers[tier.id]) return { ok: false, intent, reason: 'already-appointed' };
+
+  const gen = state.gens[tier.id];
+  if (gen.owned.lte(0)) return { ok: false, intent, reason: 'tier-not-owned' };
+  if (gen.running) return { ok: false, intent, reason: 'already-running' };
+
+  gen.running = true;
+  return { ok: true, intent, detail: `Roused the ${tier.plural}` };
+}
+
+/**
+ * Hire a tier's Overseer, after which it runs for ever.
+ *
+ * Clears `running` on the way through. Not a reset — an appointed tier's timer keeps
+ * whatever progress it had. It only means `running` never has to be read again for a
+ * tier somebody oversees, so the two flags cannot drift into disagreeing.
+ */
+function appoint(
+  state: GameState,
+  content: Content,
+  intent: Extract<Intent, { kind: 'appoint' }>,
+): IntentResult {
+  const tier = findTier(content, intent.tierId);
+  if (!tier) return { ok: false, intent, reason: 'unknown-tier' };
+  if (state.overseers[tier.id]) return { ok: false, intent, reason: 'already-appointed' };
+
+  const cost = new Decimal(tier.overseerCost);
+  const budget = state.resources[tier.costResource];
+  if (cost.gt(budget)) return { ok: false, intent, reason: 'insufficient-resource' };
+
+  state.resources[tier.costResource] = budget.sub(cost);
+  state.overseers[tier.id] = true;
+  state.gens[tier.id].running = false;
+
+  return { ok: true, intent, detail: `Appointed an Overseer over the ${tier.plural}` };
+}
+
 function prestige(
   state: GameState,
   content: Content,
@@ -73,6 +132,13 @@ function prestige(
     souls: state.souls.add(gain),
     lifetimeEvil: state.lifetimeEvil,
     stats: { ...state.stats, prestiges: state.stats.prestiges + 1 },
+    // Spec §5.4: a reset keeps achievements and unlock flags. A player who has seen
+    // the Fortress row does not lose it for starting over. Spec §5.6 adds Overseers
+    // to that list: the tapping phase is an opening, not a tax to pay every reset.
+    // Every `running` flag does go, and `createState` supplies the false ones.
+    earnedAchievements: state.earnedAchievements,
+    unlocked: state.unlocked,
+    overseers: state.overseers,
   };
 
   const fresh = createState(content);
@@ -80,7 +146,57 @@ function prestige(
   state.gens = fresh.gens;
   state.souls = carried.souls;
   state.lifetimeEvil = carried.lifetimeEvil;
+  state.earnedAchievements = carried.earnedAchievements;
+  state.unlocked = carried.unlocked;
+  state.overseers = carried.overseers;
   state.stats = carried.stats;
 
   return { ok: true, intent, detail: `Claimed ${gain.toString()} Damned Souls` };
+}
+
+/**
+ * Award every achievement the state now satisfies.
+ *
+ * Called at the boundary after a batch of slices, never per slice. Rebuilds the list
+ * in content order so two states holding the same achievements hold them in the same
+ * order. Ids no longer present in the running content drop out, which is what makes
+ * retiring an achievement possible at all.
+ */
+function recordAchievements(
+  state: GameState,
+  content: Content,
+  intent: Extract<Intent, { kind: 'record-achievements' }>,
+): IntentResult {
+  const newly = newlyEarnedAchievements(state, content);
+  if (newly.length === 0) return { ok: true, intent, detail: 'No new achievements' };
+
+  const earned = new Set([...state.earnedAchievements, ...newly]);
+  state.earnedAchievements = content.achievements
+    .filter((achievement) => earned.has(achievement.id))
+    .map((achievement) => achievement.id);
+
+  return { ok: true, intent, detail: `Earned ${newly.length} achievements` };
+}
+
+/**
+ * Latch the unlock flag of every tier whose condition now holds.
+ *
+ * Only ever sets a flag to true, so a tier the player has met cannot disappear from
+ * the rail — not on spending, and not on a prestige reset.
+ */
+function recordUnlocks(
+  state: GameState,
+  content: Content,
+  intent: Extract<Intent, { kind: 'record-unlocks' }>,
+): IntentResult {
+  const newly: TierId[] = [];
+
+  for (const tier of content.tiers) {
+    if (state.unlocked[tier.id]) continue;
+    if (!isUnlockReached(state, content, tier.id)) continue;
+    state.unlocked[tier.id] = true;
+    newly.push(tier.id);
+  }
+
+  return { ok: true, intent, detail: `Unlocked ${newly.length} tiers` };
 }

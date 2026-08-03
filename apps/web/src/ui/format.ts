@@ -45,6 +45,31 @@ export function formatCount(value: Decimal): string {
   return value.lt(1000) ? value.floor().toString() : formatNumber(value, 2);
 }
 
+/**
+ * A span of time, in the two largest units that carry meaning.
+ *
+ * "2h 14m", never "2h 14m 6s" — the third unit is noise at every scale a player
+ * reads this at, and the offline summary is the main caller.
+ */
+export function formatDuration(ms: number): string {
+  const seconds = Math.max(0, Math.floor(ms / 1000));
+  if (seconds < 60) return `${seconds}s`;
+
+  const parts: [number, string][] = [
+    [Math.floor(seconds / 86400), 'd'],
+    [Math.floor((seconds % 86400) / 3600), 'h'],
+    [Math.floor((seconds % 3600) / 60), 'm'],
+    [seconds % 60, 's'],
+  ];
+
+  const from = parts.findIndex(([value]) => value > 0);
+  return parts
+    .slice(from, from + 2)
+    .filter(([value], index) => value > 0 || index === 0)
+    .map(([value, unit]) => `${value}${unit}`)
+    .join(' ');
+}
+
 function trimZeros(text: string): string {
   return text.includes('.') ? text.replace(/\.?0+$/, '') : text;
 }

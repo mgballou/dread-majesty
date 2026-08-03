@@ -1,6 +1,7 @@
 import Decimal from 'break_eternity.js';
 import type { Content, ProducibleId, TierId } from '@dm/content';
 import { isResourceId, isTierId } from '@dm/content';
+import { achievementMultiplier } from './achievements.ts';
 import type { GameState, StepReport } from './types.ts';
 
 /** The live slice. Every online tick is exactly this long. */
@@ -27,13 +28,28 @@ export function step(state: GameState, content: Content, dtMs: number): StepRepo
 
   for (const tier of content.tiers) {
     const gen = state.gens[tier.id];
+    const appointed = state.overseers[tier.id];
 
-    // The cycle timer is a world clock. It advances and wraps whether or not the
-    // tier owns anything, so an idle tier cannot bank hours of progress and then
-    // pay it all out the instant one unit is bought.
+    // What gates the timer is who is watching the tier (spec §5.6). An appointed
+    // tier's timer is a world clock: it advances and wraps whether or not the tier
+    // owns anything, so an idle tier cannot bank hours of progress and then pay it
+    // all out the instant one unit is bought. A tier nobody oversees does not run at
+    // all until the `rouse` intent starts it.
+    if (!appointed && !gen.running) continue;
+
     gen.progressMs += dtMs;
-    const cycles = Math.floor(gen.progressMs / tier.cycleMs);
-    if (cycles > 0) gen.progressMs -= cycles * tier.cycleMs;
+    let cycles = Math.floor(gen.progressMs / tier.cycleMs);
+
+    if (appointed) {
+      if (cycles > 0) gen.progressMs -= cycles * tier.cycleMs;
+    } else if (cycles > 0) {
+      // A roused tier pays exactly one cycle and stops. Progress goes to zero rather
+      // than carrying the remainder, so leaving a rouse unclaimed banks nothing and
+      // an hour away is worth no more than a second.
+      cycles = 1;
+      gen.progressMs = 0;
+      gen.running = false;
+    }
 
     const count = owned[tier.id];
     if (cycles <= 0 || count === undefined || count.lte(0)) continue;
@@ -80,13 +96,25 @@ function commit(state: GameState, delta: Partial<Record<ProducibleId, Decimal>>)
  */
 export function tierMultiplier(state: GameState, content: Content, owned: Decimal): Decimal {
   let multiplier = new Decimal(1);
-  for (const threshold of content.milestones) {
-    if (owned.gte(threshold)) multiplier = multiplier.mul(content.milestoneMultiplier);
+  // Ascending, so the first threshold the count has not reached ends the walk. That
+  // matters: the shipping ladder runs to sixty-odd rungs and this is called per tier
+  // per slice, 36,000 times to catch up an hour.
+  for (const milestone of content.milestones) {
+    if (owned.lt(milestone.at)) break;
+    multiplier = multiplier.mul(milestone.multiplier);
   }
   return multiplier.mul(globalMultiplier(state, content));
 }
 
-/** Applies to every tier. The only thing prestige buys. */
+/**
+ * Applies to every tier: the souls the player holds, times whatever their earned
+ * achievements grant.
+ *
+ * The achievement term is 1 for all shipping content today. It is here so that
+ * turning achievements into a power source is a content edit and not an engine
+ * change. See spec §10.4.
+ */
 export function globalMultiplier(state: GameState, content: Content): Decimal {
-  return new Decimal(1).add(state.souls.mul(content.prestige.perSoul));
+  const fromSouls = new Decimal(1).add(state.souls.mul(content.prestige.perSoul));
+  return fromSouls.mul(achievementMultiplier(state, content));
 }

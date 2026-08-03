@@ -1,11 +1,12 @@
 import Decimal from 'break_eternity.js';
 import { describe, expect, it } from 'vitest';
-import { BASE_DT_MS, createState, step } from '../src/index.ts';
+import { BASE_DT_MS, step } from '../src/index.ts';
 import { fixture, fixtureReversed } from './fixtures/content.ts';
+import { appointed } from './fixtures/state.ts';
 import type { GameState } from '../src/types.ts';
 
 function seeded(minions: number, warrens: number): GameState {
-  const state = createState(fixture);
+  const state = appointed(fixture);
   state.gens.minion.owned = new Decimal(minions);
   state.gens.warren.owned = new Decimal(warrens);
   return state;

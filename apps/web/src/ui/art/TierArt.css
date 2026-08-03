@@ -1,0 +1,12 @@
+/* See TierArt.tsx. The tone is set inline from the manifest; nothing here names a
+   colour, and the void punched into a silhouette is the ground showing through. */
+
+.art {
+  display: block;
+  flex: none;
+  object-fit: cover;
+}
+
+.art__void {
+  fill: var(--ground);
+}

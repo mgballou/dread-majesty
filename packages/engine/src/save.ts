@@ -1,16 +1,34 @@
 import Decimal from 'break_eternity.js';
-import type { ResourceId, TierId } from '@dm/content';
-import { RESOURCE_IDS, TIER_IDS } from '@dm/content';
+import type { AchievementId, ResourceId, TierId } from '@dm/content';
+import { isAchievementId, RESOURCE_IDS, TIER_IDS } from '@dm/content';
 import { SAVE_VERSION } from './state.ts';
 import type { GameState, TierState } from './types.ts';
 
 export interface SaveBlob {
   saveVersion: number;
   resources: Record<string, string>;
-  gens: Record<string, { owned: string; progressMs: number; lifetimeProduced: string }>;
+  gens: Record<
+    string,
+    {
+      owned: string;
+      progressMs: number;
+      lifetimeProduced: string;
+      /** Added in save version 4. Optional because a version 3 blob does not carry it. */
+      running?: boolean;
+    }
+  >;
   souls: string;
   lifetimeEvil: string;
   stats: GameState['stats'];
+  /**
+   * Added in save version 2. Optional because a version 1 blob does not carry it and
+   * the migration chain has to be able to describe one.
+   */
+  earnedAchievements?: string[];
+  /** Added in save version 3. Optional for the same reason. */
+  unlocked?: Record<string, boolean>;
+  /** Added in save version 4. Optional for the same reason. */
+  overseers?: Record<string, boolean>;
   /** Server time when the meta-plane exists; client time until then. */
   savedAtMs: number;
 }
@@ -26,8 +44,15 @@ export function serialize(state: GameState, savedAtMs: number): SaveBlob {
       owned: gen.owned.toString(),
       progressMs: gen.progressMs,
       lifetimeProduced: gen.lifetimeProduced.toString(),
+      running: gen.running,
     };
   }
+
+  const unlocked: Record<string, boolean> = {};
+  for (const id of TIER_IDS) unlocked[id] = state.unlocked[id];
+
+  const overseers: Record<string, boolean> = {};
+  for (const id of TIER_IDS) overseers[id] = state.overseers[id];
 
   return {
     saveVersion: SAVE_VERSION,
@@ -35,6 +60,9 @@ export function serialize(state: GameState, savedAtMs: number): SaveBlob {
     gens,
     souls: state.souls.toString(),
     lifetimeEvil: state.lifetimeEvil.toString(),
+    earnedAchievements: [...state.earnedAchievements],
+    unlocked,
+    overseers,
     stats: { ...state.stats },
     savedAtMs,
   };
@@ -53,8 +81,21 @@ export function deserialize(blob: SaveBlob): GameState {
       owned: new Decimal(saved?.owned ?? '0'),
       progressMs: saved?.progressMs ?? 0,
       lifetimeProduced: new Decimal(saved?.lifetimeProduced ?? '0'),
+      running: saved?.running ?? false,
     };
   }
+
+  // Unknown ids are dropped rather than trusted. A save can hold an achievement a
+  // later build retired, and the state type says every entry is a known id.
+  const earnedAchievements: AchievementId[] = (migrated.earnedAchievements ?? []).filter(
+    (id): id is AchievementId => isAchievementId(id),
+  );
+
+  const unlocked = {} as Record<TierId, boolean>;
+  for (const id of TIER_IDS) unlocked[id] = migrated.unlocked?.[id] ?? false;
+
+  const overseers = {} as Record<TierId, boolean>;
+  for (const id of TIER_IDS) overseers[id] = migrated.overseers?.[id] ?? false;
 
   return {
     saveVersion: SAVE_VERSION,
@@ -62,15 +103,54 @@ export function deserialize(blob: SaveBlob): GameState {
     gens,
     souls: new Decimal(migrated.souls),
     lifetimeEvil: new Decimal(migrated.lifetimeEvil),
+    earnedAchievements,
+    unlocked,
+    overseers,
     stats: { ...migrated.stats },
   };
 }
 
 /**
  * One function per version step, applied in a chain. A save two versions old must
- * load. Never edit an existing migration — add another.
+ * load, so the chain is the thing under test, not any single hop.
+ *
+ * **Never edit an entry in this table.** A migration that has shipped has already run
+ * against saves in the wild; changing it changes what those saves become, and there
+ * is no way to tell which ones already passed through the old version. Correcting a
+ * mistake means appending another step, not fixing the one that made it.
  */
-const MIGRATIONS: Record<number, (blob: SaveBlob) => SaveBlob> = {};
+const MIGRATIONS: Record<number, (blob: SaveBlob) => SaveBlob> = {
+  // 1 → 2: achievements arrive. Nobody had earned any, so the list starts empty.
+  1: (blob) => ({ ...blob, saveVersion: 2, earnedAchievements: [] }),
+
+  // 2 → 3: unlock flags arrive. Deriving them from owned counts matters — defaulting
+  // to all-false would take the Fortress row away from a returning player who already
+  // owns Fortresses. Tiers the player was merely saving toward re-latch on the next
+  // `record-unlocks`, which costs them nothing.
+  2: (blob) => {
+    const unlocked: Record<string, boolean> = {};
+    for (const id of TIER_IDS) {
+      unlocked[id] = new Decimal(blob.gens[id]?.owned ?? '0').gt(0);
+    }
+    return { ...blob, saveVersion: 3, unlocked };
+  },
+
+  // 3 → 4: manual cycles and Overseers arrive. Nobody has appointed anybody and
+  // nothing is running, so an old save stops producing until the player rouses a
+  // tier. That is not a loss to work around — it is the opening spec §5.6 adds, and
+  // the game is unreleased, so the only saves this touches are our own.
+  3: (blob) => {
+    const overseers: Record<string, boolean> = {};
+    for (const id of TIER_IDS) overseers[id] = false;
+
+    const gens: SaveBlob['gens'] = {};
+    for (const [id, gen] of Object.entries(blob.gens)) {
+      gens[id] = { ...gen, running: false };
+    }
+
+    return { ...blob, saveVersion: 4, gens, overseers };
+  },
+};
 
 export function migrate(blob: SaveBlob): SaveBlob {
   let current = blob;

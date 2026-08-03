@@ -23,6 +23,7 @@ export const fixture: Content = {
       costResource: 'evil',
       baseCost: '1500',
       costRate: 1.089,
+      overseerCost: '600',
       art: 'tier/warren',
     },
     {
@@ -35,6 +36,7 @@ export const fixture: Content = {
       costResource: 'evil',
       baseCost: '90',
       costRate: 1.089,
+      overseerCost: '400',
       art: 'tier/minion',
     },
   ],
@@ -42,7 +44,49 @@ export const fixture: Content = {
   // None, deliberately. The worked example is about the cascade; a milestone
   // multiplier firing inside it would silently change every expected number.
   milestones: [],
-  milestoneMultiplier: 2,
+
+  // One of every condition kind, all granting nothing. Earning these must not move a
+  // single number in the worked example. Anything that multiplies lives in
+  // `fixtureWithAchievementMultiplier` below, for exactly that reason.
+  achievements: [
+    {
+      id: 'minion-10',
+      name: 'Ten Minions',
+      description: 'Own 10 Minions.',
+      condition: { kind: 'tier-owned', tierId: 'minion', atLeast: '10' },
+      multiplier: 1,
+    },
+    {
+      id: 'evil-1e3',
+      name: 'A Thousand Evil',
+      description: 'Earn 1,000 Evil in total.',
+      condition: { kind: 'lifetime-evil', atLeast: '1000' },
+      multiplier: 1,
+    },
+    {
+      id: 'souls-1',
+      name: 'One Soul',
+      description: 'Hold a soul.',
+      condition: { kind: 'souls', atLeast: '1' },
+      multiplier: 1,
+    },
+    {
+      id: 'prestige-1',
+      name: 'One Reset',
+      description: 'Claim souls once.',
+      condition: { kind: 'prestiges', atLeast: 1 },
+      multiplier: 1,
+    },
+    {
+      id: 'smite-1',
+      name: 'One Smite',
+      description: 'Smite once.',
+      condition: { kind: 'smites', atLeast: 1 },
+      multiplier: 1,
+    },
+  ],
+
+  unlockFraction: 0.5,
 
   prestige: { k: 150, scale: '1e11', perSoul: 0.02 },
   offlineCapMs: 4 * 60 * 60 * SECOND,
@@ -58,5 +102,28 @@ export const fixtureReversed: Content = {
 /** Fixture that does trip milestones, for testing the multiplier itself. */
 export const fixtureWithMilestones: Content = {
   ...fixture,
-  milestones: [25, 50, 100],
+  milestones: [
+    { at: 25, multiplier: 2 },
+    { at: 50, multiplier: 2 },
+    { at: 100, multiplier: 2 },
+  ],
+};
+
+/**
+ * Fixture whose one achievement grants a real multiplier, proving the hook is live.
+ *
+ * Kept out of the base fixture on purpose: production numbers that move under an
+ * achievement would break the worked example silently.
+ */
+export const fixtureWithAchievementMultiplier: Content = {
+  ...fixture,
+  achievements: [
+    {
+      id: 'minion-10',
+      name: 'Ten Minions',
+      description: 'Own 10 Minions.',
+      condition: { kind: 'tier-owned', tierId: 'minion', atLeast: '10' },
+      multiplier: 3,
+    },
+  ],
 };

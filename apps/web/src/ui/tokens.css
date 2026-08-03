@@ -6,6 +6,10 @@
  *
  * One theme block, forced dark. A gothic game commits to a look. The parity test
  * stays anyway — it costs nothing and pins the contract if a second theme arrives.
+ *
+ * Every ink and tone below is picked against a measured contrast ratio, not by eye,
+ * and tokens.test.ts recomputes those ratios from this file. Change a value and the
+ * test tells you what it did.
  */
 
 :root {
@@ -15,13 +19,35 @@
   --raw-ink-850: #16131c;
   --raw-ink-800: #1e1a26;
   --raw-ink-700: #2b2536;
-  --raw-ink-500: #58506a;
-  --raw-bone-300: #b9b2c4;
+  --raw-ink-500: #756c8b;
+
+  /* Bone. The reading ramp, and it is measured: 16:1, 12:1 and 6:1 on --surface. */
   --raw-bone-100: #ece8f1;
-  --raw-ember-500: #c2410c;
+  --raw-bone-300: #d2ccdf;
+  --raw-bone-500: #9990ad;
+
+  /* Gold. Leaf at the top of the ramp, tarnish at the bottom. Full strength marks
+     the one action; everything below it is line work, a fill that is not an action,
+     and the ground such a fill runs over. */
+  --raw-gold-300: #e2bf5c;
+  --raw-gold-400: #c9a227;
+  --raw-gold-600: #a07e22;
+  --raw-gold-700: #7d6228;
+  --raw-gold-900: #241b09;
+
   --raw-ember-400: #ea580c;
-  --raw-rot-500: #4d7c0f;
-  --raw-blood-500: #9f1239;
+  --raw-rot-500: #6d9c34;
+  --raw-blood-500: #ec5878;
+
+  /* The chain, bottom rung to top. Cool and thin at the bottom, hot and saturated at
+     the top, so a glance down the stage reads as a climb. None of these is the
+     accent, and none may sit within 45° of gold — the hue test pins that. */
+  --raw-slate-400: #7c8ba1;
+  --raw-moss-400: #6b8f5e;
+  --raw-amethyst-400: #9c78b5;
+  --raw-wine-400: #a85a76;
+
+  --raw-scrim: rgb(8 7 10 / 78%);
 
   --raw-step-1: 0.25rem;
   --raw-step-2: 0.5rem;
@@ -34,6 +60,14 @@
   --raw-base: 220ms;
   --raw-slow: 420ms;
 
+  /* One scale. Nothing is nudged to fit. */
+  --raw-type-1: 0.75rem;
+  --raw-type-2: 0.8125rem;
+  --raw-type-3: 0.9375rem;
+  --raw-type-4: 1.125rem;
+  --raw-type-5: 1.5rem;
+  --raw-type-6: 2.75rem;
+
   /* --- semantic. name the job, never the value. --- */
   --ground: var(--raw-ink-950);
   --surface: var(--raw-ink-900);
@@ -44,17 +78,41 @@
   --line: var(--raw-ink-700);
   --line-strong: var(--raw-ink-500);
 
+  /* Behind an overlay. Dark on dark, so the sheet reads as lifted, not pasted. */
+  --scrim: var(--raw-scrim);
+
   --ink: var(--raw-bone-100);
   --ink-muted: var(--raw-bone-300);
-  --ink-dim: var(--raw-ink-500);
+  --ink-dim: var(--raw-bone-500);
 
-  /* One colour means act. Nothing else may wear it. */
-  --accent: var(--raw-ember-400);
-  --accent-pressed: var(--raw-ember-500);
+  /* One colour means act, and it is gold. Full strength belongs to the single lifted
+     action on the screen and to nothing else. */
+  --accent: var(--raw-gold-400);
+  --accent-lift: var(--raw-gold-300);
+  --accent-pressed: var(--raw-gold-600);
   --on-accent: var(--raw-ink-950);
+
+  /* Gold at low weight, so a full-strength fill still reads as the only action.
+     --accent-line is line work and never fills: banner edges, rules, meter teeth.
+     --accent-soft is a fill that reports progress rather than offering an action.
+     --accent-well is the ground such a fill runs over. */
+  --accent-line: var(--raw-gold-700);
+  --accent-soft: var(--raw-gold-600);
+  --accent-well: var(--raw-gold-900);
 
   --tone-positive: var(--raw-rot-500);
   --tone-danger: var(--raw-blood-500);
+
+  /* Tone rides with the data. No screen decides what colour a tier is — the art
+     manifest names the slot, and these are what the slot resolves to. */
+  --tone-tier-1: var(--raw-slate-400);
+  --tone-tier-2: var(--raw-moss-400);
+  --tone-tier-3: var(--raw-amethyst-400);
+  --tone-tier-4: var(--raw-wine-400);
+
+  /* Evil itself. Ember is one resource among the chain's five now, not the thing
+     that means act. */
+  --tone-resource: var(--raw-ember-400);
 
   --space-1: var(--raw-step-1);
   --space-2: var(--raw-step-2);
@@ -66,6 +124,13 @@
   --duration-fast: var(--raw-fast);
   --duration-base: var(--raw-base);
   --duration-slow: var(--raw-slow);
+
+  --text-xs: var(--raw-type-1);
+  --text-sm: var(--raw-type-2);
+  --text-base: var(--raw-type-3);
+  --text-lg: var(--raw-type-4);
+  --text-xl: var(--raw-type-5);
+  --text-display: var(--raw-type-6);
 
   --font-text: ui-serif, Georgia, 'Times New Roman', serif;
   --font-numeric: ui-monospace, 'SF Mono', Menlo, monospace;

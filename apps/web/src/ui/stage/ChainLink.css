@@ -1,0 +1,141 @@
+/*
+ * The run between two nodes. See ChainLink.tsx.
+ *
+ * Four component tokens, declared here and referencing the semantic layer only. Every
+ * one is genuinely narrow: the length of the run, the share of it the mote string
+ * occupies, and the size of a head the space scale is not meant to lay out.
+ *
+ * The run is longer than a hairline gap needs to be, on purpose. The cascade is the
+ * thing the stage exists to show, and a mote crossing two centimetres reads where a
+ * mote crossing one does not.
+ */
+
+.stage-link {
+  --stage-link-run: calc(var(--space-8) + var(--space-3));
+  --stage-link-spread: calc(var(--stage-link-run) * 0.6);
+  --stage-link-head: var(--space-2);
+  --stage-link-trail: calc(var(--space-2) / 2);
+
+  position: relative;
+  block-size: var(--stage-link-run);
+  inline-size: 100%;
+  overflow: hidden;
+}
+
+/* Line work, in the structural colour. A structural fill would read as an action. */
+.stage-link::before {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: calc(50% - 1px);
+  inline-size: 1px;
+  background: var(--line);
+}
+
+/*
+ * The run lighting up. Line work again — the same hairline, in the tier's own tone,
+ * gradient-tipped so it reads as something passing rather than a bar switching on.
+ */
+.stage-link__surge {
+  position: absolute;
+  inset-inline-start: calc(50% - 1px);
+  inline-size: 2px;
+  block-size: var(--stage-link-spread);
+  border-radius: 1px;
+  background: linear-gradient(to bottom, transparent, currentColor);
+}
+
+.stage-link__motes {
+  position: absolute;
+  inset: 0;
+}
+
+/*
+ * The trail. Small and part-lit, tapering back from the head so the string reads as
+ * one thing moving in one direction.
+ */
+.stage-link__mote {
+  position: absolute;
+  inset-inline-start: 50%;
+  inline-size: var(--stage-link-trail);
+  block-size: var(--stage-link-trail);
+  margin-inline-start: calc(var(--stage-link-trail) / -2);
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.55;
+}
+
+.stage-link__motes > :nth-child(n + 4) {
+  opacity: 0.38;
+}
+
+.stage-link__motes > :nth-child(n + 7) {
+  opacity: 0.24;
+}
+
+/* The head, at full strength and twice the size. This is what the eye follows. */
+.stage-link__mote--head {
+  inline-size: var(--stage-link-head);
+  block-size: var(--stage-link-head);
+  margin-inline-start: calc(var(--stage-link-head) / -2);
+  opacity: 1;
+}
+
+/*
+ * Motes travel under normal motion and stand still under reduced motion.
+ *
+ * The reduced branch is designed, not stripped (ui-sensibility §8): the string is
+ * drawn along the run and stays there until the next completion replaces it, and the
+ * run stays lit end to end. A completion is never something you had to be watching to
+ * catch. That is also why the reduced branch carries no duration at all — the motion
+ * tokens collapse to a single millisecond under the same preference, and a fade
+ * nobody can see is the content going missing.
+ */
+.stage-link[data-motion='full'] .stage-link__motes {
+  animation: stage-mote-fall var(--duration-slow) ease-in both;
+}
+
+.stage-link[data-motion='full'] .stage-link__surge {
+  animation: stage-link-surge var(--duration-slow) ease-in both;
+}
+
+.stage-link[data-motion='reduced'] .stage-link__surge {
+  inset-block: 0;
+  block-size: auto;
+}
+
+@keyframes stage-mote-fall {
+  from {
+    opacity: 0;
+    transform: translateY(calc(var(--stage-link-spread) * -1));
+  }
+
+  15% {
+    opacity: 1;
+  }
+
+  85% {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(calc(var(--stage-link-run) - var(--stage-link-spread)));
+  }
+}
+
+@keyframes stage-link-surge {
+  from {
+    opacity: 0;
+    transform: translateY(calc(var(--stage-link-spread) * -1));
+  }
+
+  15% {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(var(--stage-link-run));
+  }
+}

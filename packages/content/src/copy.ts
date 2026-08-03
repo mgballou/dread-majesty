@@ -1,0 +1,267 @@
+import type { AchievementId, TierId } from './ids.ts';
+
+/**
+ * Every player-facing string that is not a tier name.
+ *
+ * Deliberately **not** part of `Content`. The engine takes `Content` as an argument
+ * and must never care about a string; folding copy in would force every engine
+ * fixture to carry forty lines of prose it will never read. The web app imports
+ * `CURRENT_COPY` beside `CURRENT` instead.
+ *
+ * Keyed rather than free — `Record<AchievementId, …>` and `Record<TierId, …>` mean a
+ * new achievement or tier without copy fails typecheck rather than shipping blank.
+ * A tone pass is then one file, and a translation is a second file next to it.
+ *
+ * Where a number belongs inside a sentence the entry is a function taking the
+ * already-formatted string, never a template with a token for someone to replace.
+ * Formatting is the web app's one shared formatter; wording is here.
+ */
+
+/** One line saying what a rung of the chain is. */
+export interface TierCopy {
+  readonly flavour: string;
+}
+
+export interface ResourceCopy {
+  readonly name: string;
+  readonly flavour: string;
+}
+
+export interface AchievementCopy {
+  /** Four words or fewer. */
+  readonly name: string;
+  /** What the player did, then one dry fact about it. */
+  readonly description: string;
+}
+
+export interface SmiteCopy {
+  readonly action: string;
+  readonly hint: string;
+  /** Shown one at a time after a smite. Never empty. */
+  readonly results: readonly string[];
+}
+
+export interface MilestoneCopy {
+  readonly name: string;
+  readonly what: string;
+  /**
+   * `multiplier` and `threshold` arrive formatted, e.g. "×2" and "25", so no balance
+   * number lives here.
+   */
+  readonly next: (args: {
+    readonly remaining: string;
+    readonly plural: string;
+    readonly multiplier: string;
+    readonly threshold: string;
+  }) => string;
+  readonly done: string;
+  /** Follows `done` on a tier that has taken every milestone it has. */
+  readonly noMore: string;
+}
+
+/**
+ * Reset copy. Clear first, in voice second.
+ *
+ * A player must not be able to misread what they are about to lose, so `clears`,
+ * `keeps` and `confirmBody` name the losses outright and take no liberties.
+ */
+export interface PrestigeCopy {
+  readonly name: string;
+  readonly action: string;
+  /** The claim, once there is a count to put on it. */
+  readonly claim: (souls: string) => string;
+  /** The claim while nothing is owed. Short, because the button is dead. */
+  readonly noneOwed: string;
+  readonly what: string;
+  readonly worth: (perSoul: string) => string;
+  /** Stat label over the soul count. */
+  readonly held: string;
+  /** Stat label over the multiplier. `share` arrives formatted, e.g. "2%". */
+  readonly favour: (share: string) => string;
+  /** Stat label over what a reset would pay out now. */
+  readonly reckoning: string;
+  readonly clears: string;
+  /** Heading over `clears`. */
+  readonly clearsTitle: string;
+  readonly keeps: string;
+  /** Heading over `keeps`. */
+  readonly keepsTitle: string;
+  /** Shown once souls are owed and the player has not taken them. */
+  readonly available: string;
+  readonly unavailable: string;
+  readonly nextAt: (lifetimeEvil: string) => string;
+  readonly confirmTitle: string;
+  readonly confirmBody: (souls: string) => string;
+  readonly confirmAction: string;
+  readonly cancel: string;
+  readonly claimed: (souls: string) => string;
+}
+
+export interface OfflineCopy {
+  readonly heading: string;
+  readonly summary: (duration: string) => string;
+  /** Used instead of `summary` when the absence outran the offline cap. */
+  readonly capped: (cap: string) => string;
+  /** Used when the player owns nothing that produces. */
+  readonly nothing: string;
+  readonly dismiss: string;
+}
+
+/** One Minion and nothing else. The first screen every player sees. */
+export interface EmptyCopy {
+  readonly heading: string;
+  readonly body: string;
+  readonly action: string;
+  readonly hint: string;
+}
+
+export interface RailCopy {
+  /** The panel's own name. */
+  readonly title: string;
+  /** Names the run of generators to anyone who cannot see it laid out. */
+  readonly list: string;
+  /** Sits on the one row the rail lifts to the accent. */
+  readonly best: string;
+  /** Sits on every other affordable-or-not row. */
+  readonly saving: string;
+  readonly locked: string;
+  readonly lockedHint: string;
+  /** The count on a row. `count` arrives formatted. */
+  readonly held: (count: string) => string;
+  /** Names the row's cycle bar. `tier` is the singular name. */
+  readonly cycle: (tier: string) => string;
+  /** The buy button, spoken in full. Every part arrives formatted. */
+  readonly buy: (args: {
+    readonly count: string;
+    readonly tier: string;
+    readonly cost: string;
+  }) => string;
+  /** Said outright, because tone alone may not carry the state. */
+  readonly affordable: string;
+  /** The other half of that state. `amount` arrives formatted. */
+  readonly shortfall: (amount: string) => string;
+  readonly quantity: string;
+  /** Names one numeric quantity option. `count` arrives formatted. */
+  readonly quantityOption: (count: string) => string;
+  readonly max: string;
+  readonly maxHint: string;
+  readonly cost: (amount: string) => string;
+  /** Heading over the one named row for the tier the player has not reached. */
+  readonly upcomingTitle: string;
+  /** That row's line. Both parts arrive formatted; `tier` is the plural. */
+  readonly upcoming: (args: { readonly tier: string; readonly cost: string }) => string;
+}
+
+/**
+ * The manual layer: rousing a tier by hand, and hiring somebody so you need not.
+ *
+ * `names` are the Overseers themselves, fixed by spec §5.6. `notes` are one line each
+ * on what that Overseer does with the job once they have it.
+ */
+export interface OverseerCopy {
+  /** Section label on a rail row. */
+  readonly title: string;
+  /** The rouse button. `tier` is the plural. */
+  readonly rouse: (tier: string) => string;
+  /** Spoken label while a manual cycle is already running. */
+  readonly running: (tier: string) => string;
+  /** The hire button. `name` is the Overseer's title. */
+  readonly appoint: (name: string) => string;
+  /** Shown once hired. */
+  readonly appointed: (name: string) => string;
+  /** One line under a tier nobody oversees. */
+  readonly manual: string;
+  /** One line under a tier somebody does. */
+  readonly automatic: string;
+  /** What appointing costs. `amount` arrives formatted. */
+  readonly cost: (amount: string) => string;
+  readonly names: Readonly<Record<TierId, string>>;
+  readonly notes: Readonly<Record<TierId, string>>;
+}
+
+/**
+ * The chain diagram.
+ *
+ * Nothing on the stage is an action, so every string here names or describes. Its
+ * sealed rung gets its own line rather than borrowing `rail.locked` and
+ * `rail.lockedHint`: the rail shows a heading and a hint the player reads, the stage
+ * shows an empty node whose only text is the name a screen reader speaks.
+ */
+export interface StageCopy {
+  /** Names the whole diagram. */
+  readonly chain: string;
+  /** Names a rung the player has not reached. */
+  readonly sealed: string;
+  /** The ring's spoken value. `swept` arrives formatted, e.g. "50%". */
+  readonly cycle: (args: { readonly label: string; readonly swept: string }) => string;
+}
+
+export interface DeedsCopy {
+  readonly title: string;
+  readonly what: string;
+  readonly none: string;
+  readonly unearned: string;
+  readonly progress: (earned: string, total: string) => string;
+}
+
+export interface LedgerCopy {
+  readonly title: string;
+  readonly lifetimeEvil: string;
+  readonly smites: string;
+  readonly resets: string;
+  readonly deeds: string;
+  readonly soundOn: string;
+  readonly soundOff: string;
+  readonly exportAction: string;
+  readonly exportDone: string;
+  readonly importAction: string;
+  readonly importDone: string;
+  readonly blobLabel: string;
+  readonly blobPlaceholder: string;
+  readonly abdicate: string;
+  readonly abdicateTitle: string;
+  readonly abdicateBody: string;
+  readonly abdicateCancel: string;
+  readonly abdicateConfirm: string;
+  readonly abdicated: string;
+}
+
+/**
+ * Failure text.
+ *
+ * The first seven names match the engine's `IntentFailure` members and the last three
+ * its save errors. They are spelled out rather than imported: content sits below the
+ * engine and may not depend on it.
+ */
+export interface ErrorCopy {
+  readonly insufficientResource: string;
+  readonly nothingAffordable: string;
+  readonly noSoulsEarned: string;
+  readonly unknownTier: string;
+  readonly tierNotOwned: string;
+  readonly alreadyRunning: string;
+  readonly alreadyAppointed: string;
+  readonly corruptSave: string;
+  readonly unmigratableSave: string;
+  readonly storageBlocked: string;
+}
+
+export interface Copy {
+  readonly title: string;
+  /** Shuts any record lifted over the game. Chrome, so plain rather than in voice. */
+  readonly close: string;
+  readonly evil: ResourceCopy;
+  readonly tiers: Readonly<Record<TierId, TierCopy>>;
+  readonly achievements: Readonly<Record<AchievementId, AchievementCopy>>;
+  readonly smite: SmiteCopy;
+  readonly milestone: MilestoneCopy;
+  readonly prestige: PrestigeCopy;
+  readonly offline: OfflineCopy;
+  readonly empty: EmptyCopy;
+  readonly rail: RailCopy;
+  readonly overseer: OverseerCopy;
+  readonly stage: StageCopy;
+  readonly deeds: DeedsCopy;
+  readonly ledger: LedgerCopy;
+  readonly errors: ErrorCopy;
+}

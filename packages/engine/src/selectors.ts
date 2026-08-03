@@ -1,5 +1,6 @@
 import Decimal from 'break_eternity.js';
 import type { Content, ProducibleId, TierId } from '@dm/content';
+import { findTier, nextCost } from './cost.ts';
 import { globalMultiplier, tierMultiplier } from './step.ts';
 import type { GameState } from './types.ts';
 
@@ -9,6 +10,13 @@ import type { GameState } from './types.ts';
  * A rate, not a simulation. It ignores compounding — new generators arriving from
  * higher tiers will change it. Use it for display and for smite value, never as a
  * substitute for running `step`.
+ *
+ * **It reports potential production and deliberately ignores `running` and
+ * `overseers`** — what the tiers would make if every one of them were turning, not
+ * what they are making this instant. Do not "fix" this. Smite reads it, and a smite
+ * worth three seconds of *actual* production would pay the floor of 1 for ever to a
+ * player who has roused nothing, which is precisely the player Smite has to carry
+ * (spec §5.5).
  */
 export function productionPerSecond(
   state: GameState,
@@ -19,6 +27,38 @@ export function productionPerSecond(
 
   for (const tier of content.tiers) {
     if (tier.produces !== producible) continue;
+    const owned = state.gens[tier.id].owned;
+    if (owned.lte(0)) continue;
+
+    const perCycle = owned.mul(new Decimal(tier.yield)).mul(tierMultiplier(state, content, owned));
+    total = total.add(perCycle.div(tier.cycleMs / 1000));
+  }
+
+  return total;
+}
+
+/**
+ * The same rate, counting only the tiers that keep turning on their own.
+ *
+ * This is the honest headline figure. `productionPerSecond` reports what the machine
+ * *could* make and is right to, because Smite is paid out of potential — but a crown
+ * reading "0.63 Evil per second" while nothing at all is running is telling the
+ * player something untrue about their own game.
+ *
+ * A roused manual tier is left out on purpose. It pays once and stops, so it has no
+ * rate; counting it would make the headline jump every four seconds and settle back.
+ * What a tapping player earns shows up in the Evil count, which is the number beside
+ * this one.
+ */
+export function overseenProductionPerSecond(
+  state: GameState,
+  content: Content,
+  producible: ProducibleId,
+): Decimal {
+  let total = new Decimal(0);
+
+  for (const tier of content.tiers) {
+    if (tier.produces !== producible || !state.overseers[tier.id]) continue;
     const owned = state.gens[tier.id].owned;
     if (owned.lte(0)) continue;
 
@@ -47,8 +87,46 @@ export function canAfford(
   return state.resources[tier.costResource].gte(cost);
 }
 
+/** Whether this tier has an Overseer, and so runs without being told. */
+export function isAppointed(state: GameState, tierId: TierId): boolean {
+  return state.overseers[tierId];
+}
+
+/**
+ * Whether rousing this tier now would do anything.
+ *
+ * False for a tier already turning, a tier the player owns none of, and a tier with
+ * an Overseer — that last one never stopped, so there is nothing to rouse.
+ */
+export function isRousable(state: GameState, tierId: TierId): boolean {
+  if (state.overseers[tierId]) return false;
+
+  const gen = state.gens[tierId];
+  return gen.owned.gt(0) && !gen.running;
+}
+
+/** What appointing this tier's Overseer costs. Null for a tier not in the content. */
+export function overseerCost(content: Content, tierId: TierId): Decimal | null {
+  const tier = findTier(content, tierId);
+  if (!tier) return null;
+  return new Decimal(tier.overseerCost);
+}
+
+/** Whether the player could appoint this tier's Overseer right now. */
+export function canAppoint(state: GameState, content: Content, tierId: TierId): boolean {
+  if (state.overseers[tierId]) return false;
+
+  const cost = overseerCost(content, tierId);
+  if (!cost) return false;
+
+  return canAfford(state, content, tierId, cost);
+}
+
 export interface MilestoneProgress {
+  /** Owned count the next threshold sits at, or null once every one is passed. */
   next: number | null;
+  /** What passing it is worth. Null alongside `next`. */
+  multiplier: number | null;
   owned: Decimal;
   remaining: Decimal | null;
 }
@@ -60,12 +138,42 @@ export function milestoneProgress(
   tierId: TierId,
 ): MilestoneProgress {
   const owned = state.gens[tierId].owned;
-  const next = content.milestones.find((threshold) => owned.lt(threshold)) ?? null;
+  const next = content.milestones.find((milestone) => owned.lt(milestone.at)) ?? null;
   return {
-    next,
+    next: next?.at ?? null,
+    multiplier: next?.multiplier ?? null,
     owned,
-    remaining: next === null ? null : new Decimal(next).sub(owned),
+    remaining: next === null ? null : new Decimal(next.at).sub(owned),
   };
+}
+
+/**
+ * Whether a tier's unlock condition holds at this instant.
+ *
+ * The condition: the player owns at least one, or holds at least
+ * `content.unlockFraction` of what the next one costs. Half of the price reads as
+ * "nearly there", which is the moment a row earns its place on the rail.
+ *
+ * "Can afford right now" is the obvious alternative and is worse: the row appears and
+ * vanishes every time the player spends, which is exactly the flicker the interface
+ * rules forbid. That is why the answer here is latched into `state.unlocked` by the
+ * `record-unlocks` intent, and why this predicate is never what the interface reads.
+ */
+export function isUnlockReached(state: GameState, content: Content, tierId: TierId): boolean {
+  if (state.gens[tierId].owned.gt(0)) return true;
+
+  const tier = content.tiers.find((candidate) => candidate.id === tierId);
+  if (!tier) return false;
+
+  const cost = nextCost(state, content, tierId);
+  if (!cost) return false;
+
+  return state.resources[tier.costResource].gte(cost.mul(content.unlockFraction));
+}
+
+/** The latched flag. This is what the interface reads; it never goes back to false. */
+export function isTierUnlocked(state: GameState, tierId: TierId): boolean {
+  return state.unlocked[tierId];
 }
 
 export { globalMultiplier };
