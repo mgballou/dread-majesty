@@ -1,14 +1,14 @@
 /*
  * The deck of panels. See Deck.tsx and ui-sensibility §6, §9.
  *
- * Three component tokens, and each earns its place: the chevron point has to be read
- * by both the clip shape and the padding that keeps a title off the tip, and the body
- * needs a floor no run of content can be trusted to hold on its own.
+ * Two component tokens, and each earns its place: the chevron point is read by the clip
+ * shape, by the overlap that seats one segment into the next, and by the padding that
+ * keeps a title off the tip; and the body needs a height no run of content can be
+ * trusted to hold on its own.
  */
 
 .deck {
   --deck-point: var(--space-4);
-  --deck-edge: 1px;
 
   /*
    * The height of the open panel. Fixed, not a floor.
@@ -30,11 +30,18 @@
   overflow: hidden;
 }
 
+/*
+ * One tube, cut into four — not four chevrons set side by side.
+ *
+ * Every segment after the first is pulled back by exactly the depth of the point, so
+ * the tip of one seats into the notch of the next and the run reads as a single piece
+ * of chrome divided up. No gap, no padding, no wrapping: a gap between segments is the
+ * thing that makes four badges out of one strip.
+ */
 .deck__strip {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-1);
-  padding: var(--space-2);
+  flex-wrap: nowrap;
+  gap: 0;
   background: var(--surface-raised);
   border-block-end: 1px solid var(--accent-line);
 }
@@ -45,19 +52,67 @@
  * would cut the ring off, and a focus indicator removed with no replacement is a
  * failure outright (§13).
  */
+/*
+ * Equal shares of the strip, so the seams never move at this width. The chevron lives
+ * on the span inside — a clip-path on the focusable element would cut the focus ring
+ * off, and a focus indicator removed with no replacement is a failure outright (§13).
+ */
 .deck__tab {
-  flex: 1 1 9rem;
+  flex: 1 1 0;
   min-inline-size: 0;
   padding: 0;
   background: none;
   border: none;
   cursor: pointer;
+  transition: flex-grow var(--duration-base) ease-out;
 }
 
+/* The bite that seats each segment into the one before it. */
+.deck__tab + .deck__tab {
+  margin-inline-start: calc(var(--deck-point) * -1);
+}
+
+/*
+ * The segment itself: notched at the leading edge, pointed at the trailing one.
+ *
+ * The seam is a drop-shadow rather than a border, because a border draws on the
+ * element's box and the box here is a rectangle — the shadow follows the clipped shape,
+ * so the hairline traces the chevron exactly.
+ */
 .deck__edge {
   display: block;
-  padding: var(--deck-edge);
-  background: var(--line);
+  background: var(--surface-raised);
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--deck-point)) 0,
+    100% 50%,
+    calc(100% - var(--deck-point)) 100%,
+    0 100%,
+    var(--deck-point) 50%
+  );
+  /*
+   * Gold at line weight, the same structural gold the banners edge with — and two
+   * pixels, not one. Three of the four segments share a ground, so the seam is the only
+   * thing dividing them; at hairline weight in the structural colour those divisions
+   * disappear and the tube reads as one flat bar with a single notch in it.
+   */
+  filter: drop-shadow(-2px 0 0 var(--accent-line));
+}
+
+/* The ends of the tube are flat. Only the divisions inside it are chevrons. */
+.deck__tab:first-child .deck__edge {
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--deck-point)) 0,
+    100% 50%,
+    calc(100% - var(--deck-point)) 100%,
+    0 100%
+  );
+  filter: none;
+}
+
+.deck__tab:last-child .deck__edge {
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, var(--deck-point) 50%);
 }
 
 .deck__field {
@@ -66,7 +121,9 @@
   gap: var(--space-2);
   min-block-size: 2.5rem;
   padding-block: var(--space-2);
-  padding-inline: var(--space-3) calc(var(--space-2) + var(--deck-point));
+  /* Both ends clear the shape: the notch bites into the leading edge and the point
+     runs off the trailing one, and text under either is text nobody can read. */
+  padding-inline: calc(var(--space-2) + var(--deck-point)) calc(var(--space-2) + var(--deck-point));
   font-family: var(--font-text);
   font-size: var(--text-sm);
   font-weight: 600;
@@ -74,8 +131,11 @@
   text-transform: uppercase;
   text-align: start;
   color: var(--ink-dim);
-  background: var(--surface-raised);
   transition: color var(--duration-fast) ease-out;
+}
+
+.deck__tab:first-child .deck__field {
+  padding-inline-start: var(--space-3);
 }
 
 .deck__tab:hover .deck__field {
@@ -87,12 +147,11 @@
  * weight says "you are here"; gold at full strength would say "press me" (§5, §7).
  */
 .deck__tab[aria-selected='true'] .deck__edge {
-  background: var(--accent-line);
+  background: var(--surface);
 }
 
 .deck__tab[aria-selected='true'] .deck__field {
   color: var(--ink);
-  background: var(--surface);
 }
 
 .deck__glyph {
@@ -168,9 +227,6 @@
  * rows of tab is real height to spend; a set of tabs nobody can read is worse.
  */
 @media (width <= 52rem) {
-  .deck__tab {
-    flex: 1 1 auto;
-  }
 
   .deck__panel {
     padding: var(--space-3);
@@ -190,12 +246,15 @@
  * tab properly named and merely stops it taking width (ui-sensibility §13).
  */
 @media (width <= 34rem) {
-  .deck__tab {
-    flex: 0 1 auto;
-  }
-
+  /*
+   * The open segment takes three shares to the others' one.
+   *
+   * Shares rather than widths, so the tube is always exactly as wide as the strip and
+   * only the seams inside it move. `flex-grow` transitions, so switching tabs slides
+   * the divisions along rather than snapping them.
+   */
   .deck__tab[aria-selected='true'] {
-    flex: 1 1 auto;
+    flex-grow: 3;
   }
 
   .deck__tab[aria-selected='false'] .deck__title,
