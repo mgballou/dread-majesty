@@ -542,7 +542,13 @@ Answer these during implementation. None blocks M1.
    Dark Legion lands. Intentional as the moment the cascade becomes visible, but only
    real players can say whether it reads as a payoff or a discontinuity.
 2. **Offline cap upgrade curve.** How far past 4 hours can it go, and at what cost?
-3. **Second Overseers, bought with Souls.** §5.6's Overseers cost Evil and only
+3. **Onboarding, with a library behind it.** The game now has four verbs — rouse,
+   buy, appoint, smite — spread across a chain and a deck of four panels, and nothing
+   explains any of them. The intent is a step-through and tutorial library rather than
+   hand-rolled coach marks, so the sequencing is data and not a pile of conditionals in
+   `App`. Not started; pinned so the interface is not designed as though it will never
+   need one.
+4. **Second Overseers, bought with Souls.** §5.6's Overseers cost Evil and only
    automate. A second, soul-bought appointment per tier would give the prestige loop
    something to spend on and a reason to reset beyond the flat +2%. What each one
    *does* is open — a faster cycle, a share of the tier below, a milestone reached
