@@ -133,10 +133,22 @@ describe('Deck', () => {
     expect(screen.getByText('2/4')).toBeInTheDocument();
   });
 
-  it('says in a word that a shut panel has something to act on', () => {
+  it('marks a shut panel that has something to act on', () => {
+    const { container } = draw();
+
+    expect(container.querySelector('.deck__dot')).toBeInTheDocument();
+  });
+
+  it('still says what that mark means, for anyone who cannot see it', () => {
     draw();
 
-    expect(screen.getByText('Advised')).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /Advised/ })).toBeInTheDocument();
+  });
+
+  it('names the open panel under the tube rather than inside it', () => {
+    draw();
+
+    expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('The Muster');
   });
 
   it('drops that word once the panel is open, because the panel says it', async () => {

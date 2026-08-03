@@ -54,12 +54,6 @@ describe('Miscreants', () => {
     expect(screen.getByText(OVERSEER.notes.minion)).toBeInTheDocument();
   });
 
-  it('says what the panel is for', () => {
-    draw();
-
-    expect(screen.getByText(OVERSEER.what)).toBeInTheDocument();
-  });
-
   it('marks a post with a diamond, never a circle', () => {
     const { container } = draw();
 

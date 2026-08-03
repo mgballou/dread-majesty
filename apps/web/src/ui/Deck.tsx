@@ -91,17 +91,34 @@ export function Deck({ tabs }: DeckProps): ReactNode {
                     {tab.glyph}
                   </span>
                 )}
-                <span className="deck__title">{tab.title}</span>
-                {tab.trailing !== undefined && (
-                  <span className="deck__trailing">{tab.trailing}</span>
-                )}
+                {/* Every tab is named to assistive technology and none of them is named
+                    on screen. The mark is a dot beside the glyph and its word rides
+                    here, so a shut tab with something to say still says it. */}
+                <span className="deck__name">
+                  {tab.title}
+                  {tab.mark !== undefined && index !== open && ` — ${tab.mark}`}
+                </span>
                 {tab.mark !== undefined && index !== open && (
-                  <span className="deck__mark">{tab.mark}</span>
+                  <span className="deck__dot" aria-hidden="true" />
                 )}
               </span>
             </span>
           </button>
         ))}
+      </div>
+
+      {/*
+        The name of the open panel, under the tube rather than inside it.
+        Four names abreast do not fit a phone at any weight, and shrinking them until
+        they do is how "Miscreants" becomes "THE MIS…". So the tube carries icons, which
+        are the same width at every viewport, and the name gets a line of its own where
+        it has the whole width to itself and nothing shifts when it changes.
+      */}
+      <div className="deck__head">
+        <h2 className="deck__heading">{tabs[open]?.title}</h2>
+        {tabs[open]?.trailing !== undefined && (
+          <span className="deck__count">{tabs[open]?.trailing}</span>
+        )}
       </div>
 
       <div className="deck__body">
