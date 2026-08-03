@@ -1,10 +1,11 @@
 import Decimal from 'break_eternity.js';
-import { useMemo, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, type ReactNode, type RefObject } from 'react';
 import type { Content, TierDef, TierId } from '@dm/content';
 import { nextCost, type GameState } from '@dm/engine';
 import { Banner } from '../Banner.tsx';
 import { formatNumber } from '../format.ts';
 import { Panel } from '../Panel.tsx';
+import { useReducedMotion } from '../useReducedMotion.ts';
 import { TierRow, type RowEmphasis, type RailScreenCopy } from './TierRow.tsx';
 import { QuantityToggle } from './QuantityToggle.tsx';
 import { railPlan, type RailAppointment, type RailPlan, type RailPurchase } from './railPlan.ts';
@@ -47,6 +48,12 @@ interface BuyRailProps {
  * order, the one signpost row is always last, and a tier arriving turns the signpost
  * into a real row and appends a new signpost beneath it. Every row above stays where
  * it was, and the signpost is a full row tall so the rail does not shrink either.
+ *
+ * **On a phone the rail lies down.** A column of eight-rem rows is most of a phone
+ * screen for one generator; laid across, the rows become cards a thumb flicks through.
+ * That reintroduces the one problem the accent exists to solve — the lifted row can
+ * sit off-screen — so the rail scrolls it back into view whenever it changes. See
+ * `useAccentInView`.
  */
 export function BuyRail({
   content,
@@ -77,6 +84,8 @@ export function BuyRail({
   const met = rungs.filter((tier) => isUnlocked(tier.id));
   const upcoming = rungs.find((tier) => !isUnlocked(tier.id));
 
+  const rail = useAccentInView(plan.best?.tierId ?? null);
+
   return (
     <Panel
       title={copy.rail.title}
@@ -84,7 +93,7 @@ export function BuyRail({
       trailing={`${met.length}/${rungs.length}`}
       actions={<QuantityToggle quantity={quantity} onChange={setQuantity} copy={copy.rail} />}
     >
-      <ul className="rail" aria-label={copy.rail.list}>
+      <ul className="rail" aria-label={copy.rail.list} ref={rail}>
         {met.map((tier) => {
           const purchase = purchases.get(tier.id);
           if (!purchase) return null;
@@ -112,6 +121,39 @@ export function BuyRail({
       </ul>
     </Panel>
   );
+}
+
+/**
+ * Keeps the lifted row on screen while the rail is lying down.
+ *
+ * Only while it actually scrolls. On a desktop the rail is a column that fits, the
+ * width test fails, and nothing here ever runs — which is also why it is inert under
+ * a test runner, where every measurement is zero.
+ *
+ * It moves the rail's own `scrollLeft` rather than calling `scrollIntoView`, which is
+ * allowed to scroll ancestors and would drag the whole page sideways to centre a card.
+ * Reduced motion jumps instead of gliding; the card still arrives (ui-sensibility §8).
+ */
+function useAccentInView(tierId: TierId | null): RefObject<HTMLUListElement | null> {
+  const rail = useRef<HTMLUListElement>(null);
+  const reduced = useReducedMotion();
+
+  useEffect(() => {
+    const element = rail.current;
+    if (!element || tierId === null) return;
+    if (element.scrollWidth <= element.clientWidth) return;
+    if (typeof element.scrollTo !== 'function') return;
+
+    const row = element.querySelector(`[data-tier="${tierId}"]`);
+    if (!(row instanceof HTMLElement)) return;
+
+    element.scrollTo({
+      left: row.offsetLeft - (element.clientWidth - row.clientWidth) / 2,
+      behavior: reduced ? 'auto' : 'smooth',
+    });
+  }, [tierId, reduced]);
+
+  return rail;
 }
 
 function emphasis(tierId: TierId, plan: RailPlan): RowEmphasis {

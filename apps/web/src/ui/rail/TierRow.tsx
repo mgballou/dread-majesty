@@ -69,7 +69,7 @@ export function TierRow({
   const mark = flag(emphasis, copy);
 
   return (
-    <li className={`rail__slot rail__row rail__row--${emphasis.kind}`}>
+    <li className={`rail__slot rail__row rail__row--${emphasis.kind}`} data-tier={tier.id}>
       <TierArt slot={tier.art} size={ROW_ART_SIZE} decorative />
 
       <div className="rail__body">

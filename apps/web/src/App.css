@@ -45,9 +45,30 @@
   gap: var(--space-2);
 }
 
+/*
+ * One column on a phone, in DOM order: crown, chain, rail, records.
+ *
+ * The rail lands at the foot, which is where a thumb is. The crown is a big target
+ * and can afford the top of the screen; the chain is the thing you watch and belongs
+ * between them.
+ */
 @media (width <= 52rem) {
+  /* The viewport reaches under the notch and the home bar; this puts it back. */
+  .shell {
+    padding: var(--space-2);
+    padding-block-start: max(var(--space-2), env(safe-area-inset-top));
+    padding-block-end: max(var(--space-2), env(safe-area-inset-bottom));
+    padding-inline-start: max(var(--space-2), env(safe-area-inset-left));
+    padding-inline-end: max(var(--space-2), env(safe-area-inset-right));
+  }
+
   .shell__body {
     grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-4);
+  }
+
+  .shell__foot {
+    margin-block-start: var(--space-6);
   }
 }
 
@@ -84,5 +105,14 @@
 @media (width <= 52rem) {
   .boot__body {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Matched to the phone layout: a shorter chain and a rail lying on its side. */
+  .boot__stage {
+    height: 22rem;
+  }
+
+  .boot__rail {
+    height: 12rem;
   }
 }

@@ -237,3 +237,19 @@
   background: var(--well);
   border: 1px solid var(--line);
 }
+
+/*
+ * On a phone the chain has to share the screen with the crown and the rail, and five
+ * rungs at desktop scale is more than a screen on its own.
+ *
+ * Only the three component tokens move. Every rule above is written against them, so
+ * the whole node shrinks in proportion and nothing has to be restated — including the
+ * tap target, which at 3.5rem is still more than three times the WCAG 2.2 floor.
+ */
+@media (width <= 52rem) {
+  .stage-node {
+    --stage-node-medallion: calc(var(--space-8) + var(--space-6));
+    --stage-node-art: var(--space-8);
+    --stage-node-width: calc(var(--space-8) * 4);
+  }
+}

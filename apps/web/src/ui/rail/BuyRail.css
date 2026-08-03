@@ -162,23 +162,45 @@
 }
 
 /*
- * On a phone the row runs out of width and the buy column has to come off the end
- * and go underneath. Nothing is hidden and nothing scrolls sideways: the body must
- * never overflow horizontally (ui-sensibility §9), and a row that keeps its three
- * columns at 420px does exactly that.
+ * On a phone the rail lies down.
+ *
+ * A column of eight-rem rows is most of a phone screen for a single generator. Laid
+ * across, the rows become cards a thumb flicks between, snapping one at a time, and
+ * the chain above keeps the room it needs. `BuyRail.tsx` scrolls the lifted card back
+ * into view whenever the accent moves, which is the whole reason this is allowed to
+ * put a row off-screen at all.
+ *
+ * The row also gives up its third column here: the buy control comes off the end and
+ * goes underneath. The body must never overflow horizontally (ui-sensibility §9), and
+ * a row that insists on three columns inside a 20rem card does exactly that.
  */
-@media (width <= 34rem) {
+@media (width <= 52rem) {
+  .rail {
+    grid-auto-flow: column;
+    grid-auto-columns: min(20rem, 82vw);
+    overflow-x: auto;
+    padding-block-end: var(--space-2);
+    scroll-snap-type: x mandatory;
+    overscroll-behavior-x: contain;
+  }
+
   .rail__slot {
     flex-wrap: wrap;
+    align-content: flex-start;
+    scroll-snap-align: center;
   }
 
   .rail__body {
-    flex: 1 1 12rem;
+    flex: 1 1 10rem;
   }
 
   .rail__buy {
     flex: 1 1 100%;
     justify-items: stretch;
+  }
+
+  .rail__oversight {
+    flex: 1 1 100%;
   }
 }
 

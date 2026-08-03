@@ -139,3 +139,10 @@
     transform: translateY(var(--stage-link-run));
   }
 }
+
+/* The run shortens with the nodes, so the chain keeps its proportions on a phone. */
+@media (width <= 52rem) {
+  .stage-link {
+    --stage-link-run: var(--space-6);
+  }
+}
