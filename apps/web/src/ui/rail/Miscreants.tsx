@@ -80,8 +80,6 @@ export function Miscreants({ content, state, plan, onAppoint, copy }: Miscreants
 
   return (
     <div className="miscreants">
-      <p className="miscreants__what">{copy.overseer.what}</p>
-
       <ul className="miscreants__posts" aria-label={copy.overseer.panelTitle}>
         {posts.map((post) => (
           <Post key={post.tier.id} post={post} onAsk={() => setAsking(post.tier.id)} copy={copy} />

@@ -19,12 +19,6 @@ describe('Trophies', () => {
     expect(screen.getAllByRole('listitem')).toHaveLength(CURRENT.achievements.length);
   });
 
-  it('says what the panel is for', () => {
-    render(<Trophies state={seeded()} content={CURRENT} copy={CURRENT_COPY.deeds} />);
-
-    expect(screen.getByText(CURRENT_COPY.deeds.what)).toBeInTheDocument();
-  });
-
   it('draws no title of its own, because the tab that opened it is the title', () => {
     render(<Trophies state={seeded()} content={CURRENT} copy={CURRENT_COPY.deeds} />);
 

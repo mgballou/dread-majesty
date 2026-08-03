@@ -64,7 +64,6 @@
   background: none;
   border: none;
   cursor: pointer;
-  transition: flex-grow var(--duration-base) ease-out;
 }
 
 /* The bite that seats each segment into the one before it. */
@@ -120,10 +119,11 @@
   align-items: center;
   gap: var(--space-2);
   min-block-size: 2.5rem;
+  justify-content: center;
   padding-block: var(--space-2);
-  /* Both ends clear the shape: the notch bites into the leading edge and the point
-     runs off the trailing one, and text under either is text nobody can read. */
-  padding-inline: calc(var(--space-2) + var(--deck-point)) calc(var(--space-2) + var(--deck-point));
+  /* Both ends clear the shape: the notch bites into the leading edge and the point runs
+     off the trailing one, and a glyph under either is a glyph half drawn. */
+  padding-inline: calc(var(--space-2) + var(--deck-point));
   font-family: var(--font-text);
   font-size: var(--text-sm);
   font-weight: 600;
@@ -132,10 +132,6 @@
   text-align: start;
   color: var(--ink-dim);
   transition: color var(--duration-fast) ease-out;
-}
-
-.deck__tab:first-child .deck__field {
-  padding-inline-start: var(--space-3);
 }
 
 .deck__tab:hover .deck__field {
@@ -155,13 +151,31 @@
 }
 
 .deck__glyph {
-  color: var(--accent-line);
+  font-size: var(--text-lg);
+  color: var(--ink-dim);
+  transition: color var(--duration-fast) ease-out;
 }
 
-.deck__title {
-  min-inline-size: 0;
+.deck__tab:hover .deck__glyph {
+  color: var(--ink-muted);
+}
+
+/* The open segment: a lighter ground and a glyph at full ink. Gold at line weight edges
+   it; gold at full strength would say "press me" rather than "you are here" (§5, §7). */
+.deck__tab[aria-selected='true'] .deck__glyph {
+  color: var(--accent);
+}
+
+/* Named to assistive technology, never on screen. The heading under the tube is the
+   only place a panel says what it is. */
+.deck__name {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  margin: -1px;
+  padding: 0;
   overflow: hidden;
-  text-overflow: ellipsis;
+  clip-path: inset(50%);
   white-space: nowrap;
 }
 
@@ -176,14 +190,48 @@
 /*
  * Something to act on, behind a shut tab.
  *
- * No accent and no chrome: this is navigation, and a chip with a rule round it takes
- * width the title needs. The word alone, brighter than everything beside it, does the
- * work — and the accented control is on screen a press later.
+ * A dot, because the tube has no room for a word and no business carrying one. Its
+ * meaning is spoken by `.deck__name`, so nothing is lost to anyone who cannot see it,
+ * and the accented control is on screen a press later. Never gold: this is navigation.
  */
-.deck__mark {
-  flex: none;
-  font-size: var(--text-xs);
+.deck__dot {
+  inline-size: 5px;
+  block-size: 5px;
+  margin-inline-start: calc(var(--space-2) * -1);
+  background: var(--ink);
+  border-radius: 50%;
+}
+
+/*
+ * The name of the open panel.
+ *
+ * Its own line under the tube, with the whole width to itself. Fixed height, so a
+ * three-syllable name and a one-syllable one occupy the same ground and nothing below
+ * moves when the tab changes.
+ */
+.deck__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-block-size: 2.5rem;
+  padding: var(--space-3) var(--space-4) 0;
+}
+
+.deck__heading {
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: var(--text-lg);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   color: var(--ink);
+}
+
+.deck__count {
+  font-family: var(--font-numeric);
+  font-size: var(--text-sm);
+  color: var(--ink-muted);
 }
 
 .deck__body {
@@ -203,95 +251,18 @@
   display: none;
 }
 
-@supports (clip-path: polygon(0 0, 100% 0, 100% 100%)) {
-  .deck__edge,
-  .deck__field {
-    --deck-shape: polygon(
-      0 0,
-      calc(100% - var(--deck-point)) 0,
-      100% 50%,
-      calc(100% - var(--deck-point)) 100%,
-      0 100%
-    );
-
-    clip-path: var(--deck-shape);
-  }
-}
-
-/*
- * The tabs give up the row before they give up the words.
- *
- * A chevron 4rem wide is a shape with no room for a name in it, and a name cut to
- * "THE MIS…" is worse than no chevron at all — these four are the whole navigation of
- * the game. So they go two abreast on a tablet and stack outright on a phone. Four
- * rows of tab is real height to spend; a set of tabs nobody can read is worse.
- */
 @media (width <= 52rem) {
   .deck__panel {
     padding: var(--space-3);
   }
 }
 
-/*
- * On a phone the four chevrons stay in one row and only the open one says its name.
- *
- * Four titles abreast at 393px either wrap to four rows — a quarter of the screen spent
- * on navigation — or truncate to "THE MIS…", which is worse. So a shut tab collapses to
- * its glyph and the open one keeps its title, which is the only one a player needs: they
- * know where they are, and the glyphs tell them where else they can go.
- *
- * The titles are hidden **from sight only**. `display: none` would take them out of the
- * accessibility tree and leave four tabs called nothing at all; clipping them keeps every
- * tab properly named and merely stops it taking width (ui-sensibility §13).
- */
 @media (width <= 34rem) {
-  /*
-   * The open segment takes three shares to the others' one.
-   *
-   * Shares rather than widths, so the tube is always exactly as wide as the strip and
-   * only the seams inside it move. `flex-grow` transitions, so switching tabs slides
-   * the divisions along rather than snapping them.
-   */
-  .deck__tab[aria-selected='true'] {
-    flex-grow: 3;
-  }
-
-  .deck__tab[aria-selected='false'] .deck__title,
-  .deck__tab[aria-selected='false'] .deck__trailing,
-  .deck__tab[aria-selected='false'] .deck__mark {
-    position: absolute;
-    inline-size: 1px;
-    block-size: 1px;
-    margin: -1px;
-    padding: 0;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-  }
-
-  /*
-   * A shut tab with something worth saying keeps a dot.
-   *
-   * Its word is clipped along with the rest, so the one signal that would otherwise be
-   * lost — "the advised spend is through here" — is redrawn as a mark on the glyph.
-   */
-  .deck__tab[aria-selected='false']:has(.deck__mark) .deck__glyph::after {
-    content: '';
-    position: absolute;
-    inset-block-start: 0;
-    inset-inline-end: -0.35rem;
-    inline-size: 5px;
-    block-size: 5px;
-    background: var(--ink);
-    border-radius: 50%;
-  }
-
-  .deck__glyph {
-    position: relative;
-  }
-
   .deck__field {
     min-block-size: 2.25rem;
-    justify-content: center;
+  }
+
+  .deck__head {
+    padding-inline: var(--space-3);
   }
 }
