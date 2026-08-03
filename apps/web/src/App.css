@@ -7,16 +7,35 @@
   min-height: 100vh;
 }
 
+/*
+ * The chain runs across the top, the buy panes sit under it.
+ *
+ * The chain is horizontal now, so it wants the full width and there is no second
+ * column to put beside it. Everything a player does is in one vertical order: read the
+ * rate, evoke at the end of the chain, scroll down to spend.
+ */
 .shell__body {
   display: grid;
-  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  /* `minmax(0, 1fr)`, never `1fr`: a grid item's default minimum is its content, and
+     the chain is wider than a phone. Without this the chain pushes the page sideways
+     instead of scrolling inside its own track. */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-6);
   align-items: start;
 }
 
+/*
+ * The buy panes. Two abreast where there is room for two, one where there is not.
+ *
+ * `auto-fit` rather than a fixed pair of tracks, because the prestige panel is held
+ * back until souls are in reach — a fixed second column would leave a hole beside the
+ * rail for the first three hours.
+ */
 .shell__side {
   display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(22rem, 100%), 1fr));
   gap: var(--space-4);
+  align-items: start;
 }
 
 .shell__claim {
@@ -46,11 +65,10 @@
 }
 
 /*
- * One column on a phone, in DOM order: crown, chain, rail, records.
+ * One column on a phone, in the order the game is played: rate, chain, buy, records.
  *
- * The rail lands at the foot, which is where a thumb is. The crown is a big target
- * and can afford the top of the screen; the chain is the thing you watch and belongs
- * between them.
+ * The chain is horizontal at every width, so nothing has to rearrange itself here —
+ * only the buy panes, which stop sitting side by side.
  */
 @media (width <= 52rem) {
   /* The viewport reaches under the notch and the home bar; this puts it back. */
@@ -63,7 +81,6 @@
   }
 
   .shell__body {
-    grid-template-columns: minmax(0, 1fr);
     gap: var(--space-4);
   }
 
@@ -82,37 +99,21 @@
 }
 
 .boot__crown {
-  height: 7rem;
-  margin-bottom: var(--space-6);
+  height: 2.5rem;
+  margin-bottom: var(--space-4);
 }
 
 .boot__body {
   display: grid;
-  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
   gap: var(--space-6);
 }
 
-/* Sized to the opening board — three rungs and one rail row — because that is what
-   lands for anybody the boot screen is actually shown to. */
+/* Sized to the opening board — a short wide chain over one column of buy panes —
+   because that is what lands for anybody the boot screen is actually shown to. */
 .boot__stage {
-  height: 36rem;
+  height: 16rem;
 }
 
 .boot__rail {
-  height: 25rem;
-}
-
-@media (width <= 52rem) {
-  .boot__body {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  /* Matched to the phone layout: a shorter chain and a rail lying on its side. */
-  .boot__stage {
-    height: 22rem;
-  }
-
-  .boot__rail {
-    height: 12rem;
-  }
+  height: 28rem;
 }

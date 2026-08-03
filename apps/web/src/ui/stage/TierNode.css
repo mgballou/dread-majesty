@@ -186,7 +186,11 @@
  */
 .stage-node__name {
   margin: 0;
-  block-size: var(--space-4);
+  /* A minimum rather than a fixed height. Every rung names itself now, sealed or not,
+     so there is no placeholder to keep in step — and "Dark Legions" needs two lines at
+     phone width. */
+  min-block-size: var(--space-4);
+  overflow-wrap: break-word;
   font-size: var(--text-sm);
   line-height: var(--space-4);
   letter-spacing: 0.08em;
@@ -239,12 +243,60 @@
 }
 
 /*
- * On a phone the chain has to share the screen with the crown and the rail, and five
- * rungs at desktop scale is more than a screen on its own.
+ * The call passing through, when the player evokes.
  *
- * Only the three component tokens move. Every rule above is written against them, so
- * the whole node shrinks in proportion and nothing has to be restated — including the
- * tap target, which at 3.5rem is still more than three times the WCAG 2.2 floor.
+ * Ember, the tone of Evil itself, laid over the medallion for one beat. Every other
+ * mark on this node is in the tier's own tone; this one is deliberately not, because
+ * it is not the tier doing anything — it is Evil being called through it.
+ *
+ * `--surge-index` is set per node by the chain, so the rungs light in sequence and
+ * the whole run reads as one wave rather than everything flashing at once.
+ */
+.stage-node__evoke {
+  position: absolute;
+  inset: -6%;
+  border: 2px solid var(--tone-resource);
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.stage-node[data-motion='full'] .stage-node__evoke {
+  background: radial-gradient(circle, var(--tone-resource), transparent 65%);
+  animation: stage-node-evoke var(--duration-base) ease-out
+    calc(var(--surge-step) * var(--surge-index)) both;
+}
+
+/*
+ * Reduced motion is designed, not stripped (ui-sensibility §8). Every rung takes the
+ * Evil tone at once and holds it for as long as the evocation lasts, then it goes.
+ * It does not travel and it does not swell; the chain still visibly answers.
+ */
+.stage-node[data-motion='reduced'] .stage-node__evoke {
+  opacity: 0.8;
+}
+
+@keyframes stage-node-evoke {
+  from {
+    opacity: 0;
+    scale: 0.9;
+  }
+
+  40% {
+    opacity: 0.9;
+  }
+
+  to {
+    opacity: 0;
+    scale: 1.12;
+  }
+}
+
+/*
+ * The chain lies across the screen, so a rung is only as wide as it needs to be and
+ * the whole run shrinks together on a phone. Only the three component tokens move;
+ * every rule above is written against them, including the tap target, which at 3.5rem
+ * is still several times the WCAG 2.2 floor.
  */
 @media (width <= 52rem) {
   .stage-node {

@@ -69,16 +69,7 @@ export function App(): ReactNode {
   return (
     <div className="shell">
       <div className="shell__frame" inert={behindTheSummary}>
-        <Crown
-          state={state}
-          content={content}
-          copy={copy}
-          smiteIsTheAction={plan.best === null}
-          onSmite={() => {
-            dispatch({ kind: 'smite' });
-            sound.play('smite');
-          }}
-        />
+        <Crown state={state} content={content} copy={copy} />
 
         <main className="shell__body">
           <ChainStage
@@ -92,6 +83,11 @@ export function App(): ReactNode {
             onRouse={(tierId) => {
               const result = dispatch({ kind: 'rouse', tierId });
               if (result.ok) sound.play('rouse');
+            }}
+            smiteIsTheAction={plan.best === null}
+            onSmite={() => {
+              dispatch({ kind: 'smite' });
+              sound.play('smite');
             }}
           />
 

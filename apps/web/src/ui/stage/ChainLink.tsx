@@ -30,6 +30,10 @@ interface ChainLinkProps {
   version: number;
   /** Semantic tone the motes carry, from the art manifest. Null leaves them inherited. */
   tone: ArtSlot['fallback']['tone'] | null;
+  /** The evocation now under way, or null. Re-keying on the id restarts the reply. */
+  surge: number | null;
+  /** Where this run sits in the chain, which is what staggers the reply into a wave. */
+  surgeIndex: number;
 }
 
 /**
@@ -48,7 +52,13 @@ interface ChainLinkProps {
  * the amounts are already in the counts. A stream of dots would add nothing but
  * noise.
  */
-export function ChainLink({ produced, version, tone }: ChainLinkProps): ReactNode {
+export function ChainLink({
+  produced,
+  version,
+  tone,
+  surge,
+  surgeIndex,
+}: ChainLinkProps): ReactNode {
   const reduced = useReducedMotion();
   const pulse = usePulse(produced, version);
   const motes = pulse === null ? 0 : moteCount(pulse.amount);
@@ -70,11 +80,21 @@ export function ChainLink({ produced, version, tone }: ChainLinkProps): ReactNod
                   index === 0 ? 'stage-link__mote stage-link__mote--head' : 'stage-link__mote'
                 }
                 key={index}
-                style={{ top: `calc(var(--stage-link-spread) * ${share(index, motes)})` }}
+                style={{
+                  insetInlineStart: `calc(var(--stage-link-spread) * ${share(index, motes)})`,
+                }}
               />
             ))}
           </span>
         </Fragment>
+      )}
+
+      {surge !== null && (
+        <span
+          className="stage-link__evoke"
+          key={`evoke-${surge}`}
+          style={{ ['--surge-index' as string]: surgeIndex }}
+        />
       )}
     </div>
   );
