@@ -28,8 +28,6 @@ export function Trophies({ state, content, copy }: TrophiesProps): ReactNode {
 
   return (
     <div className="deeds">
-      <p className="deeds__what">{copy.what}</p>
-
       <ul className="trophies">
         {content.achievements.map((achievement) => (
           <Trophy

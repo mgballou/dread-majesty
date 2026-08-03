@@ -227,7 +227,7 @@ export const v1Copy = {
   },
 
   rail: {
-    title: 'The Muster',
+    title: 'Muster',
     list: 'What you can raise',
     best: 'Advised',
     saving: 'Save toward this',
@@ -270,7 +270,7 @@ export const v1Copy = {
       warren: 'Knows each door in the Warrens and which of them still shut.',
       minion: 'Walks the pits at all hours. Keeps a tally, a whistle, and no friends.',
     },
-    panelTitle: 'The Miscreants',
+    panelTitle: 'Miscreants',
     what: 'Promoted for enthusiasm. They keep the work moving while you are elsewhere.',
     none: 'Nobody has done anything worth promoting yet.',
     confirmTitle: (name) => `Appoint ${name}?`,
@@ -288,7 +288,7 @@ export const v1Copy = {
   },
 
   deeds: {
-    title: 'The Misdeeds',
+    title: 'Misdeeds',
     what: 'What the realm remembers you for.',
     none: 'Nothing recorded yet.',
     unearned: 'Not yet done.',
@@ -296,7 +296,7 @@ export const v1Copy = {
   },
 
   ledger: {
-    title: 'The Musings',
+    title: 'Musings',
     lifetimeEvil: 'Lifetime Evil',
     smites: 'Smites',
     resets: 'Resets',
