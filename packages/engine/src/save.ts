@@ -29,6 +29,9 @@ export interface SaveBlob {
   unlocked?: Record<string, boolean>;
   /** Added in save version 4. Optional for the same reason. */
   overseers?: Record<string, boolean>;
+  /** Added in save version 5. Optional for the same reason. */
+  smiteActiveMs?: number;
+  smiteCooldownMs?: number;
   /** Server time when the meta-plane exists; client time until then. */
   savedAtMs: number;
 }
@@ -63,6 +66,8 @@ export function serialize(state: GameState, savedAtMs: number): SaveBlob {
     earnedAchievements: [...state.earnedAchievements],
     unlocked,
     overseers,
+    smiteActiveMs: state.smiteActiveMs,
+    smiteCooldownMs: state.smiteCooldownMs,
     stats: { ...state.stats },
     savedAtMs,
   };
@@ -106,6 +111,8 @@ export function deserialize(blob: SaveBlob): GameState {
     earnedAchievements,
     unlocked,
     overseers,
+    smiteActiveMs: migrated.smiteActiveMs ?? 0,
+    smiteCooldownMs: migrated.smiteCooldownMs ?? 0,
     stats: { ...migrated.stats },
   };
 }
@@ -150,6 +157,11 @@ const MIGRATIONS: Record<number, (blob: SaveBlob) => SaveBlob> = {
 
     return { ...blob, saveVersion: 4, gens, overseers };
   },
+
+  // 4 → 5: the smite becomes a buff with a cooldown. Both counters start at zero, so a
+  // returning player may strike at once — which is the friendly way round, and the
+  // alternative would be inventing a cooldown they never earned.
+  4: (blob) => ({ ...blob, saveVersion: 5, smiteActiveMs: 0, smiteCooldownMs: 0 }),
 };
 
 export function migrate(blob: SaveBlob): SaveBlob {

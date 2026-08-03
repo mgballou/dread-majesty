@@ -9,8 +9,9 @@ import type { GameState, TierState } from './types.ts';
  * 2: adds `earnedAchievements`.
  * 3: adds `unlocked`.
  * 4: adds `overseers`, and `running` on every tier.
+ * 5: adds the two smite countdowns.
  */
-export const SAVE_VERSION = 4;
+export const SAVE_VERSION = 5;
 
 export function createState(content: Content): GameState {
   const resources = {} as Record<ResourceId, Decimal>;
@@ -53,6 +54,8 @@ export function createState(content: Content): GameState {
     earnedAchievements,
     unlocked,
     overseers,
+    smiteActiveMs: 0,
+    smiteCooldownMs: 0,
     stats: { playTimeMs: 0, smites: 0, prestiges: 0 },
   };
 }
@@ -88,6 +91,8 @@ export function cloneState(state: GameState): GameState {
     earnedAchievements: [...state.earnedAchievements],
     unlocked,
     overseers,
+    smiteActiveMs: state.smiteActiveMs,
+    smiteCooldownMs: state.smiteCooldownMs,
     stats: { ...state.stats },
   };
 }

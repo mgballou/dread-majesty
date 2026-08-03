@@ -2,7 +2,7 @@ import type { ReactElement } from 'react';
 import Decimal from 'break_eternity.js';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { CURRENT_COPY } from '@dm/content';
+import { CURRENT, CURRENT_COPY } from '@dm/content';
 import { describe, expect, it, vi } from 'vitest';
 import { setReducedMotion } from '../../../test/setup.ts';
 import { EvilNode } from './EvilNode.tsx';
@@ -15,8 +15,8 @@ function evil(overrides: Partial<Parameters<typeof EvilNode>[0]> = {}): ReactEle
       copy={CURRENT_COPY.smite}
       report=""
       isTheAction={false}
-      surge={null}
-      surgeIndex={8}
+      phase={{ kind: 'ready', share: 0 }}
+      content={CURRENT}
       feed={null}
       onSmite={vi.fn()}
       {...overrides}
@@ -86,25 +86,40 @@ describe('EvilNode', () => {
     expect(screen.getByText('An orchard, salted.')).toBeInTheDocument();
   });
 
-  it('marks the answer arriving when an evocation is under way', () => {
-    const { container } = render(evil({ surge: 1 }));
+  it('says the verb while it is ready', () => {
+    render(evil());
 
-    expect(container.querySelector('.evil-node__answer')).toBeInTheDocument();
+    expect(screen.getByText(CURRENT_COPY.smite.action)).toBeInTheDocument();
   });
 
-  it('delays that mark by the whole length of the wave', () => {
-    const { container } = render(evil({ surge: 1 }));
+  it('counts the buff down while it runs', () => {
+    render(evil({ phase: { kind: 'active', share: 0.5 } }));
 
-    expect(container.querySelector('.evil-node__answer')?.getAttribute('style')).toContain(
-      '--surge-index: 8',
-    );
+    expect(screen.getByText(/Surging/)).toBeInTheDocument();
   });
 
-  it('still marks the answer under reduced motion', () => {
-    setReducedMotion(true);
-    const { container } = render(evil({ surge: 1 }));
+  it('counts the cooldown down while it is spent', () => {
+    render(evil({ phase: { kind: 'cooling', share: 0.5 } }));
 
-    expect(container.querySelector('.evil-node__answer')).toBeInTheDocument();
+    expect(screen.getByText(/Spent/)).toBeInTheDocument();
+  });
+
+  it('refuses to be struck while cooling', () => {
+    render(evil({ phase: { kind: 'cooling', share: 0.5 } }));
+
+    expect(strike()).toBeDisabled();
+  });
+
+  it('never wears the accent while it cannot be struck', () => {
+    render(evil({ isTheAction: true, phase: { kind: 'cooling', share: 0.5 } }));
+
+    expect(strike()).not.toHaveClass('evil-node__strike--lifted');
+  });
+
+  it('marks which part of the blow it is in, for the stylesheet', () => {
+    const { container } = render(evil({ phase: { kind: 'active', share: 1 } }));
+
+    expect(container.querySelector('.evil-node')).toHaveAttribute('data-smite', 'active');
   });
 
   it('marks the reduced-motion branch on the node', () => {

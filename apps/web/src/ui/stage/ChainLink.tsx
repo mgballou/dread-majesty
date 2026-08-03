@@ -30,9 +30,15 @@ interface ChainLinkProps {
   version: number;
   /** Semantic tone the motes carry, from the art manifest. Null leaves them inherited. */
   tone: ArtSlot['fallback']['tone'] | null;
-  /** The evocation now under way, or null. Re-keying on the id restarts the reply. */
-  surge: number | null;
-  /** Where this run sits in the chain, which is what staggers the reply into a wave. */
+  /**
+   * True while an evocation is running.
+   *
+   * Completions are suppressed for the duration. The chain is one colour and one
+   * meaning at that moment, and motes crossing it in a tier tone would read as the
+   * cascade arguing with the evocation.
+   */
+  surging: boolean;
+  /** Where this run sits in the wave. The chain sets it; the stylesheet delays by it. */
   surgeIndex: number;
 }
 
@@ -56,7 +62,7 @@ export function ChainLink({
   produced,
   version,
   tone,
-  surge,
+  surging,
   surgeIndex,
 }: ChainLinkProps): ReactNode {
   const reduced = useReducedMotion();
@@ -68,9 +74,12 @@ export function ChainLink({
       className="stage-link"
       data-motion={reduced ? 'reduced' : 'full'}
       aria-hidden="true"
-      style={tone === null ? undefined : { color: `var(--tone-${tone})` }}
+      style={{
+        ...(tone === null ? {} : { ['--node-tone' as string]: `var(--tone-${tone})` }),
+        ['--surge-index' as string]: surgeIndex,
+      }}
     >
-      {pulse !== null && (
+      {pulse !== null && !surging && (
         <Fragment key={pulse.id}>
           <span className="stage-link__surge" />
           <span className="stage-link__motes">
@@ -87,14 +96,6 @@ export function ChainLink({
             ))}
           </span>
         </Fragment>
-      )}
-
-      {surge !== null && (
-        <span
-          className="stage-link__evoke"
-          key={`evoke-${surge}`}
-          style={{ ['--surge-index' as string]: surgeIndex }}
-        />
       )}
     </div>
   );

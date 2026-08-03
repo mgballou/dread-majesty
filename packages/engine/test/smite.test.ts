@@ -1,0 +1,171 @@
+import Decimal from 'break_eternity.js';
+import { describe, expect, it } from 'vitest';
+import { apply } from '../src/intents.ts';
+import { canSmite, smitePhase } from '../src/selectors.ts';
+import { createState } from '../src/state.ts';
+import { globalMultiplier, step } from '../src/step.ts';
+import type { GameState } from '../src/types.ts';
+import { fixture } from './fixtures/content.ts';
+
+const { durationMs, cooldownMs, multiplier } = fixture.smite;
+
+function running(): GameState {
+  const state = createState(fixture);
+  for (const tier of fixture.tiers) {
+    state.gens[tier.id].owned = new Decimal(10);
+    state.overseers[tier.id] = true;
+  }
+  return state;
+}
+
+function smite(state: GameState) {
+  return apply(state, fixture, { kind: 'smite' });
+}
+
+describe('smite', () => {
+  it('is ready on a fresh state', () => {
+    expect(canSmite(createState(fixture))).toBe(true);
+  });
+
+  it('pays something at once, even with nothing running', () => {
+    const state = createState(fixture);
+    smite(state);
+
+    expect(state.resources.evil.gte(1)).toBe(true);
+  });
+
+  it('starts the buff', () => {
+    const state = running();
+    smite(state);
+
+    expect(state.smiteActiveMs).toBe(durationMs);
+  });
+
+  it('starts the cooldown', () => {
+    const state = running();
+    smite(state);
+
+    expect(state.smiteCooldownMs).toBe(cooldownMs);
+  });
+
+  it('raises the global multiplier while it runs', () => {
+    const state = running();
+    const before = globalMultiplier(state, fixture);
+    smite(state);
+
+    expect(globalMultiplier(state, fixture).div(before).toNumber()).toBe(multiplier);
+  });
+
+  it('drops the multiplier back when the buff runs out', () => {
+    const state = running();
+    smite(state);
+    step(state, fixture, durationMs);
+
+    expect(globalMultiplier(state, fixture).toNumber()).toBe(1);
+  });
+
+  it('refuses a second blow while cooling', () => {
+    const state = running();
+    smite(state);
+
+    expect(smite(state).ok).toBe(false);
+  });
+
+  it('says why it refused', () => {
+    const state = running();
+    smite(state);
+    const result = smite(state);
+
+    expect(result.ok === false && result.reason).toBe('smite-cooling');
+  });
+
+  it('allows another once the cooldown is spent', () => {
+    const state = running();
+    smite(state);
+    step(state, fixture, cooldownMs);
+
+    expect(canSmite(state)).toBe(true);
+  });
+
+  it('does not stack when struck again', () => {
+    const state = running();
+    smite(state);
+    step(state, fixture, cooldownMs);
+    smite(state);
+
+    expect(state.smiteActiveMs).toBe(durationMs);
+  });
+
+  it('counts the blow whether or not anything was running', () => {
+    const state = createState(fixture);
+    smite(state);
+
+    expect(state.stats.smites).toBe(1);
+  });
+
+  it('produces exactly twice as much across a buffed slice', () => {
+    const plain = running();
+    const buffed = running();
+    smite(buffed);
+    buffed.resources.evil = new Decimal(0);
+    plain.resources.evil = new Decimal(0);
+
+    step(plain, fixture, 24_000);
+    step(buffed, fixture, 24_000);
+
+    expect(buffed.resources.evil.div(plain.resources.evil).toNumber()).toBe(multiplier);
+  });
+
+  it('spends the buff during offline catch-up like any other slice', () => {
+    const state = running();
+    smite(state);
+    step(state, fixture, durationMs * 2);
+
+    expect(state.smiteActiveMs).toBe(0);
+  });
+
+  it('reports the buff while it runs', () => {
+    const state = running();
+    smite(state);
+
+    expect(smitePhase(state, fixture).kind).toBe('active');
+  });
+
+  it('reports the cooldown once the buff is spent', () => {
+    const state = running();
+    smite(state);
+    step(state, fixture, durationMs);
+
+    expect(smitePhase(state, fixture).kind).toBe('cooling');
+  });
+
+  it('reports ready when it is neither', () => {
+    expect(smitePhase(createState(fixture), fixture).kind).toBe('ready');
+  });
+
+  it('reports the share left on the buff', () => {
+    const state = running();
+    smite(state);
+    step(state, fixture, durationMs / 2);
+
+    expect(smitePhase(state, fixture).share).toBeCloseTo(0.5);
+  });
+
+  it('clears the buff on a reset but keeps the cooldown', () => {
+    const state = running();
+    state.lifetimeEvil = new Decimal('1e30');
+    smite(state);
+    apply(state, fixture, { kind: 'prestige' });
+
+    expect(state.smiteActiveMs).toBe(0);
+  });
+
+  it('keeps the cooldown across a reset, so a reset is not a free blow', () => {
+    const state = running();
+    state.lifetimeEvil = new Decimal('1e30');
+    smite(state);
+    apply(state, fixture, { kind: 'prestige' });
+
+    expect(state.smiteCooldownMs).toBe(cooldownMs);
+  });
+});

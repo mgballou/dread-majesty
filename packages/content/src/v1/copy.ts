@@ -151,6 +151,9 @@ export const v1Copy = {
     action: 'Smite',
     hint: 'Do it yourself. It is not beneath you.',
     spoken: (amount) => `Smite. You hold ${amount} Evil.`,
+    surging: (seconds) => `Surging · ${seconds}`,
+    cooling: (seconds) => `Spent · ${seconds}`,
+    worth: ({ multiplier, seconds }) => `Everything works ${multiplier} as hard for ${seconds}.`,
     results: [
       'A village, and the road to it.',
       'One shrine, put down personally.',

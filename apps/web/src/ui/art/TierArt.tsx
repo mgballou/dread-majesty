@@ -5,7 +5,13 @@ import './TierArt.css';
 interface TierArtProps {
   /** Key into the art manifest, e.g. `tier/warren`. */
   slot: string;
-  /** Drawn size in pixels. The fallback scales; a real image is object-fit cover. */
+  /**
+   * Drawn size in pixels, or omitted to fill whatever box the caller put it in.
+   *
+   * Filling is what the chain wants: its medallion shrinks with the viewport, and a
+   * fixed pixel size hung inside a shrinking box is exactly how the art ends up
+   * spilling out of its ring on a phone.
+   */
   size?: number;
   /** True where a neighbouring label already names the thing. */
   decorative?: boolean;
@@ -23,12 +29,14 @@ interface TierArtProps {
  * manifest names a semantic token and this component resolves it, so no screen
  * decides what colour a tier is.
  */
-export function TierArt({ slot, size = 40, decorative = false }: TierArtProps): ReactNode {
+export function TierArt({ slot, size, decorative = false }: TierArtProps): ReactNode {
   const art = ART[slot];
   if (!art) return null;
 
   const label = decorative ? undefined : art.alt;
-  const style = { width: size, height: size, color: `var(--tone-${art.fallback.tone})` };
+  const box =
+    size === undefined ? { width: '100%', height: '100%' } : { width: size, height: size };
+  const style = { ...box, color: `var(--tone-${art.fallback.tone})` };
 
   if (art.src !== null) {
     return <img className="art" src={art.src} alt={decorative ? '' : art.alt} style={style} />;

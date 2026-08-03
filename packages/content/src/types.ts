@@ -89,6 +89,25 @@ export interface MilestoneDef {
   readonly multiplier: number;
 }
 
+/**
+ * The tap verb (spec §5.5).
+ *
+ * A smite pays a little Evil at once and then **raises production for a while**. The
+ * instant part keeps it worth pressing before anything is running at all, when a
+ * multiplier on nothing would be nothing; the buff is what makes it stay worth
+ * pressing for the rest of the game.
+ */
+export interface SmiteDef {
+  /** The instant part: this many seconds of current production, floor 1. */
+  readonly seconds: number;
+  /** How long the buff runs. */
+  readonly durationMs: number;
+  /** How long before it can be used again, counted from the moment it is used. */
+  readonly cooldownMs: number;
+  /** What the buff multiplies every tier's output by while it runs. */
+  readonly multiplier: number;
+}
+
 export interface PrestigeDef {
   /** souls = floor(k * sqrt(lifetimeEvil / scale)) */
   readonly k: number;
@@ -112,6 +131,5 @@ export interface Content {
   readonly prestige: PrestigeDef;
   /** Offline production is clamped to this. Raisable by upgrades later. */
   readonly offlineCapMs: number;
-  /** A smite is worth this many seconds of current production. */
-  readonly smiteSeconds: number;
+  readonly smite: SmiteDef;
 }
