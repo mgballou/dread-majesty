@@ -37,6 +37,14 @@ export interface AchievementCopy {
 export interface SmiteCopy {
   readonly action: string;
   readonly hint: string;
+  /**
+   * Spoken name of the control, which is the Evil total itself.
+   *
+   * The total is the tap target, so its accessible name has to carry both the verb
+   * and the figure — otherwise a screen reader hears "Smite" and the player has no
+   * way to learn what they hold. `amount` arrives formatted.
+   */
+  readonly spoken: (amount: string) => string;
   /** Shown one at a time after a smite. Never empty. */
   readonly results: readonly string[];
 }

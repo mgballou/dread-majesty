@@ -150,6 +150,7 @@ export const v1Copy = {
   smite: {
     action: 'Smite',
     hint: 'Do it yourself. It is not beneath you.',
+    spoken: (amount) => `Smite. You hold ${amount} Evil.`,
     results: [
       'A village, and the road to it.',
       'One shrine, put down personally.',
