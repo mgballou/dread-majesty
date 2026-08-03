@@ -1,7 +1,7 @@
 import Decimal from 'break_eternity.js';
 import { render, screen } from '@testing-library/react';
 import { CURRENT, CURRENT_COPY } from '@dm/content';
-import { createState } from '@dm/engine';
+import { apply, createState, step } from '@dm/engine';
 import { describe, expect, it } from 'vitest';
 import { Crown } from './Crown.tsx';
 
@@ -16,7 +16,39 @@ function crown(state = seeded()) {
   return <Crown state={state} content={CURRENT} copy={CURRENT_COPY} />;
 }
 
+function struck() {
+  const state = seeded();
+  apply(state, CURRENT, { kind: 'smite' });
+  return state;
+}
+
 describe('Crown', () => {
+  it('invites a blow while one is ready', () => {
+    render(crown());
+
+    expect(screen.getByText(CURRENT_COPY.smite.ready)).toBeInTheDocument();
+  });
+
+  it('says what is happening while a blow runs, not how long until the next', () => {
+    render(crown(struck()));
+
+    expect(screen.getByText(CURRENT_COPY.smite.reigning)).toBeInTheDocument();
+  });
+
+  it('never says the surge is a wait', () => {
+    render(crown(struck()));
+
+    expect(screen.queryByText(/til ready/)).not.toBeInTheDocument();
+  });
+
+  it('counts down only once the surge is spent', () => {
+    const state = struck();
+    step(state, CURRENT, CURRENT.smite.durationMs);
+    render(crown(state));
+
+    expect(screen.getByText(/til ready/)).toBeInTheDocument();
+  });
+
   it('names the rate of production', () => {
     render(crown());
 
