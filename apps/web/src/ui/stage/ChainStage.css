@@ -1,17 +1,50 @@
-/* The chain, drawn top to bottom. See ChainStage.tsx. */
+/*
+ * The chain, drawn left to right. See ChainStage.tsx.
+ *
+ * One component token, and it belongs to the whole chain rather than to any one part
+ * of it: the beat of the evocation wave. Every rung and every run is delayed by a
+ * multiple of it, so the timing is set once and cannot drift between the two files
+ * that draw it. Under the reduced-motion preference the duration tokens collapse to a
+ * millisecond, the beat collapses with them, and the wave becomes one flash — which is
+ * the designed reduced branch, not a stripped one (ui-sensibility §8).
+ */
 
 .stage {
+  --surge-step: calc(var(--duration-fast) / 2);
+
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin: 0;
+  align-items: flex-start;
+  gap: var(--space-3);
+  min-inline-size: 0;
   padding: var(--space-4) 0;
+}
+
+/*
+ * The rungs, which run off the end.
+ *
+ * The chain grows and a phone is narrow, so the track scrolls and `ChainStage` anchors
+ * it on the rung that still wants a tap. Snap points are `proximity` rather than
+ * `mandatory`: the anchoring effect sets a scroll position deliberately, and mandatory
+ * snapping would fight it to the nearest rung.
+ */
+.stage__track {
+  display: flex;
+  align-items: flex-start;
+  /* Shrinks to fit and scrolls; never stretches. Stretching would push Evil to the far
+     edge of a wide screen and leave the chain stranded on the other side of a gap. */
+  flex: 0 1 auto;
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0;
   list-style: none;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
 }
 
 .stage__rung {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  inline-size: 100%;
+  align-items: flex-start;
+  flex: none;
+  scroll-snap-align: start;
 }

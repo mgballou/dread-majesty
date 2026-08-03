@@ -50,34 +50,50 @@ function stage(overrides: Partial<Parameters<typeof ChainStage>[0]> = {}): React
       isAppointed={nothing()}
       isRousable={everything()}
       onRouse={() => {}}
+      smiteIsTheAction={false}
+      onSmite={() => {}}
       {...overrides}
     />
   );
 }
 
+function rouseButtons(container: HTMLElement): NodeListOf<Element> {
+  return container.querySelectorAll('.stage-node__tap');
+}
+
+function strike(): HTMLElement {
+  return screen.getByRole('button', { name: /^Smite\./ });
+}
+
 describe('ChainStage', () => {
-  it('draws the whole chain once every rung has been reached', () => {
+  it('draws every generator once every rung has been reached', () => {
     render(stage());
 
-    expect(screen.getAllByRole('listitem')).toHaveLength(5);
+    expect(screen.getAllByRole('listitem')).toHaveLength(CURRENT.tiers.length);
   });
 
   it('draws the rungs reached and one above them, not the whole ladder', () => {
     render(stage({ isUnlocked: onlyMinions() }));
 
-    expect(screen.getAllByRole('listitem')).toHaveLength(3);
+    expect(screen.getAllByRole('listitem')).toHaveLength(2);
   });
 
   it('names itself as the chain rather than explaining the game', () => {
     render(stage());
 
-    expect(screen.getByRole('list', { name: CURRENT_COPY.stage.chain })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: CURRENT_COPY.stage.chain })).toBeInTheDocument();
   });
 
   it('ends the chain at Evil', () => {
     render(stage());
 
     expect(screen.getByText(CURRENT_COPY.evil.name)).toBeInTheDocument();
+  });
+
+  it('keeps Evil out of the scrolling track, so it can never be scrolled away', () => {
+    const { container } = render(stage());
+
+    expect(container.querySelector('.stage__track .evil-node')).toBeNull();
   });
 
   it('puts every count through the one formatter', () => {
@@ -122,12 +138,6 @@ describe('ChainStage', () => {
     expect(container.querySelectorAll('.stage-link')).toHaveLength(CURRENT.tiers.length);
   });
 
-  it('never spends the accent, because the one action here is not the screen action', () => {
-    const { container } = render(stage());
-
-    expect(container.innerHTML).not.toContain('--accent');
-  });
-
   it('treats the state as read-only', () => {
     const state = fresh();
     const before = state.gens.minion.owned.toString();
@@ -142,7 +152,7 @@ describe('ChainStage', () => {
 
     render(stage({ isUnlocked: onlyMinions() }));
 
-    expect(screen.getAllByRole('listitem')).toHaveLength(3);
+    expect(screen.getAllByRole('listitem')).toHaveLength(2);
   });
 
   it('marks the reduced-motion branch on every link', () => {
@@ -156,24 +166,26 @@ describe('ChainStage', () => {
   });
 
   it('offers the one tier the player owns as a dormant node', () => {
-    render(stage({ isUnlocked: onlyMinions() }));
+    const { container } = render(stage({ isUnlocked: onlyMinions() }));
 
-    expect(screen.getAllByRole('button')).toHaveLength(1);
+    expect(rouseButtons(container)).toHaveLength(1);
   });
 
   it('rouses the tier whose node was pressed', async () => {
     const onRouse = vi.fn();
     render(stage({ isUnlocked: onlyMinions(), onRouse }));
 
-    await userEvent.click(screen.getByRole('button'));
+    await userEvent.click(screen.getByRole('button', { name: /Rouse the Minions/ }));
 
     expect(onRouse).toHaveBeenCalledWith('minion');
   });
 
-  it('offers no node at all once every Overseer is appointed', () => {
-    render(stage({ state: tapped(1), isAppointed: everything(), isRousable: nothing() }));
+  it('offers no rung to rouse once every Overseer is appointed', () => {
+    const { container } = render(
+      stage({ state: tapped(1), isAppointed: everything(), isRousable: nothing() }),
+    );
 
-    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+    expect(rouseButtons(container)).toHaveLength(0);
   });
 
   it('names the Overseer over a tier somebody runs', () => {
@@ -182,10 +194,60 @@ describe('ChainStage', () => {
     expect(screen.getByText(CURRENT_COPY.overseer.names.minion)).toBeInTheDocument();
   });
 
-  it('never offers Evil as a tap target, since it is a resource and not a tier', () => {
-    const { container } = render(stage({ state: tapped(600), version: 1 }));
-    const rungs = container.querySelectorAll('.stage__rung');
+  it('makes Evil itself the verb', async () => {
+    const onSmite = vi.fn();
+    render(stage({ onSmite }));
 
-    expect(rungs[rungs.length - 1]?.querySelector('button')).toBeNull();
+    await userEvent.click(strike());
+
+    expect(onSmite).toHaveBeenCalledOnce();
+  });
+
+  it('runs no evocation until one is asked for', () => {
+    const { container } = render(stage());
+
+    expect(container.querySelectorAll('.stage-node__evoke')).toHaveLength(0);
+  });
+
+  it('calls through every generator when Evil is evoked', async () => {
+    const { container } = render(stage());
+
+    await userEvent.click(strike());
+
+    expect(container.querySelectorAll('.stage-node__evoke')).toHaveLength(CURRENT.tiers.length);
+  });
+
+  it('runs the answer back along every link', async () => {
+    const { container } = render(stage());
+
+    await userEvent.click(strike());
+
+    expect(container.querySelectorAll('.stage-link__evoke')).toHaveLength(CURRENT.tiers.length);
+  });
+
+  it('lands the answer on Evil itself', async () => {
+    const { container } = render(stage());
+
+    await userEvent.click(strike());
+
+    expect(container.querySelector('.evil-node__answer')).toBeInTheDocument();
+  });
+
+  it('staggers the call so the rung nearest Evil lights first', async () => {
+    const { container } = render(stage());
+
+    await userEvent.click(strike());
+    const marks = [...container.querySelectorAll('.stage-node__evoke')];
+
+    expect(marks[marks.length - 1]?.getAttribute('style')).toContain('--surge-index: 0');
+  });
+
+  it('evokes under reduced motion too, so nothing goes missing', async () => {
+    setReducedMotion(true);
+    const { container } = render(stage());
+
+    await userEvent.click(strike());
+
+    expect(container.querySelectorAll('.stage-node__evoke')).toHaveLength(CURRENT.tiers.length);
   });
 });

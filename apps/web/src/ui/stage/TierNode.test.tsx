@@ -29,6 +29,8 @@ function node(overrides: Partial<Parameters<typeof TierNode>[0]> = {}): ReactEle
       copy={CURRENT_COPY.stage}
       oversight={OVERSIGHT}
       feed={null}
+      surge={null}
+      surgeIndex={0}
       {...overrides}
     />
   );
