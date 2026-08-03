@@ -69,6 +69,10 @@ interface TierNodeProps {
   oversight: Oversight | null;
   /** The rung above. Null for the head of the chain, which nothing feeds. */
   feed: Feed | null;
+  /** The evocation now under way, or null. Re-keying on the id restarts the call. */
+  surge: number | null;
+  /** Where this rung falls in the wave. Set by the chain, so the CSS stays dumb. */
+  surgeIndex: number;
 }
 
 /**
@@ -106,6 +110,8 @@ export function TierNode({
   copy,
   oversight,
   feed,
+  surge,
+  surgeIndex,
 }: TierNodeProps): ReactNode {
   const reduced = useReducedMotion();
   const landing = usePulse(feed === null ? null : feed.produced, feed?.version ?? 0);
@@ -146,6 +152,18 @@ export function TierNode({
             <span className="stage-node__blank" aria-hidden="true" />
           )}
         </div>
+
+        {surge !== null && (
+          /* The call passing through this rung. Ember, because it is Evil being
+             evoked, not the tier answering — the tier's own tone is everywhere else
+             on this node. Re-keyed on the id so a second tap restarts it. */
+          <span
+            className="stage-node__evoke"
+            key={`evoke-${surge}`}
+            style={{ ['--surge-index' as string]: surgeIndex }}
+            aria-hidden="true"
+          />
+        )}
 
         {landing !== null && (
           /* Re-keying on the arrival id restarts the mark. Same trick as the link's

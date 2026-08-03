@@ -5,9 +5,10 @@
  * one is genuinely narrow: the length of the run, the share of it the mote string
  * occupies, and the size of a head the space scale is not meant to lay out.
  *
- * The run is longer than a hairline gap needs to be, on purpose. The cascade is the
- * thing the stage exists to show, and a mote crossing two centimetres reads where a
- * mote crossing one does not.
+ * The chain runs left to right, so the run does too and every measurement here is on
+ * the inline axis. The run is longer than a hairline gap needs to be, on purpose: the
+ * cascade is the thing the chain exists to show, and a mote crossing two centimetres
+ * reads where a mote crossing one does not.
  */
 
 .stage-link {
@@ -17,8 +18,9 @@
   --stage-link-trail: calc(var(--space-2) / 2);
 
   position: relative;
-  block-size: var(--stage-link-run);
-  inline-size: 100%;
+  flex: none;
+  inline-size: var(--stage-link-run);
+  align-self: stretch;
   overflow: hidden;
 }
 
@@ -26,9 +28,9 @@
 .stage-link::before {
   content: '';
   position: absolute;
-  inset-block: 0;
-  inset-inline-start: calc(50% - 1px);
-  inline-size: 1px;
+  inset-inline: 0;
+  inset-block-start: calc(var(--stage-node-medallion, 5rem) / 2);
+  block-size: 1px;
   background: var(--line);
 }
 
@@ -38,11 +40,11 @@
  */
 .stage-link__surge {
   position: absolute;
-  inset-inline-start: calc(50% - 1px);
-  inline-size: 2px;
-  block-size: var(--stage-link-spread);
+  inset-block-start: calc(var(--stage-node-medallion, 5rem) / 2 - 1px);
+  block-size: 2px;
+  inline-size: var(--stage-link-spread);
   border-radius: 1px;
-  background: linear-gradient(to bottom, transparent, currentColor);
+  background: linear-gradient(to right, transparent, currentColor);
 }
 
 .stage-link__motes {
@@ -56,10 +58,10 @@
  */
 .stage-link__mote {
   position: absolute;
-  inset-inline-start: 50%;
+  inset-block-start: calc(var(--stage-node-medallion, 5rem) / 2);
   inline-size: var(--stage-link-trail);
   block-size: var(--stage-link-trail);
-  margin-inline-start: calc(var(--stage-link-trail) / -2);
+  margin-block-start: calc(var(--stage-link-trail) / -2);
   border-radius: 50%;
   background: currentColor;
   opacity: 0.55;
@@ -77,7 +79,7 @@
 .stage-link__mote--head {
   inline-size: var(--stage-link-head);
   block-size: var(--stage-link-head);
-  margin-inline-start: calc(var(--stage-link-head) / -2);
+  margin-block-start: calc(var(--stage-link-head) / -2);
   opacity: 1;
 }
 
@@ -92,7 +94,7 @@
  * nobody can see is the content going missing.
  */
 .stage-link[data-motion='full'] .stage-link__motes {
-  animation: stage-mote-fall var(--duration-slow) ease-in both;
+  animation: stage-mote-run var(--duration-slow) ease-in both;
 }
 
 .stage-link[data-motion='full'] .stage-link__surge {
@@ -100,14 +102,14 @@
 }
 
 .stage-link[data-motion='reduced'] .stage-link__surge {
-  inset-block: 0;
-  block-size: auto;
+  inset-inline: 0;
+  inline-size: auto;
 }
 
-@keyframes stage-mote-fall {
+@keyframes stage-mote-run {
   from {
     opacity: 0;
-    transform: translateY(calc(var(--stage-link-spread) * -1));
+    transform: translateX(calc(var(--stage-link-spread) * -1));
   }
 
   15% {
@@ -120,14 +122,14 @@
 
   to {
     opacity: 0;
-    transform: translateY(calc(var(--stage-link-run) - var(--stage-link-spread)));
+    transform: translateX(calc(var(--stage-link-run) - var(--stage-link-spread)));
   }
 }
 
 @keyframes stage-link-surge {
   from {
     opacity: 0;
-    transform: translateY(calc(var(--stage-link-spread) * -1));
+    transform: translateX(calc(var(--stage-link-spread) * -1));
   }
 
   15% {
@@ -136,13 +138,57 @@
 
   to {
     opacity: 0;
-    transform: translateY(var(--stage-link-run));
+    transform: translateX(var(--stage-link-run));
   }
 }
 
-/* The run shortens with the nodes, so the chain keeps its proportions on a phone. */
-@media (width <= 52rem) {
-  .stage-link {
-    --stage-link-run: var(--space-6);
+/*
+ * The answer coming back.
+ *
+ * When the player evokes, the call runs out through the generators and the reply runs
+ * back down the chain to Evil. This is the reply crossing one run: the same hairline,
+ * in the Evil tone rather than the tier's, travelling the other way. Its delay is set
+ * per link by `--surge-index`, so the whole chain reads as one wave rather than every
+ * run lighting at once.
+ */
+.stage-link__evoke {
+  position: absolute;
+  inset-block-start: calc(var(--stage-node-medallion, 5rem) / 2 - 1px);
+  inset-inline-start: 0;
+  block-size: 2px;
+  inline-size: var(--stage-link-spread);
+  border-radius: 1px;
+  background: linear-gradient(to left, transparent, var(--tone-resource));
+}
+
+.stage-link[data-motion='full'] .stage-link__evoke {
+  animation: stage-link-evoke var(--duration-base) ease-out
+    calc(var(--surge-step) * var(--surge-index)) both;
+}
+
+/*
+ * Reduced motion: the run simply takes the Evil tone for as long as the evocation
+ * lasts, end to end and all at once. It does not travel, and nothing goes missing —
+ * the chain still visibly answers.
+ */
+.stage-link[data-motion='reduced'] .stage-link__evoke {
+  inset-inline: 0;
+  inline-size: auto;
+  background: var(--tone-resource);
+}
+
+@keyframes stage-link-evoke {
+  from {
+    opacity: 0;
+    transform: translateX(var(--stage-link-run));
+  }
+
+  20% {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+    transform: translateX(calc(var(--stage-link-spread) * -1));
   }
 }
