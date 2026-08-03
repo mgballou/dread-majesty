@@ -27,3 +27,29 @@
   font-size: var(--text-xs);
   color: var(--ink-dim);
 }
+
+/* The separator between the rate and the standing of the blow. A drawn dot, not a
+   character, so it cannot be read aloud as punctuation. */
+.crown__dot {
+  display: inline-block;
+  inline-size: 3px;
+  block-size: 3px;
+  margin-inline: var(--space-2);
+  vertical-align: middle;
+  background: var(--ink-dim);
+  border-radius: 50%;
+}
+
+/*
+ * Fixed width, and the digits are tabular.
+ *
+ * The countdown ticks once a second for a minute at a stretch. Left to size itself it
+ * would nudge the whole line every time it crossed a digit, which is the shift this
+ * whole arrangement exists to stop.
+ */
+.crown__standing {
+  display: inline-block;
+  min-inline-size: 8rem;
+  font-variant-numeric: tabular-nums;
+  text-align: start;
+}

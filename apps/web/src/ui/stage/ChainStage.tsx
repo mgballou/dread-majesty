@@ -55,6 +55,15 @@ interface ChainStageProps {
   isAppointed: (tierId: TierId) => boolean;
   /** Whether rousing this tier now would start a cycle. */
   isRousable: (tierId: TierId) => boolean;
+  /**
+   * Whether this tier will keep needing a hand — owned, and nobody appointed to it.
+   *
+   * Distinct from `isRousable`, which is about this instant. The track anchors on this
+   * one because `isRousable` flips false the moment you rouse and true again when the
+   * cycle ends, and an anchor keyed to it drags the chain back and forth every few
+   * seconds while you are tapping.
+   */
+  needsHand: (tierId: TierId) => boolean;
   /** Start one manual cycle. */
   onRouse: (tierId: TierId) => void;
   /** True while nothing on the rail is worth buying, which is when evoking is the move. */
@@ -99,6 +108,7 @@ export function ChainStage({
   isUnlocked,
   isAppointed,
   isRousable,
+  needsHand,
   onRouse,
   smiteIsTheAction,
   onSmite,
@@ -111,7 +121,7 @@ export function ChainStage({
   const smite = smitePhase(state, content);
   const surge = useSurge(smite.kind === 'active');
 
-  const track = useAnchoredOnWork(rungs, isRousable);
+  const track = useAnchoredOnWork(rungs, needsHand);
 
   // The wave runs out from Evil, so the rung nearest it lights first and the far end
   // last. Rungs and runs interleave, which is why the span is twice the rung count.
@@ -224,7 +234,7 @@ function report(state: GameState, results: readonly string[]): string {
  */
 function useAnchoredOnWork(
   rungs: readonly TierDef[],
-  isRousable: (tierId: TierId) => boolean,
+  needsHand: (tierId: TierId) => boolean,
 ): RefObject<HTMLOListElement | null> {
   const track = useRef<HTMLOListElement>(null);
   const scrolledAt = useRef(0);
@@ -233,7 +243,7 @@ function useAnchoredOnWork(
   // Falls back to the head of the chain, never to wherever the browser last left the
   // scroll. With nothing to rouse there is no work to point at, and the top of the
   // chain is the thing worth looking at — not the cheap end that runs itself.
-  const wants = rungs.find((tier) => isRousable(tier.id))?.id ?? rungs[0]?.id ?? null;
+  const wants = rungs.find((tier) => needsHand(tier.id))?.id ?? rungs[0]?.id ?? null;
 
   // A player reading along the chain outranks the anchor. Their own scrolls are marked
   // by elimination: anything this hook did not cause was theirs.

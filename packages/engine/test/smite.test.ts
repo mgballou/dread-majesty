@@ -27,11 +27,20 @@ describe('smite', () => {
     expect(canSmite(createState(fixture))).toBe(true);
   });
 
-  it('pays something at once, even with nothing running', () => {
+  it('pays nothing at once — a blow is the buff and nothing else', () => {
     const state = createState(fixture);
     smite(state);
 
-    expect(state.resources.evil.gte(1)).toBe(true);
+    expect(state.resources.evil.eq(0)).toBe(true);
+  });
+
+  it('is worth striking before anything runs, because it covers the cycles you start', () => {
+    const state = createState(fixture);
+    smite(state);
+    apply(state, fixture, { kind: 'rouse', tierId: 'minion' });
+    step(state, fixture, 24_000);
+
+    expect(state.resources.evil.gt(0)).toBe(true);
   });
 
   it('starts the buff', () => {

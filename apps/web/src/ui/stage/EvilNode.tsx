@@ -88,7 +88,7 @@ export function EvilNode({
 
         <span className="evil-node__name">{name}</span>
         <span className="evil-node__total">{shown}</span>
-        <span className="evil-node__verb">{verb(phase, copy, content)}</span>
+        <span className="evil-node__verb">{verb(phase, copy)}</span>
       </button>
 
       {/* Held open whether or not there is a report, so a blow never moves the chain. */}
@@ -104,23 +104,22 @@ export function EvilNode({
  * a player deciding whether to wait needs a number, not a bar they have to estimate
  * from. The bar is there too, under the chip.
  */
-function verb(phase: SmitePhase, copy: SmiteCopy, content: Content): string {
-  if (phase.kind === 'active') {
-    return copy.surging(seconds(phase.share * content.smite.durationMs));
-  }
-  if (phase.kind === 'cooling') {
-    return copy.cooling(seconds(phase.share * content.smite.cooldownMs));
-  }
+/**
+ * The verb, in one of three faces of the same width.
+ *
+ * No number goes on the button. A label that changes length moves everything beside it
+ * — the report line, the chain, the whole column — and this one changes three times a
+ * minute. The count lives on the status line instead, which has nothing to its right.
+ */
+function verb(phase: SmitePhase, copy: SmiteCopy): string {
+  if (phase.kind === 'active') return copy.surging;
+  if (phase.kind === 'cooling') return copy.cooling;
   return copy.action;
 }
 
 function worth(copy: SmiteCopy, content: Content): string {
   return copy.worth({
     multiplier: `×${content.smite.multiplier}`,
-    seconds: seconds(content.smite.durationMs),
+    seconds: `${Math.round(content.smite.durationMs / 1000)}s`,
   });
-}
-
-function seconds(ms: number): string {
-  return `${Math.max(0, Math.ceil(ms / 1000))}s`;
 }

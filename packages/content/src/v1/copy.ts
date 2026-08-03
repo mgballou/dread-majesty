@@ -151,8 +151,10 @@ export const v1Copy = {
     action: 'Smite',
     hint: 'Do it yourself. It is not beneath you.',
     spoken: (amount) => `Smite. You hold ${amount} Evil.`,
-    surging: (seconds) => `Surging · ${seconds}`,
-    cooling: (seconds) => `Spent · ${seconds}`,
+    surging: 'Surge',
+    cooling: 'Soon',
+    ready: 'Enact your will',
+    until: (seconds) => `${seconds} til ready`,
     worth: ({ multiplier, seconds }) => `Everything works ${multiplier} as hard for ${seconds}.`,
     results: [
       'A village, and the road to it.',
@@ -225,7 +227,7 @@ export const v1Copy = {
   },
 
   rail: {
-    title: 'The Levy',
+    title: 'The Muster',
     list: 'What you can raise',
     best: 'Advised',
     saving: 'Save toward this',
@@ -268,6 +270,15 @@ export const v1Copy = {
       warren: 'Knows each door in the Warrens and which of them still shut.',
       minion: 'Walks the pits at all hours. Keeps a tally, a whistle, and no friends.',
     },
+    panelTitle: 'The Miscreants',
+    what: 'Promoted for enthusiasm. They keep the work moving while you are elsewhere.',
+    none: 'Nobody has done anything worth promoting yet.',
+    confirmTitle: (name) => `Appoint ${name}?`,
+    confirmAction: 'Appoint',
+    cancel: 'Not yet',
+    filled: 'Appointed',
+    beyond: 'Beyond you',
+
   },
 
   stage: {

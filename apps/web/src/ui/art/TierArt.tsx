@@ -36,7 +36,11 @@ export function TierArt({ slot, size, decorative = false }: TierArtProps): React
   const label = decorative ? undefined : art.alt;
   const box =
     size === undefined ? { width: '100%', height: '100%' } : { width: size, height: size };
-  const style = { ...box, color: `var(--tone-${art.fallback.tone})` };
+  // The tone is handed over as a custom property rather than as `color`, so a
+  // stylesheet can take the drawing's colour over — which is exactly what the chain
+  // does while a blow is running. An inline `color` would win and the silhouettes
+  // would sit there in their own tones while everything around them burned.
+  const style = { ...box, ['--art-tone' as string]: `var(--tone-${art.fallback.tone})` };
 
   if (art.src !== null) {
     return <img className="art" src={art.src} alt={decorative ? '' : art.alt} style={style} />;
