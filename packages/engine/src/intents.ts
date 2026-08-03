@@ -2,7 +2,7 @@ import Decimal from 'break_eternity.js';
 import type { Content, TierId } from '@dm/content';
 import { newlyEarnedAchievements } from './achievements.ts';
 import { bulkCost, findTier, maxAffordable } from './cost.ts';
-import { isUnlockReached, productionPerSecond, prestigeGain } from './selectors.ts';
+import { isUnlockReached, prestigeGain } from './selectors.ts';
 import { createState } from './state.ts';
 import type { GameState, Intent, IntentResult } from './types.ts';
 
@@ -62,15 +62,6 @@ function smite(
 ): IntentResult {
   if (state.smiteCooldownMs > 0) return { ok: false, intent, reason: 'smite-cooling' };
 
-  // The instant part, which is what keeps a blow worth striking before anything is
-  // running: a multiplier on nothing is nothing, and the opening minutes are exactly
-  // when the player has nothing (spec §5.5). It reads potential production, not what
-  // is turning this instant, for the same reason.
-  const perSecond = productionPerSecond(state, content, 'evil');
-  const gain = Decimal.max(1, perSecond.mul(content.smite.seconds)).floor();
-
-  state.resources.evil = state.resources.evil.add(gain);
-  state.lifetimeEvil = state.lifetimeEvil.add(gain);
   state.stats.smites += 1;
 
   // The lasting part. Set, not added: striking again the moment the cooldown lifts
@@ -79,7 +70,7 @@ function smite(
   state.smiteActiveMs = content.smite.durationMs;
   state.smiteCooldownMs = content.smite.cooldownMs;
 
-  return { ok: true, intent, detail: `Smote for ${gain.toString()} Evil` };
+  return { ok: true, intent, detail: 'Struck' };
 }
 
 /**

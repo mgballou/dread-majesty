@@ -445,6 +445,20 @@
   transition-delay: calc(var(--surge-step) * (var(--surge-span) - var(--surge-index)));
 }
 
+/* The silhouette burns with everything else. Without this the drawing keeps its own
+   tone — it sets `--art-tone` inline — and the one thing you are looking at is the one
+   thing that does not answer. */
+.stage[data-surge] .art {
+  color: var(--tone-resource);
+  transition: color var(--duration-base) ease-out;
+  transition-delay: calc(var(--surge-step) * var(--surge-index));
+}
+
+.stage[data-surge='releasing'] .art {
+  color: var(--art-tone, currentColor);
+  transition-delay: calc(var(--surge-step) * (var(--surge-span) - var(--surge-index)));
+}
+
 /* While the chain is lit, a dormant rung stops asking. One thing is happening. */
 .stage[data-surge] .stage-node[data-oversight='dormant'] .stage-node__medallion {
   animation: none;

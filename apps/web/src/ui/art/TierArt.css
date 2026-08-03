@@ -10,3 +10,9 @@
 .art__void {
   fill: var(--ground);
 }
+
+/* Tone rides with the data: the manifest names the token, the component hands it over
+   as `--art-tone`, and this is the only place that turns it into a colour. */
+.art {
+  color: var(--art-tone, currentColor);
+}

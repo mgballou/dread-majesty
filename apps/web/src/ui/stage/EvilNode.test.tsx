@@ -92,16 +92,22 @@ describe('EvilNode', () => {
     expect(screen.getByText(CURRENT_COPY.smite.action)).toBeInTheDocument();
   });
 
-  it('counts the buff down while it runs', () => {
+  it('says the surge while the buff runs', () => {
     render(evil({ phase: { kind: 'active', share: 0.5 } }));
 
-    expect(screen.getByText(/Surging/)).toBeInTheDocument();
+    expect(screen.getByText(CURRENT_COPY.smite.surging)).toBeInTheDocument();
   });
 
-  it('counts the cooldown down while it is spent', () => {
+  it('says it is coming while it is spent', () => {
     render(evil({ phase: { kind: 'cooling', share: 0.5 } }));
 
-    expect(screen.getByText(/Spent/)).toBeInTheDocument();
+    expect(screen.getByText(CURRENT_COPY.smite.cooling)).toBeInTheDocument();
+  });
+
+  it('puts no number on the control, whatever state it is in', () => {
+    render(evil({ phase: { kind: 'cooling', share: 0.5 } }));
+
+    expect(strike().textContent).not.toMatch(/\ds/);
   });
 
   it('refuses to be struck while cooling', () => {
