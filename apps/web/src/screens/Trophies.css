@@ -1,5 +1,16 @@
 /* See Trophies.tsx. */
 
+.deeds {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.deeds__what {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--ink-dim);
+}
+
 .trophies {
   margin: 0;
   padding: 0;

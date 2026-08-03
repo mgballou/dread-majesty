@@ -1,8 +1,7 @@
 import { useRef, useState, type ReactNode } from 'react';
 import type { Content, Copy } from '@dm/content';
 import type { GameState } from '@dm/engine';
-import { Panel } from '../ui/Panel.tsx';
-import { formatDuration, formatNumber } from '../ui/format.ts';
+import { formatNumber } from '../ui/format.ts';
 import './Ledger.css';
 
 interface LedgerProps {
@@ -20,9 +19,11 @@ interface LedgerProps {
 /**
  * The record, and the controls that act on it.
  *
- * An inline reveal rather than a screen: nothing here is a change of task
+ * One panel of the deck rather than a screen: nothing here is a change of task
  * (ui-sensibility §2.10). The export blob doubles as the bug-report format, which is
  * why it is plain text a player can select and paste rather than a download.
+ *
+ * It draws no title of its own. The tab that opened it is the heading.
  */
 export function Ledger({
   state,
@@ -49,7 +50,7 @@ export function Ledger({
   }
 
   return (
-    <Panel title={copy.title} glyph="※" trailing={formatDuration(state.stats.playTimeMs)}>
+    <div className="ledger">
       <dl className="ledger__stats">
         <div className="ledger__stat">
           <dt>{copy.lifetimeEvil}</dt>
@@ -128,6 +129,6 @@ export function Ledger({
           </button>
         </form>
       </dialog>
-    </Panel>
+    </div>
   );
 }

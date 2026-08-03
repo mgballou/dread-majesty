@@ -288,7 +288,7 @@ export const v1Copy = {
   },
 
   deeds: {
-    title: 'Deeds',
+    title: 'The Misdeeds',
     what: 'What the realm remembers you for.',
     none: 'Nothing recorded yet.',
     unearned: 'Not yet done.',
@@ -296,11 +296,11 @@ export const v1Copy = {
   },
 
   ledger: {
-    title: 'The ledger',
+    title: 'The Musings',
     lifetimeEvil: 'Lifetime Evil',
     smites: 'Smites',
     resets: 'Resets',
-    deeds: 'Deeds recorded',
+    deeds: 'Misdeeds recorded',
     soundOn: 'Sound: on',
     soundOff: 'Sound: off',
     exportAction: 'Export',
