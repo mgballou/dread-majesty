@@ -83,7 +83,12 @@
 
 /* The verb, said in words. Colour never carries the state on its own. */
 .evil-node__verb {
+  /* Five characters in every state — SMITE, SURGE, SOON — and the width is pinned
+     anyway, because a control that changes size three times a minute drags the chain
+     beside it every time. */
+  min-inline-size: 5.5rem;
   padding: var(--space-1) var(--space-3);
+  text-align: center;
   font-size: var(--text-xs);
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -164,10 +169,15 @@
   border-color: var(--tone-resource);
 }
 
-/* Spent. No colour at all, and the control says so as well as showing it. */
+/* Spent. Grey, and the word says so as well — colour never carries a state alone. */
 .evil-node__strike:disabled {
   cursor: default;
   color: var(--ink-dim);
+}
+
+.evil-node__strike:disabled .evil-node__total,
+.evil-node__strike:disabled .evil-node__name {
+  color: var(--ink-muted);
 }
 
 .evil-node[data-smite='cooling'] .evil-node__verb {

@@ -28,7 +28,9 @@ describe('TierArt', () => {
   it('resolves the tone to a semantic token, never a colour', () => {
     const { container } = render(<TierArt slot="tier/minion" />);
 
-    expect(container.querySelector('svg')).toHaveStyle({ color: 'var(--tone-tier-1)' });
+    expect(container.querySelector('svg')?.getAttribute('style')).toContain(
+      '--art-tone: var(--tone-tier-1)',
+    );
   });
 
   it('renders nothing for a slot the manifest does not carry', () => {

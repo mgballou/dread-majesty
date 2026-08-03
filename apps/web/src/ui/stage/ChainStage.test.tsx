@@ -49,6 +49,7 @@ function stage(overrides: Partial<Parameters<typeof ChainStage>[0]> = {}): React
       isUnlocked={everything()}
       isAppointed={nothing()}
       isRousable={everything()}
+      needsHand={everything()}
       onRouse={() => {}}
       smiteIsTheAction={false}
       onSmite={() => {}}

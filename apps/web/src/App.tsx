@@ -52,6 +52,9 @@ export function App(): ReactNode {
   const unlocked = (tierId: TierId): boolean => isTierUnlocked(state, tierId);
   const appointed = (tierId: TierId): boolean => isAppointed(state, tierId);
   const rousable = (tierId: TierId): boolean => isRousable(state, tierId);
+  // Standing work, not this instant's: owned and unappointed. See ChainStage.
+  const needsHand = (tierId: TierId): boolean =>
+    !isAppointed(state, tierId) && state.gens[tierId].owned.gt(0);
 
   const plan = railPlan({ state, content, quantity, isUnlocked: unlocked });
 
@@ -80,6 +83,7 @@ export function App(): ReactNode {
             isUnlocked={unlocked}
             isAppointed={appointed}
             isRousable={rousable}
+            needsHand={needsHand}
             onRouse={(tierId) => {
               const result = dispatch({ kind: 'rouse', tierId });
               if (result.ok) sound.play('rouse');

@@ -45,10 +45,19 @@ export interface SmiteCopy {
    * way to learn what they hold. `amount` arrives formatted.
    */
   readonly spoken: (amount: string) => string;
-  /** The verb while the buff is running. `seconds` arrives formatted. */
-  readonly surging: (seconds: string) => string;
-  /** The verb while it is cooling and cannot be struck. `seconds` arrives formatted. */
-  readonly cooling: (seconds: string) => string;
+  /**
+   * The three faces of the control, and they are the same width on purpose.
+   *
+   * A button whose label changes length moves everything beside it, and this one
+   * changes three times a minute. Five characters each, so the layout cannot shift —
+   * the state is carried by colour *and* by the word, never by width.
+   */
+  readonly surging: string;
+  readonly cooling: string;
+  /** Said on the status line while a blow is ready. */
+  readonly ready: string;
+  /** Said on the status line while one is not. `seconds` arrives formatted. */
+  readonly until: (seconds: string) => string;
   /** One line saying what a blow is worth, for the hint. `multiplier` arrives formatted. */
   readonly worth: (args: { readonly multiplier: string; readonly seconds: string }) => string;
   /** Shown one at a time after a smite. Never empty. */
@@ -191,6 +200,20 @@ export interface OverseerCopy {
   readonly cost: (amount: string) => string;
   readonly names: Readonly<Record<TierId, string>>;
   readonly notes: Readonly<Record<TierId, string>>;
+  /** The panel these appointments live in, beside the muster. */
+  readonly panelTitle: string;
+  /** One line saying what the panel is for. */
+  readonly what: string;
+  /** Said where no post can be filled yet. */
+  readonly none: string;
+  /** Heading of the sheet that asks before spending. `name` is the Overseer's title. */
+  readonly confirmTitle: (name: string) => string;
+  readonly confirmAction: string;
+  readonly cancel: string;
+  /** Marks a post already filled, in a list. */
+  readonly filled: string;
+  /** Marks one that cannot be afforded yet. */
+  readonly beyond: string;
 }
 
 /**
