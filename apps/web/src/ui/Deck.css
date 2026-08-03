@@ -169,7 +169,7 @@
  */
 @media (width <= 52rem) {
   .deck__tab {
-    flex: 1 1 40%;
+    flex: 1 1 auto;
   }
 
   .deck__panel {
@@ -177,12 +177,63 @@
   }
 }
 
+/*
+ * On a phone the four chevrons stay in one row and only the open one says its name.
+ *
+ * Four titles abreast at 393px either wrap to four rows — a quarter of the screen spent
+ * on navigation — or truncate to "THE MIS…", which is worse. So a shut tab collapses to
+ * its glyph and the open one keeps its title, which is the only one a player needs: they
+ * know where they are, and the glyphs tell them where else they can go.
+ *
+ * The titles are hidden **from sight only**. `display: none` would take them out of the
+ * accessibility tree and leave four tabs called nothing at all; clipping them keeps every
+ * tab properly named and merely stops it taking width (ui-sensibility §13).
+ */
 @media (width <= 34rem) {
   .deck__tab {
-    flex: 1 1 100%;
+    flex: 0 1 auto;
+  }
+
+  .deck__tab[aria-selected='true'] {
+    flex: 1 1 auto;
+  }
+
+  .deck__tab[aria-selected='false'] .deck__title,
+  .deck__tab[aria-selected='false'] .deck__trailing,
+  .deck__tab[aria-selected='false'] .deck__mark {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  /*
+   * A shut tab with something worth saying keeps a dot.
+   *
+   * Its word is clipped along with the rest, so the one signal that would otherwise be
+   * lost — "the advised spend is through here" — is redrawn as a mark on the glyph.
+   */
+  .deck__tab[aria-selected='false']:has(.deck__mark) .deck__glyph::after {
+    content: '';
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline-end: -0.35rem;
+    inline-size: 5px;
+    block-size: 5px;
+    background: var(--ink);
+    border-radius: 50%;
+  }
+
+  .deck__glyph {
+    position: relative;
   }
 
   .deck__field {
     min-block-size: 2.25rem;
+    justify-content: center;
   }
 }
