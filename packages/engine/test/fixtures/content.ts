@@ -90,7 +90,9 @@ export const fixture: Content = {
 
   prestige: { k: 150, scale: '1e11', perSoul: 0.02 },
   offlineCapMs: 4 * 60 * 60 * SECOND,
-  smiteSeconds: 3,
+  // Long enough that a whole Minion cycle (24s) fits inside the buff, which is what
+  // makes "produced exactly twice as much" a thing a test can assert at all.
+  smite: { seconds: 3, durationMs: 48_000, cooldownMs: 120_000, multiplier: 2 },
 };
 
 /** Fixture with the tiers reversed, for the order-independence test. */

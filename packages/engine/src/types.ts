@@ -47,6 +47,16 @@ export interface GameState {
    */
   unlocked: Record<TierId, boolean>;
   /**
+   * Milliseconds left on the smite buff, and until another blow may be struck.
+   *
+   * Counters rather than timestamps, because the engine reads no clock (CLAUDE.md,
+   * engine rule 1). `step` spends them down at exactly the rate it spends `dtMs`, so a
+   * buff behaves the same online, offline and in the harness, with nothing to
+   * reconcile between them.
+   */
+  smiteActiveMs: number;
+  smiteCooldownMs: number;
+  /**
    * Which tiers have an Overseer appointed.
    *
    * An appointed tier runs for ever and never needs rousing again. Survives prestige,
@@ -101,6 +111,7 @@ export type IntentResult =
   | { ok: false; intent: Intent; reason: IntentFailure };
 
 export type IntentFailure =
+  | 'smite-cooling'
   | 'insufficient-resource'
   | 'nothing-affordable'
   | 'no-souls-earned'

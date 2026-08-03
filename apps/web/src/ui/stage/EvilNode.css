@@ -60,6 +60,8 @@
   place-items: center;
   inline-size: var(--evil-node-medallion);
   block-size: var(--evil-node-medallion);
+  /* The drawing fills its box, so the disc has to hold the box off its own edge. */
+  padding: var(--space-3);
   background: var(--surface);
   border-radius: 50%;
 }
@@ -147,47 +149,30 @@
 }
 
 /*
- * The answer arriving.
+ * While the blow is running, the node that started it burns too.
  *
- * The call went out through the chain and this is it coming back. It is delayed by the
- * whole length of the wave, so it lands last — which is the beat the player reads as
- * "and the total updates", even though the engine credited the blow the moment the
- * button went down.
+ * The chain takes the Evil tone during an evocation and this is where the tone came
+ * from, so the node marks the state on its edge rather than its fill — otherwise the
+ * one thing that is always ember would be the one thing that never changes.
  */
-.evil-node__answer {
-  position: absolute;
-  inset: -8%;
-  border: 2px solid var(--tone-resource);
-  border-radius: 50%;
-  pointer-events: none;
-  opacity: 0;
+.evil-node[data-smite='active'] .evil-node__strike {
+  border-color: var(--tone-resource);
 }
 
-.evil-node[data-motion='full'] .evil-node__answer {
-  background: radial-gradient(circle, var(--tone-resource), transparent 60%);
-  animation: evil-node-answer var(--duration-base) ease-out
-    calc(var(--surge-step) * var(--surge-index)) both;
+.evil-node[data-smite='active'] .evil-node__verb {
+  color: var(--tone-resource);
+  border-color: var(--tone-resource);
 }
 
-/* Reduced motion: it arrives, it just does not travel or swell. Nothing goes missing. */
-.evil-node[data-motion='reduced'] .evil-node__answer {
-  opacity: 0.85;
+/* Spent. No colour at all, and the control says so as well as showing it. */
+.evil-node__strike:disabled {
+  cursor: default;
+  color: var(--ink-dim);
 }
 
-@keyframes evil-node-answer {
-  from {
-    opacity: 0;
-    scale: 0.85;
-  }
-
-  45% {
-    opacity: 1;
-  }
-
-  to {
-    opacity: 0;
-    scale: 1.2;
-  }
+.evil-node[data-smite='cooling'] .evil-node__verb {
+  color: var(--ink-dim);
+  border-color: var(--line);
 }
 
 @media (width <= 52rem) {
@@ -197,5 +182,9 @@
 
   .evil-node__report {
     max-inline-size: 9rem;
+  }
+
+  .evil-node__total {
+    font-size: var(--text-lg);
   }
 }

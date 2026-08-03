@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import type Decimal from 'break_eternity.js';
-import type { SmiteCopy } from '@dm/content';
+import type { Content, SmiteCopy } from '@dm/content';
 import { TierArt } from '../art/TierArt.tsx';
 import { formatNumber } from '../format.ts';
 import { useReducedMotion } from '../useReducedMotion.ts';
@@ -8,11 +8,11 @@ import { usePulse } from './usePulse.ts';
 import type { Feed } from './TierNode.tsx';
 import './EvilNode.css';
 
+/** What `smitePhase` reports. Restated rather than imported, so the props stay readable. */
+type SmitePhase = { readonly kind: 'active' | 'cooling' | 'ready'; readonly share: number };
+
 /** The manifest slot for the resource at the end of the chain. */
 export const EVIL_ART = 'resource/evil';
-
-/** Drawn larger than a rung. This is the end of the chain and the thing you press. */
-const EVIL_ART_SIZE = 56;
 
 interface EvilNodeProps {
   /** How much Evil is held. Always a `Decimal` (CLAUDE.md, engine rule 5). */
@@ -24,10 +24,10 @@ interface EvilNodeProps {
   report: string;
   /** True while nothing on the rail is worth buying, which is when evoking is the move. */
   isTheAction: boolean;
-  /** The evocation now under way, or null. */
-  surge: number | null;
-  /** Where the node falls in the wave — last, because the answer comes back to it. */
-  surgeIndex: number;
+  /** Whether the blow is running, cooling, or ready — and how far through. */
+  phase: SmitePhase;
+  /** Read only for the smite durations, so the node can say them in seconds. */
+  content: Content;
   /** The Minion rung, so the node can mark a delivery landing. */
   feed: Feed | null;
   onSmite: () => void;
@@ -56,50 +56,71 @@ export function EvilNode({
   copy,
   report,
   isTheAction,
-  surge,
-  surgeIndex,
+  phase,
+  content,
   feed,
   onSmite,
 }: EvilNodeProps): ReactNode {
   const reduced = useReducedMotion();
   const landing = usePulse(feed === null ? null : feed.produced, feed?.version ?? 0);
   const shown = formatNumber(total);
+  const ready = phase.kind === 'ready';
 
   return (
-    <div className="evil-node" data-motion={reduced ? 'reduced' : 'full'}>
+    <div className="evil-node" data-motion={reduced ? 'reduced' : 'full'} data-smite={phase.kind}>
       <button
         type="button"
         className={
-          isTheAction ? 'evil-node__strike evil-node__strike--lifted' : 'evil-node__strike'
+          isTheAction && ready ? 'evil-node__strike evil-node__strike--lifted' : 'evil-node__strike'
         }
         onClick={onSmite}
+        disabled={!ready}
         aria-label={copy.spoken(shown)}
-        title={copy.hint}
+        title={ready ? worth(copy, content) : copy.hint}
       >
         <span className="evil-node__medallion">
-          <TierArt slot={EVIL_ART} size={EVIL_ART_SIZE} decorative />
+          <TierArt slot={EVIL_ART} decorative />
 
           {landing !== null && (
             <span className="evil-node__landing" key={`land-${landing.id}`} aria-hidden="true" />
-          )}
-
-          {surge !== null && (
-            <span
-              className="evil-node__answer"
-              key={`answer-${surge}`}
-              style={{ ['--surge-index' as string]: surgeIndex }}
-              aria-hidden="true"
-            />
           )}
         </span>
 
         <span className="evil-node__name">{name}</span>
         <span className="evil-node__total">{shown}</span>
-        <span className="evil-node__verb">{copy.action}</span>
+        <span className="evil-node__verb">{verb(phase, copy, content)}</span>
       </button>
 
       {/* Held open whether or not there is a report, so a blow never moves the chain. */}
       <p className="evil-node__report">{report}</p>
     </div>
   );
+}
+
+/**
+ * The verb, or what is happening instead of it.
+ *
+ * Counted down in whole seconds. A blow is a fifteen-second window inside a minute, and
+ * a player deciding whether to wait needs a number, not a bar they have to estimate
+ * from. The bar is there too, under the chip.
+ */
+function verb(phase: SmitePhase, copy: SmiteCopy, content: Content): string {
+  if (phase.kind === 'active') {
+    return copy.surging(seconds(phase.share * content.smite.durationMs));
+  }
+  if (phase.kind === 'cooling') {
+    return copy.cooling(seconds(phase.share * content.smite.cooldownMs));
+  }
+  return copy.action;
+}
+
+function worth(copy: SmiteCopy, content: Content): string {
+  return copy.worth({
+    multiplier: `×${content.smite.multiplier}`,
+    seconds: seconds(content.smite.durationMs),
+  });
+}
+
+function seconds(ms: number): string {
+  return `${Math.max(0, Math.ceil(ms / 1000))}s`;
 }

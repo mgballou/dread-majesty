@@ -170,5 +170,23 @@ export const v1: Content = {
   },
 
   offlineCapMs: 4 * HOUR,
-  smiteSeconds: 3,
+  /**
+   * A blow lands a little Evil at once and then doubles everything for fifteen
+   * seconds, once a minute.
+   *
+   * Fifteen seconds is longer than a Minion cycle (4s) and well short of a Warren's
+   * (90s), which is the window that makes a blow feel like it covered something
+   * without letting one press carry a whole tier. At ×2 for 15s in every 60s a player
+   * who never misses a cooldown runs about 25% ahead of the idle economy — enough
+   * that pressing it is always right, not enough to make §5.2's table a fiction.
+   *
+   * The harness does not smite, deliberately: it measures the idle economy, and this
+   * is the reward for being at the keyboard (spec §5.7).
+   */
+  smite: {
+    seconds: 3,
+    durationMs: 15 * SECOND,
+    cooldownMs: 60 * SECOND,
+    multiplier: 2,
+  },
 };

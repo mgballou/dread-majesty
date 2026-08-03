@@ -8,15 +8,6 @@ import { CycleRing } from './CycleRing.tsx';
 import { usePulse } from './usePulse.ts';
 import './TierNode.css';
 
-/**
- * How large the stage draws a tier's picture.
- *
- * Bigger than the rail's 40px, because the stage is the material (ui-sensibility
- * §11) and the medallion has the room. It matches `--stage-node-art` in the
- * stylesheet: `TierArt` sizes the drawing and the CSS sizes the box it sits in.
- */
-const STAGE_ART = 48;
-
 interface Cycle {
   progressMs: number;
   cycleMs: number;
@@ -69,9 +60,13 @@ interface TierNodeProps {
   oversight: Oversight | null;
   /** The rung above. Null for the head of the chain, which nothing feeds. */
   feed: Feed | null;
-  /** The evocation now under way, or null. Re-keying on the id restarts the call. */
-  surge: number | null;
-  /** Where this rung falls in the wave. Set by the chain, so the CSS stays dumb. */
+  /**
+   * Where this rung falls in the wave, counted from the Evil end.
+   *
+   * The chain sets it; the stylesheet turns it into a delay. It lives here rather than
+   * in the CSS because the order of the wave depends on how many rungs there are, and
+   * only the chain knows that.
+   */
   surgeIndex: number;
 }
 
@@ -110,15 +105,16 @@ export function TierNode({
   copy,
   oversight,
   feed,
-  surge,
   surgeIndex,
 }: TierNodeProps): ReactNode {
   const reduced = useReducedMotion();
   const landing = usePulse(feed === null ? null : feed.produced, feed?.version ?? 0);
   const stateId = useId();
 
-  // A rung nobody has reached does not get to show its colour either.
-  const tint = isUnlocked && tone !== null ? { color: `var(--tone-${tone})` } : undefined;
+  // Set as a custom property, not as `color`. The chain takes every rung's colour over
+  // while an evocation runs, and an inline `color` would beat any rule that tried.
+  const tint =
+    isUnlocked && tone !== null ? { ['--node-tone' as string]: `var(--tone-${tone})` } : undefined;
 
   const state = isUnlocked && oversight !== null ? nodeState(oversight, count) : 'idle';
   const line = state === 'idle' || oversight === null ? '' : stateLine(state, oversight, name);
@@ -130,7 +126,7 @@ export function TierNode({
       aria-label={isUnlocked ? undefined : copy.sealed}
       data-motion={reduced ? 'reduced' : 'full'}
       data-oversight={state}
-      style={tint}
+      style={{ ...tint, ['--surge-index' as string]: surgeIndex }}
     >
       <div className="stage-node__medallion">
         {cycle !== null &&
@@ -147,23 +143,11 @@ export function TierNode({
 
         <div className="stage-node__art">
           {isUnlocked ? (
-            <TierArt slot={art} size={STAGE_ART} decorative />
+            <TierArt slot={art} decorative />
           ) : (
             <span className="stage-node__blank" aria-hidden="true" />
           )}
         </div>
-
-        {surge !== null && (
-          /* The call passing through this rung. Ember, because it is Evil being
-             evoked, not the tier answering — the tier's own tone is everywhere else
-             on this node. Re-keyed on the id so a second tap restarts it. */
-          <span
-            className="stage-node__evoke"
-            key={`evoke-${surge}`}
-            style={{ ['--surge-index' as string]: surgeIndex }}
-            aria-hidden="true"
-          />
-        )}
 
         {landing !== null && (
           /* Re-keying on the arrival id restarts the mark. Same trick as the link's

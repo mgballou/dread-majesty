@@ -39,12 +39,10 @@
   list-style: none;
   overflow-x: auto;
   overscroll-behavior-x: contain;
-  scroll-snap-type: x proximity;
 }
 
 .stage__rung {
   display: flex;
   align-items: flex-start;
   flex: none;
-  scroll-snap-align: start;
 }

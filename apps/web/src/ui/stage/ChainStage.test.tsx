@@ -57,6 +57,13 @@ function stage(overrides: Partial<Parameters<typeof ChainStage>[0]> = {}): React
   );
 }
 
+/** A state mid-blow: the buff is what lights the chain, so the engine has to run it. */
+function struck(): GameState {
+  const state = tapped(1);
+  apply(state, CURRENT, { kind: 'smite' });
+  return state;
+}
+
 function rouseButtons(container: HTMLElement): NodeListOf<Element> {
   return container.querySelectorAll('.stage-node__tap');
 }
@@ -203,51 +210,55 @@ describe('ChainStage', () => {
     expect(onSmite).toHaveBeenCalledOnce();
   });
 
-  it('runs no evocation until one is asked for', () => {
+  it('runs no evocation until one is struck', () => {
     const { container } = render(stage());
 
-    expect(container.querySelectorAll('.stage-node__evoke')).toHaveLength(0);
+    expect(container.querySelector('.stage')).not.toHaveAttribute('data-surge');
   });
 
-  it('calls through every generator when Evil is evoked', async () => {
-    const { container } = render(stage());
+  it('lights the whole chain for as long as the blow lasts', () => {
+    const { container } = render(stage({ state: struck() }));
 
-    await userEvent.click(strike());
-
-    expect(container.querySelectorAll('.stage-node__evoke')).toHaveLength(CURRENT.tiers.length);
+    expect(container.querySelector('.stage')).toHaveAttribute('data-surge', 'lit');
   });
 
-  it('runs the answer back along every link', async () => {
-    const { container } = render(stage());
+  it('suppresses completions along the chain while it burns', () => {
+    const state = struck();
+    const { container, rerender } = render(stage({ state, version: 1 }));
 
-    await userEvent.click(strike());
+    state.gens.minion.lifetimeProduced = state.gens.minion.lifetimeProduced.add(1000);
+    rerender(stage({ state, version: 2 }));
 
-    expect(container.querySelectorAll('.stage-link__evoke')).toHaveLength(CURRENT.tiers.length);
+    expect(container.querySelectorAll('.stage-link__mote')).toHaveLength(0);
   });
 
-  it('lands the answer on Evil itself', async () => {
-    const { container } = render(stage());
+  it('lets completions through again once the blow is spent', () => {
+    const state = fresh();
+    const { container, rerender } = render(stage({ state, version: 1 }));
 
-    await userEvent.click(strike());
+    state.gens.minion.lifetimeProduced = state.gens.minion.lifetimeProduced.add(1000);
+    rerender(stage({ state, version: 2 }));
 
-    expect(container.querySelector('.evil-node__answer')).toBeInTheDocument();
+    expect(container.querySelectorAll('.stage-link__mote').length).toBeGreaterThan(0);
   });
 
-  it('staggers the call so the rung nearest Evil lights first', async () => {
-    const { container } = render(stage());
+  it('orders the wave outward from Evil', () => {
+    const { container } = render(stage({ state: struck() }));
+    const rungs = [...container.querySelectorAll('.stage-node')];
 
-    await userEvent.click(strike());
-    const marks = [...container.querySelectorAll('.stage-node__evoke')];
-
-    expect(marks[marks.length - 1]?.getAttribute('style')).toContain('--surge-index: 0');
+    expect(rungs[rungs.length - 1]?.getAttribute('style')).toContain('--surge-index: 1');
   });
 
-  it('evokes under reduced motion too, so nothing goes missing', async () => {
+  it('tells the stylesheet how long the wave is', () => {
+    const { container } = render(stage({ state: struck() }));
+
+    expect(container.querySelector('.stage')?.getAttribute('style')).toContain('--surge-span: 8');
+  });
+
+  it('lights the chain under reduced motion too, so nothing goes missing', () => {
     setReducedMotion(true);
-    const { container } = render(stage());
+    const { container } = render(stage({ state: struck() }));
 
-    await userEvent.click(strike());
-
-    expect(container.querySelectorAll('.stage-node__evoke')).toHaveLength(CURRENT.tiers.length);
+    expect(container.querySelector('.stage')).toHaveAttribute('data-surge', 'lit');
   });
 });

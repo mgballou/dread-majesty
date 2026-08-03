@@ -33,7 +33,13 @@ describe('moteCount', () => {
 describe('ChainLink', () => {
   it('carries nothing while the producer has produced nothing', () => {
     const { container } = render(
-      <ChainLink produced={new Decimal(0)} version={0} tone="tier-2" surge={null} surgeIndex={0} />,
+      <ChainLink
+        produced={new Decimal(0)}
+        version={0}
+        tone="tier-2"
+        surging={false}
+        surgeIndex={0}
+      />,
     );
 
     expect(motes(container)).toHaveLength(0);
@@ -41,7 +47,13 @@ describe('ChainLink', () => {
 
   it('pours motes down the link when a cycle completes', () => {
     const { container, rerender } = render(
-      <ChainLink produced={new Decimal(0)} version={0} tone="tier-2" surge={null} surgeIndex={0} />,
+      <ChainLink
+        produced={new Decimal(0)}
+        version={0}
+        tone="tier-2"
+        surging={false}
+        surgeIndex={0}
+      />,
     );
 
     rerender(
@@ -49,7 +61,7 @@ describe('ChainLink', () => {
         produced={new Decimal(1500)}
         version={1}
         tone="tier-2"
-        surge={null}
+        surging={false}
         surgeIndex={0}
       />,
     );
@@ -59,7 +71,13 @@ describe('ChainLink', () => {
 
   it('leads the string with a head', () => {
     const { container, rerender } = render(
-      <ChainLink produced={new Decimal(0)} version={0} tone="tier-2" surge={null} surgeIndex={0} />,
+      <ChainLink
+        produced={new Decimal(0)}
+        version={0}
+        tone="tier-2"
+        surging={false}
+        surgeIndex={0}
+      />,
     );
 
     rerender(
@@ -67,7 +85,7 @@ describe('ChainLink', () => {
         produced={new Decimal(1500)}
         version={1}
         tone="tier-2"
-        surge={null}
+        surging={false}
         surgeIndex={0}
       />,
     );
@@ -77,7 +95,13 @@ describe('ChainLink', () => {
 
   it('sets the head furthest along, so it leads whichever way the string is drawn', () => {
     const { container, rerender } = render(
-      <ChainLink produced={new Decimal(0)} version={0} tone="tier-2" surge={null} surgeIndex={0} />,
+      <ChainLink
+        produced={new Decimal(0)}
+        version={0}
+        tone="tier-2"
+        surging={false}
+        surgeIndex={0}
+      />,
     );
 
     rerender(
@@ -85,7 +109,7 @@ describe('ChainLink', () => {
         produced={new Decimal(1500)}
         version={1}
         tone="tier-2"
-        surge={null}
+        surging={false}
         surgeIndex={0}
       />,
     );
@@ -97,7 +121,13 @@ describe('ChainLink', () => {
 
   it('lights the whole run when a cycle completes', () => {
     const { container, rerender } = render(
-      <ChainLink produced={new Decimal(0)} version={0} tone="tier-2" surge={null} surgeIndex={0} />,
+      <ChainLink
+        produced={new Decimal(0)}
+        version={0}
+        tone="tier-2"
+        surging={false}
+        surgeIndex={0}
+      />,
     );
 
     rerender(
@@ -105,7 +135,7 @@ describe('ChainLink', () => {
         produced={new Decimal(1500)}
         version={1}
         tone="tier-2"
-        surge={null}
+        surging={false}
         surgeIndex={0}
       />,
     );
@@ -117,7 +147,13 @@ describe('ChainLink', () => {
     setReducedMotion(true);
 
     const { container, rerender } = render(
-      <ChainLink produced={new Decimal(0)} version={0} tone="tier-2" surge={null} surgeIndex={0} />,
+      <ChainLink
+        produced={new Decimal(0)}
+        version={0}
+        tone="tier-2"
+        surging={false}
+        surgeIndex={0}
+      />,
     );
 
     rerender(
@@ -125,7 +161,7 @@ describe('ChainLink', () => {
         produced={new Decimal(1500)}
         version={1}
         tone="tier-2"
-        surge={null}
+        surging={false}
         surgeIndex={0}
       />,
     );
@@ -135,7 +171,13 @@ describe('ChainLink', () => {
 
   it('draws as many motes as the amount is worth', () => {
     const { container, rerender } = render(
-      <ChainLink produced={new Decimal(0)} version={0} tone="tier-2" surge={null} surgeIndex={0} />,
+      <ChainLink
+        produced={new Decimal(0)}
+        version={0}
+        tone="tier-2"
+        surging={false}
+        surgeIndex={0}
+      />,
     );
 
     rerender(
@@ -143,7 +185,7 @@ describe('ChainLink', () => {
         produced={new Decimal('1e40')}
         version={1}
         tone="tier-2"
-        surge={null}
+        surging={false}
         surgeIndex={0}
       />,
     );
@@ -154,11 +196,11 @@ describe('ChainLink', () => {
   it('stays still while the producer stands idle', () => {
     const produced = new Decimal(1500);
     const { container, rerender } = render(
-      <ChainLink produced={produced} version={0} tone="tier-2" surge={null} surgeIndex={0} />,
+      <ChainLink produced={produced} version={0} tone="tier-2" surging={false} surgeIndex={0} />,
     );
 
     rerender(
-      <ChainLink produced={produced} version={1} tone="tier-2" surge={null} surgeIndex={0} />,
+      <ChainLink produced={produced} version={1} tone="tier-2" surging={false} surgeIndex={0} />,
     );
 
     expect(motes(container)).toHaveLength(0);
@@ -166,15 +208,29 @@ describe('ChainLink', () => {
 
   it('takes its tone from the manifest, never the accent', () => {
     const { container } = render(
-      <ChainLink produced={new Decimal(0)} version={0} tone="tier-3" surge={null} surgeIndex={0} />,
+      <ChainLink
+        produced={new Decimal(0)}
+        version={0}
+        tone="tier-3"
+        surging={false}
+        surgeIndex={0}
+      />,
     );
 
-    expect(container.querySelector('.stage-link')).toHaveStyle({ color: 'var(--tone-tier-3)' });
+    expect(container.querySelector('.stage-link')?.getAttribute('style')).toContain(
+      '--node-tone: var(--tone-tier-3)',
+    );
   });
 
   it('travels when motion is unrestricted', () => {
     const { container } = render(
-      <ChainLink produced={new Decimal(0)} version={0} tone="tier-2" surge={null} surgeIndex={0} />,
+      <ChainLink
+        produced={new Decimal(0)}
+        version={0}
+        tone="tier-2"
+        surging={false}
+        surgeIndex={0}
+      />,
     );
 
     expect(container.querySelector('.stage-link')).toHaveAttribute('data-motion', 'full');
@@ -184,7 +240,13 @@ describe('ChainLink', () => {
     setReducedMotion(true);
 
     const { container } = render(
-      <ChainLink produced={new Decimal(0)} version={0} tone="tier-2" surge={null} surgeIndex={0} />,
+      <ChainLink
+        produced={new Decimal(0)}
+        version={0}
+        tone="tier-2"
+        surging={false}
+        surgeIndex={0}
+      />,
     );
 
     expect(container.querySelector('.stage-link')).toHaveAttribute('data-motion', 'reduced');
@@ -194,7 +256,13 @@ describe('ChainLink', () => {
     setReducedMotion(true);
 
     const { container, rerender } = render(
-      <ChainLink produced={new Decimal(0)} version={0} tone="tier-2" surge={null} surgeIndex={0} />,
+      <ChainLink
+        produced={new Decimal(0)}
+        version={0}
+        tone="tier-2"
+        surging={false}
+        surgeIndex={0}
+      />,
     );
 
     rerender(
@@ -202,7 +270,7 @@ describe('ChainLink', () => {
         produced={new Decimal(1500)}
         version={1}
         tone="tier-2"
-        surge={null}
+        surging={false}
         surgeIndex={0}
       />,
     );
@@ -212,7 +280,13 @@ describe('ChainLink', () => {
 
   it('stays out of the accessibility tree, since the counts already carry the amounts', () => {
     const { container } = render(
-      <ChainLink produced={new Decimal(0)} version={0} tone="tier-2" surge={null} surgeIndex={0} />,
+      <ChainLink
+        produced={new Decimal(0)}
+        version={0}
+        tone="tier-2"
+        surging={false}
+        surgeIndex={0}
+      />,
     );
 
     expect(container.querySelector('.stage-link')).toHaveAttribute('aria-hidden', 'true');
