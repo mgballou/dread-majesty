@@ -1,0 +1,25 @@
+/* A record, lifted over the game. See Sheet.tsx. */
+
+.sheet {
+  inline-size: min(38rem, calc(100vw - var(--space-8)));
+  max-block-size: min(44rem, calc(100vh - var(--space-8)));
+  padding: 0;
+  border: 1px solid var(--accent-line);
+  background: var(--surface);
+  color: var(--ink);
+  overflow: auto;
+}
+
+.sheet::backdrop {
+  background: var(--scrim);
+}
+
+.sheet__body {
+  padding: var(--space-4);
+}
+
+.sheet__close {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 var(--space-4) var(--space-4);
+}

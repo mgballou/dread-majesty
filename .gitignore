@@ -5,3 +5,6 @@ dist/
 .vite/
 coverage/
 .eslintcache
+
+# Playwright MCP artifacts
+.playwright-mcp/

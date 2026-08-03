@@ -10,6 +10,14 @@
  * Slices are 1s rather than the live 100ms. Every cycle duration in the content is a
  * whole number of seconds, so completions stay exact and the run goes ten times
  * faster. If a sub-second cycle is ever added, drop this back to BASE_DT_MS.
+ *
+ * The simulated player taps perfectly: every manual tier is roused the instant its
+ * cycle frees, and an Overseer is appointed as soon as one is affordable. That is
+ * deliberate (spec §5.6). The harness measures the idle economy, exactly as §5.2
+ * tuned it; a harness that modelled imperfect tapping would be measuring a guess
+ * about players rather than the economy. What it reports instead is *when* each
+ * Overseer first comes within reach, and the manual layer is then priced by feel
+ * against those times.
  */
 import type Decimal from 'break_eternity.js';
 import { CURRENT, type Content } from '@dm/content';
@@ -17,7 +25,13 @@ import { apply } from '../src/intents.ts';
 import { createState } from '../src/state.ts';
 import { step } from '../src/step.ts';
 import { maxAffordable } from '../src/cost.ts';
-import { prestigeGain, productionPerSecond } from '../src/selectors.ts';
+import {
+  canAppoint,
+  isAppointed,
+  isRousable,
+  prestigeGain,
+  productionPerSecond,
+} from '../src/selectors.ts';
 import type { GameState } from '../src/types.ts';
 
 const DT_MS = 1000;
@@ -41,10 +55,21 @@ const CHECKPOINTS = [
 ] as const;
 
 /**
- * Each second, buy one of every tier that is affordable, richest first.
+ * Each second: buy, then appoint, then rouse.
  *
- * Not optimal play, but far closer to it than only ever buying the top tier — a real
+ * **Buying comes first, always.** The buying policy is the instrument's calibration
+ * (spec §5.7) — every number in §5.2 is the output of it — so an Overseer may only
+ * ever be paid for out of what the buying pass left behind. Reversing the order
+ * would let appointments starve the generator stack and quietly re-tune the whole
+ * economy. Overseers are then taken cheapest first, so the early ones land as soon
+ * as they are within reach rather than waiting behind a Castellan.
+ *
+ * The buying pass itself is one of every tier that is affordable, richest first. Not
+ * optimal play, but far closer to it than only ever buying the top tier — a real
  * player keeps stacking the cheap tiers while saving for the expensive ones.
+ *
+ * Rousing comes last because a tier bought or freed this second is then already
+ * turning when the next slice runs. That is the perfect tapping the header explains.
  */
 function decide(state: GameState, content: Content): void {
   for (const tier of content.tiers) {
@@ -52,11 +77,32 @@ function decide(state: GameState, content: Content): void {
       apply(state, content, { kind: 'purchase', tierId: tier.id, quantity: 1 });
     }
   }
+
+  for (const tier of [...content.tiers].reverse()) {
+    if (canAppoint(state, content, tier.id)) {
+      apply(state, content, { kind: 'appoint', tierId: tier.id });
+    }
+  }
+
+  for (const tier of content.tiers) {
+    if (isRousable(state, tier.id)) {
+      apply(state, content, { kind: 'rouse', tierId: tier.id });
+    }
+  }
+
+  // The simulated player records progress at the same cadence the real one does.
+  // Every shipping achievement grants a multiplier of 1, so this changes no number
+  // in the table today — but the moment one of them grants more, a harness that
+  // never recorded them would quietly report a slower game than the one shipped.
+  apply(state, content, { kind: 'record-achievements' });
+  apply(state, content, { kind: 'record-unlocks' });
 }
 
 function run(content: Content): void {
   const state = createState(content);
   const firstOwned = new Map<string, number>();
+  const overseerAffordableAt = new Map<string, number>();
+  const overseerAppointedAt = new Map<string, number>();
   const rows: string[] = [];
   let firstPrestigeMs: number | null = null;
 
@@ -67,11 +113,23 @@ function run(content: Content): void {
   while (elapsed < totalMs) {
     step(state, content, DT_MS);
     elapsed += DT_MS;
+
+    // Read before the buying pass spends anything, so this answers "could the player
+    // have appointed at this moment", not "was there change left afterwards".
+    for (const tier of content.tiers) {
+      if (!overseerAffordableAt.has(tier.id) && canAppoint(state, content, tier.id)) {
+        overseerAffordableAt.set(tier.id, elapsed);
+      }
+    }
+
     decide(state, content);
 
     for (const tier of content.tiers) {
       if (!firstOwned.has(tier.id) && state.gens[tier.id].owned.gte(1)) {
         firstOwned.set(tier.id, elapsed);
+      }
+      if (!overseerAppointedAt.has(tier.id) && isAppointed(state, tier.id)) {
+        overseerAppointedAt.set(tier.id, elapsed);
       }
     }
     if (firstPrestigeMs === null && prestigeGain(state, content).gte(1)) {
@@ -96,8 +154,22 @@ function run(content: Content): void {
     `    ${'first prestige'.padEnd(14)} ${firstPrestigeMs === null ? 'never' : duration(firstPrestigeMs)}`,
   );
 
+  console.log('\n  overseers');
+  for (const tier of [...content.tiers].reverse()) {
+    const affordable = overseerAffordableAt.get(tier.id);
+    const hired = overseerAppointedAt.get(tier.id);
+    console.log(
+      `    ${tier.plural.padEnd(14)}` +
+        `within reach ${(affordable === undefined ? 'never' : duration(affordable)).padEnd(14)}` +
+        `appointed ${hired === undefined ? 'never' : duration(hired)}`,
+    );
+  }
+
   console.log(`\n  ${'at'.padEnd(5)}${header(content)}`);
   for (const row of rows) console.log(`  ${row}`);
+  console.log(
+    `\n  achievements earned: ${state.earnedAchievements.length} of ${content.achievements.length}`,
+  );
   console.log();
 }
 

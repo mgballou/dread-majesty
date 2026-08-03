@@ -11,8 +11,22 @@ export {
   findTier,
   MAX_AFFORDABLE_CAP,
 } from './cost.ts';
-export { productionPerSecond, prestigeGain, canAfford, milestoneProgress } from './selectors.ts';
+export {
+  productionPerSecond,
+  overseenProductionPerSecond,
+  prestigeGain,
+  canAfford,
+  milestoneProgress,
+  isUnlockReached,
+  isTierUnlocked,
+  isAppointed,
+  isRousable,
+  overseerCost,
+  canAppoint,
+} from './selectors.ts';
 export type { MilestoneProgress } from './selectors.ts';
+
+export { isConditionMet, newlyEarnedAchievements, achievementMultiplier } from './achievements.ts';
 
 export {
   serialize,

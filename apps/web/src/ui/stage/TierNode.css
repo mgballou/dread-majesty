@@ -1,0 +1,239 @@
+/*
+ * One rung of the chain. See TierNode.tsx.
+ *
+ * Three component tokens, referencing the semantic layer only. The medallion is a
+ * drawn disc rather than a laid-out region, the art box has to match the size
+ * `TierArt` draws itself at, and the node holds a fixed width so the state line does
+ * not reflow the chain as it changes. None is a measurement the space scale has a
+ * name for.
+ */
+
+.stage-node {
+  --stage-node-medallion: calc(var(--space-8) * 2 + var(--space-4));
+  --stage-node-art: calc(var(--space-8) + var(--space-4));
+  --stage-node-width: calc(var(--space-8) * 5 + var(--space-4));
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  inline-size: var(--stage-node-width);
+  margin: 0;
+  text-align: center;
+}
+
+/* Depth comes from the surface stack. No drop shadow anywhere on the stage. */
+.stage-node__medallion {
+  position: relative;
+  display: grid;
+  place-items: center;
+  inline-size: var(--stage-node-medallion);
+  block-size: var(--stage-node-medallion);
+  background: var(--surface);
+  border-radius: 50%;
+  transition: background var(--duration-fast) ease-out;
+}
+
+.stage-node__art {
+  display: grid;
+  place-items: center;
+  inline-size: var(--stage-node-art);
+  block-size: var(--stage-node-art);
+}
+
+/* The empty ring a rung leaves behind it while nobody has reached it. */
+.stage-node__socket {
+  position: absolute;
+  inset: 6.25%;
+  border: 1px dashed var(--line);
+  border-radius: 50%;
+}
+
+.stage-node__blank {
+  inline-size: var(--stage-node-art);
+  block-size: var(--stage-node-art);
+  background: var(--surface-panel);
+  border-radius: var(--space-1);
+}
+
+/*
+ * The tap target, laid over the whole medallion.
+ *
+ * It carries no drawing of its own — the state it is in is drawn by the medallion
+ * beneath it and said outright by the state line, which is also its accessible name.
+ * It sits over the ring rather than around it so the ring keeps its `progressbar`
+ * role: a `button` makes its children presentational, and a swept cycle nobody can
+ * read is content going missing.
+ *
+ * The whole 5rem disc is the target, which clears WCAG 2.2 2.5.8 several times over.
+ */
+.stage-node__tap {
+  position: absolute;
+  inset: 0;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  appearance: none;
+}
+
+.stage-node__tap[aria-disabled='true'] {
+  cursor: default;
+}
+
+/*
+ * A delivery landing.
+ *
+ * The link carries the units down; this is the node at the foot of it acknowledging
+ * that they arrived, which is the half that was missing and the reason the cascade
+ * did not read. Line work in the tier's own tone, plus a brief lift of the whole
+ * medallion's face.
+ */
+.stage-node__landing {
+  position: absolute;
+  inset: 0;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/*
+ * Delayed by exactly the time the motes spend travelling, so the node reacts when
+ * they land rather than when they set off. Both durations are the same token, so the
+ * two halves cannot drift apart.
+ */
+.stage-node[data-motion='full'] .stage-node__landing {
+  background: radial-gradient(circle, currentColor, transparent 70%);
+  animation: stage-node-landing var(--duration-base) ease-out var(--duration-slow) both;
+}
+
+/*
+ * Reduced motion is designed, not stripped (ui-sensibility §8). The arrival is drawn
+ * in place and held until the next one replaces it, so nothing that shows under full
+ * motion goes missing — it simply does not travel and does not swell.
+ */
+.stage-node[data-motion='reduced'] .stage-node__landing {
+  border-width: 1px;
+  opacity: 0.7;
+}
+
+@keyframes stage-node-landing {
+  from {
+    opacity: 0;
+    scale: 1;
+  }
+
+  35% {
+    opacity: 0.75;
+  }
+
+  to {
+    opacity: 0;
+    scale: 1.16;
+  }
+}
+
+/*
+ * Dormant: manual, owned, and stopped. The clearest call to action on the stage.
+ *
+ * It reads as pressable three ways over, and none of them is colour alone: the face
+ * lifts a step up the surface stack, takes a hairline edge in the tier's own tone,
+ * and the state line under it says what pressing it does. The edge is an inset
+ * shadow, which is line work on the disc — not elevation, which the surface stack
+ * already carries.
+ */
+.stage-node[data-oversight='dormant'] .stage-node__medallion {
+  background: var(--surface-raised);
+  box-shadow: inset 0 0 0 1px currentColor;
+}
+
+.stage-node[data-oversight='dormant'] .stage-node__state {
+  color: var(--ink);
+}
+
+/*
+ * The breathing that says this one is waiting on you.
+ *
+ * Motion earns its place by explaining a change (§8), and a tier whose cycle has run
+ * out and stopped is exactly that. Four times the slow token — composed from the
+ * vocabulary, never a timing of its own — and gated to full motion, because that same
+ * token collapses to a millisecond under the reduced preference and would strobe.
+ * Nothing is lost there: the lift, the edge and the line all still say it.
+ */
+.stage-node[data-oversight='dormant'][data-motion='full'] .stage-node__medallion {
+  animation: stage-node-waiting calc(var(--duration-slow) * 4) ease-in-out infinite;
+}
+
+@keyframes stage-node-waiting {
+  from,
+  to {
+    box-shadow: inset 0 0 0 1px currentColor;
+  }
+
+  50% {
+    box-shadow: inset 0 0 0 3px currentColor;
+  }
+}
+
+.stage-node[data-oversight='overseen'] .stage-node__state {
+  font-style: italic;
+}
+
+/*
+ * Fixed line boxes on both text rows, so a placeholder and the real thing occupy
+ * exactly the same space and nothing moves when the rung is reached.
+ */
+.stage-node__name {
+  margin: 0;
+  block-size: var(--space-4);
+  font-size: var(--text-sm);
+  line-height: var(--space-4);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.stage-node__count {
+  margin: 0;
+  block-size: var(--space-6);
+  font-family: var(--font-numeric);
+  font-size: var(--text-lg);
+  line-height: var(--space-6);
+  color: var(--ink);
+}
+
+/*
+ * The state line. Held open at its full height whichever of the three states is
+ * showing — and while none is — so the chain never reflows as tiers start, stop and
+ * get somebody appointed over them.
+ */
+.stage-node__state {
+  margin: 0;
+  min-block-size: var(--space-6);
+  font-size: var(--text-xs);
+  line-height: var(--space-3);
+  color: var(--ink-dim);
+}
+
+.stage-node__bar {
+  display: inline-block;
+  vertical-align: middle;
+  inline-size: calc(var(--space-8) * 2);
+  block-size: var(--space-2);
+  background: var(--surface-panel);
+  border-radius: var(--space-1);
+}
+
+.stage-node__bar--short {
+  inline-size: var(--space-8);
+}
+
+.stage-node--sealed {
+  color: var(--ink-dim);
+}
+
+.stage-node--sealed .stage-node__medallion {
+  background: var(--well);
+  border: 1px solid var(--line);
+}

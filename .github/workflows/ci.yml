@@ -24,3 +24,7 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm lint
       - run: pnpm test
+
+      # There is a real app now, and a Vite build fails on things tsc does not see —
+      # a bad asset path, an import that only resolves under the dev server.
+      - run: pnpm build

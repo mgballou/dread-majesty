@@ -1,125 +1,88 @@
-/* M0 shell only. Replaced wholesale in M2. Semantic tokens even so. */
+/* The frame. See App.tsx. */
 
 .shell {
-  max-width: 42rem;
+  max-width: 72rem;
   margin: 0 auto;
-  padding: var(--space-8) var(--space-4);
+  padding: var(--space-4);
+  min-height: 100vh;
+}
+
+.shell__body {
   display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
   gap: var(--space-6);
+  align-items: start;
 }
 
-.crown {
-  text-align: center;
-  padding: var(--space-6);
-  background: var(--surface-raised);
-  border: 1px solid var(--line);
-  border-radius: var(--space-2);
-}
-
-.crown__evil {
-  margin: 0;
-  font-family: var(--font-numeric);
-  font-size: 2.5rem;
-  color: var(--ink);
-}
-
-.crown__rate {
-  margin: var(--space-1) 0 0;
-  color: var(--ink-muted);
-  font-size: 0.875rem;
-}
-
-.rail {
+.shell__side {
   display: grid;
+  gap: var(--space-4);
+}
+
+.shell__claim {
+  width: 100%;
+  border-color: var(--tone-danger);
+}
+
+/*
+ * The records live in the footer, not in the right-hand column.
+ *
+ * They used to sit under the prestige panel and open inline beneath it, which put
+ * the reveal below the fold on any normal window — pressing the button looked like
+ * nothing happening. They are dialogs now, and the footer is where a thing that
+ * takes over the screen should be reached from.
+ */
+.shell__foot {
+  display: flex;
+  justify-content: center;
+  margin-block-start: var(--space-8);
+  padding-block-start: var(--space-4);
+  border-block-start: 1px solid var(--line);
+}
+
+.shell__records {
+  display: flex;
   gap: var(--space-2);
 }
 
-.row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
-  padding: var(--space-3) var(--space-4);
+@media (width <= 52rem) {
+  .shell__body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* The boot placeholder is sized to what lands, so nothing moves when it does. */
+.boot__crown,
+.boot__stage,
+.boot__rail {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--space-2);
 }
 
-/* Structural mark, never a fill. Only the accent means act. */
-.row--best {
-  border-left: 3px solid var(--accent);
+.boot__crown {
+  height: 7rem;
+  margin-bottom: var(--space-6);
 }
 
-.row__body {
-  flex: 1;
-  min-width: 0;
+.boot__body {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: var(--space-6);
 }
 
-.row__name {
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 600;
+/* Sized to the opening board — three rungs and one rail row — because that is what
+   lands for anybody the boot screen is actually shown to. */
+.boot__stage {
+  height: 36rem;
 }
 
-.row__meta {
-  margin: var(--space-1) 0 var(--space-2);
-  font-size: 0.8125rem;
-  color: var(--ink-muted);
+.boot__rail {
+  height: 25rem;
 }
 
-.row__cycle {
-  width: 100%;
-  height: 2px;
-  appearance: none;
-  border: none;
-  background: var(--well);
-}
-
-.row__cycle::-webkit-progress-bar {
-  background: var(--well);
-}
-
-.row__cycle::-webkit-progress-value {
-  background: var(--line-strong);
-  transition: width var(--duration-fast) linear;
-}
-
-.buy {
-  min-width: 6rem;
-  min-height: 2.5rem;
-  padding: var(--space-2) var(--space-4);
-  font-family: var(--font-numeric);
-  color: var(--ink);
-  background: transparent;
-  border: 1px solid var(--line-strong);
-  border-radius: var(--space-1);
-  cursor: pointer;
-}
-
-.buy:disabled {
-  color: var(--ink-dim);
-  border-color: var(--line);
-  cursor: not-allowed;
-}
-
-/* Exactly one of these on screen at a time. */
-.buy--primary {
-  color: var(--on-accent);
-  background: var(--accent);
-  border-color: var(--accent);
-}
-
-.buy--primary:hover {
-  background: var(--accent-pressed);
-}
-
-.foot {
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
-}
-
-.foot__note {
-  margin: 0;
-  font-size: 0.75rem;
-  color: var(--ink-dim);
+@media (width <= 52rem) {
+  .boot__body {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }

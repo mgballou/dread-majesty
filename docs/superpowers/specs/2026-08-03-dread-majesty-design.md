@@ -186,7 +186,8 @@ Plus selectors, all pure and read-only: `nextCost`, `bulkCost`, `maxAffordable`,
 `canAfford`, `productionPerSecond`, `prestigeGain`, `milestoneProgress`.
 
 Intents: `{ kind: 'purchase', tierId, quantity }` where quantity is `1 | 10 | 100 |
-'max'`; `{ kind: 'smite' }`; `{ kind: 'prestige' }`.
+'max'`; `{ kind: 'smite' }`; `{ kind: 'rouse', tierId }`; `{ kind: 'appoint', tierId }`;
+`{ kind: 'prestige' }`. The last two belong to §5.6.
 
 ### 4.6 Offline catch-up
 
@@ -233,19 +234,27 @@ guessed. A first pass, not a final answer.
 
 | Tier | Yield | Cycle | Base cost | Cost rate |
 | --- | ---: | ---: | ---: | ---: |
-| Minion | 15 Evil | 24s | 90 | 1.089 |
+| Minion | 2.5 Evil | 4s | 90 | 1.089 |
 | Warren | 1 Minion | 90s | 2,500 | 1.120 |
 | Dark Legion | 1 Warren | 10m | 2,000,000 | 1.180 |
 | Fortress | 1 Legion | 30m | 5,000,000,000 | 1.220 |
 
-What that produces:
+What that produces, with the milestone ladder of §5.3:
 
 | | |
 | --- | --- |
-| First Warren | 26m |
-| First Dark Legion | 58m |
-| First Fortress | 2h 53m |
-| First prestige | 2h 46m |
+| First Warren | 28m |
+| First Dark Legion | 1h 01m |
+| First Fortress | 2h 37m |
+| First prestige | 2h 29m |
+| Souls at 8h | 243 |
+| Souls at 12h | 2,338 |
+
+The opening — first Warren, first Dark Legion — is identical to what the tiers were
+tuned against. The Fortress and the first prestige come about 12% early, and the long
+game runs richer, because a milestone ladder that never stops issuing raises the
+growth exponent. Both are accepted: 239 souls at 8h is ×5.8, which lands inside the
+first-reset band §5.4 was aiming for.
 
 **Every tier above Minions aims for a payback period of tens of minutes.** One unit
 yields one unit of the tier below per cycle; the cost curve gates how far you can
@@ -253,7 +262,12 @@ stack it. The reference docs' figures had a Warren yielding 100 Minions a minute
 which paid back its own cost about ten times over per minute and detonated the
 economy inside half an hour — every tier unlocked by minute 23.
 
-Minion values are the reference docs' own and are kept: that opening pace reads well.
+Minion values are the reference docs' own **rate** and are kept: 0.625 Evil a second
+reads well. The cycle was 15 Evil every 24s and is now 2.5 Evil every 4s, which is the
+same rate to the last digit and leaves every number in the table above untouched. It
+was shortened for §5.6 — a manual tier you tap once and then watch for 24 seconds is
+dead air, and AdVenture Capitalist's opening business runs a 0.6s cycle for exactly
+this reason.
 
 **Cost rate varies per tier deliberately.** The reference docs use 1.089 for
 everything, which makes every tier feel identical. AdCap varies it per business for
@@ -268,9 +282,23 @@ A closed form may replace the loop only if it is tested against the loop.
 
 ### 5.3 Milestones
 
-Owned-count milestones at 25, 50, 100, 200, 300, 400 each double that tier's output.
-**This is what actually drives the buy loop** — without it the rail is arithmetic. The
-next milestone and its distance must be visible on every rail row.
+Owned-count milestones multiply that tier's output. **This is what actually drives the
+buy loop** — without it the rail is arithmetic. The next milestone and its distance
+must be visible on every rail row, which means **the ladder never runs out**.
+
+Each milestone carries **its own multiplier**, rather than every rung sharing one.
+That is not decoration. With a flat ×2 per rung the total is `2^(rungs passed)`, and
+generator counts run past 1e20, so a player passes every rung on the ladder — the
+ladder's *length* becomes the late-game multiplier. Going from six rungs to fifteen
+took the whole economy 2.2× faster and moved first prestige from 2h46m to 1h17m.
+
+- The first six rungs — 25, 50, 100, 200, 300, 400 — stay at **×2**. They are what the
+  opening hour was tuned against. Do not move them.
+- Past 400 the thresholds double and each rung is worth **×1.25**. A goal always
+  exists, the early game is untouched, and the late game compounds without detonating.
+
+Milestone thresholds and multipliers are content, not engine. Retune them and re-run
+the harness; §5.2's table is the output of that run.
 
 ### 5.4 Prestige — Damned Souls
 
@@ -289,21 +317,80 @@ would naturally take their first reset somewhere in the 6–12h band, for a ×1.
 
 ### 5.5 Smite
 
-The tap verb. Yields Evil worth roughly 3 seconds of current production, floor 1. It
-matters for the first ten minutes and then does not, which is the intent. It is never
-an upgradeable path.
+One of the two tap verbs, and the one that pays. Yields Evil worth roughly 3 seconds
+of current production, floor 1. It matters for the first ten minutes and then does
+not, which is the intent. It is never an upgradeable path.
 
-### 5.6 Balance harness
+It reads **potential** production — what the tiers would make if every one of them
+were running — not what they are making this instant. Otherwise a player who has not
+yet roused anything gets the floor of 1 for ever, and Smite stops being the thing that
+carries the opening.
+
+Smite survives §5.6 because the two verbs mean different things. Smite pays now.
+Rousing a tier starts that tier's production. Rousing the Minions and then smiting
+while their 4 seconds run is the opening loop.
+
+### 5.6 Manual cycles and Overseers
+
+**A tier does not run until somebody makes it run.** This is AdVenture Capitalist's
+hook and it is worth taking: it puts a reason to touch the game into every tier, for a
+while, and then buys that reason off.
+
+- Every tier begins **manual**. `TierState.running` is false, and a tier that is not
+  running accrues no cycle progress at all.
+- The **rouse** intent sets it running. One cycle runs, pays out, and the tier stops.
+  Progress resets to zero rather than carrying — a manual tier banks nothing.
+- The **appoint** intent hires that tier's **Overseer**, for Evil. An appointed tier
+  runs for ever and never needs rousing again.
+- Overseers **survive prestige**, like achievements and unlock flags. AdCap keeps
+  managers through an angel reset, and for the same reason: the tapping phase is an
+  opening, not a tax to pay every few hours.
+- Offline, an unappointed tier finishes at most the one cycle it was already running.
+  That is the honest consequence of the rule, and it is the strongest argument the
+  game ever makes for appointing somebody.
+
+Overseer costs sit at roughly **0.4× the next tier's base cost**, so appointing
+competes directly with reaching the tier above — the trade the player should be
+weighing. The Fortress, which has no tier above it, extrapolates the ratio.
+
+| Tier | Overseer | Cost | In reach at |
+| --- | --- | ---: | ---: |
+| Minions | Taskmaster of the Pits | 1,000 | 20m |
+| Warrens | Warden of the Warrens | 800,000 | 57m |
+| Dark Legions | Quartermaster of the Host | 2,000,000,000 | 2h 23m |
+| Fortresses | Castellan of the Black Keep | 5,000,000,000,000 | 5h 43m |
+
+The Taskmaster lands at 20 minutes and the first Warren at 28, which is the trade
+working: for those eight minutes appointing genuinely is the better buy, and the rail
+must be able to say so.
+
+**The harness does not measure this layer, deliberately.** Its policy is perfect
+tapping — every manual tier is roused the instant its cycle frees — and it appoints an
+Overseer as soon as it can afford one. So §5.2's table keeps measuring the idle
+economy exactly as it was tuned, and the harness reports *when each Overseer becomes
+affordable* as a new checkpoint. The manual layer's cost is then set by feel against
+those times. A harness that modelled imperfect tapping would be measuring a guess
+about players, not the economy.
+
+### 5.7 Balance harness
 
 `packages/engine/scripts/harness.ts`. Runs the engine headless over seven simulated
 days and reports time-to-first-of-each-tier, time-to-first-prestige, and a checkpoint
 table of production, counts, lifetime Evil and souls at 15m through 7d.
 
-The buying policy is: every simulated second, buy one of every tier you can afford,
-richest first. Not optimal play, but far closer to it than only ever buying the top
+The policy is, every simulated second: buy one of every tier you can afford, richest
+first; then appoint whatever Overseer the change will cover, cheapest first; then
+rouse every manual tier whose cycle is free. Buying comes first so an Overseer can
+only ever be paid for out of what the buying pass left, and cannot starve the
+generator stack. Not optimal play, but far closer to it than only ever buying the top
 tier — a real player keeps stacking the cheap tiers while saving for the expensive
-ones. **The policy is the instrument's calibration.** Change it and every number in
-§5.2 shifts, so change it deliberately and re-record the results.
+ones.
+
+**The policy is the instrument's calibration.** Change it and every number in §5.2
+shifts, so change it deliberately and re-record the results. Adding the appointment
+pass alone moved the first Warren from 26m to 28m, with no balance number touched:
+the harness now spends 1,000 Evil on a Taskmaster against a 15-minute lifetime total
+of about 4,400.
 
 Slices are 1s rather than the live 100ms. Every cycle duration in the content is a
 whole number of seconds, so completions stay exact and the run goes ten times faster.
@@ -327,11 +414,30 @@ own cascade. This one does, and it is the reason the diagram beats a list.
 Mote count is a display decision, not a headcount — a tier producing millions of units
 per cycle cannot draw a mote each. Pick a readable range and scale into it.
 
+Each node is also the **tap target that rouses that tier** until its Overseer is
+appointed (§5.6). The verb belongs on the thing it acts on, not on a button somewhere
+else.
+
 **Rail — one accent, always.** `ui-sensibility.md` §3 forbids five equal buttons; the
 genre's scrolling list is nothing else. Every generator sits in the rail at secondary
 weight, and **the single best available purchase is lifted out and accented**. One
 primary action, always, and always the right one. The full list stays for players who
 want to disagree. Buy quantity (×1 / ×10 / ×100 / max) is a sticky global toggle.
+
+The rail carries the tiers the player has met, **plus exactly one named row for the
+tier after them** — what it is and what it costs. Three identical blank slots are not
+a goal, they are a hole; one named row is the goal, and the rail still does not jump
+when the tier arrives.
+
+**Gold is the accent.** The game is about majesty as much as dread, and orange alone
+was carrying none of it. Gold owns the single lifted action at full strength and the
+chevron banners and meters at low weight; ember drops to being the tone of Evil
+itself, one resource among the chain's five. No tier tone may sit near gold, or the
+accent stops meaning act.
+
+Bone text runs brighter than it did. The old muted and dim ramps were set for looks
+and failed §13's contrast floor outright, which is the whole reason half the interface
+was hard to read.
 
 **Reduced motion needs real design here.** This game is motion. Rings jump instead of
 sweeping, motes fade in place instead of travelling, numbers still roll. Nothing that
@@ -382,6 +488,8 @@ The balance harness is a script, not a test. It must never gate CI.
 
 | Milestone | Content |
 | --- | --- |
+Everything through M4 has had a first pass. M5 and M6 have not been started.
+
 | **M0** | Monorepo, toolchain, CI green, private repo pushed. *Delivered with this spec.* |
 | **M1** | Engine complete for Minions and Warrens: fixed step, costs, purchase, save, offline, harness. Every test in §7. **No UI at all.** |
 | **M2** | Chain diagram and rail, one screen, local save. First build anyone else can touch. |
@@ -418,14 +526,36 @@ Answer these during implementation. None blocks M1.
 1. **Does the 30m→1h cliff need softening?** (§5.2) It is a 1,100× jump as the first
    Dark Legion lands. Intentional as the moment the cascade becomes visible, but only
    real players can say whether it reads as a payoff or a discontinuity.
-2. **Do milestones need more thresholds?** (§5.3) Six of them cap at ×64, reached
-   early and then permanent — at which point they are a flat multiplier rather than a
-   goal. AdCap keeps issuing them. Decide before M3.
-3. **Offline cap upgrade curve.** How far past 4 hours can it go, and at what cost?
-4. **Achievements**: cosmetic, or do they grant multipliers? Cosmetic is simpler and
-   AdCap grants multipliers. Decide before M3.
-5. **Where does the writing live?** Copy belongs in `content`, but a tone this
-   specific may want its own authoring pass rather than inline strings.
+2. **Offline cap upgrade curve.** How far past 4 hours can it go, and at what cost?
+3. **Second Overseers, bought with Souls.** §5.6's Overseers cost Evil and only
+   automate. A second, soul-bought appointment per tier would give the prestige loop
+   something to spend on and a reason to reset beyond the flat +2%. What each one
+   *does* is open — a faster cycle, a share of the tier below, a milestone reached
+   early. Pinned, not started. The engine work in §5.6 leaves room for it: `overseers`
+   is per-tier state that survives prestige, and a second rank is another field on it.
 
-Settled since the first draft: the tier is **Warrens** (§5.1), and the Legion,
-Fortress and prestige numbers are tuned (§5.2, §5.4).
+### Settled
+
+- The tier below Legions is **Warrens** (§5.1).
+- The Legion, Fortress and prestige numbers are tuned (§5.2, §5.4).
+- **Milestones keep issuing** (was §10.2). The ladder no longer stops at 400, so
+  every rail row always has a next threshold. This forced a change the original
+  question did not anticipate: with one flat multiplier per rung, the total
+  multiplier is `2^(rungs passed)`, and since counts run to 1e20 a player passes
+  *every* rung, so the ladder's length alone sets the late-game multiplier.
+  Extending six rungs to fifteen took the whole economy 2.2× faster — first prestige
+  fell from 2h46m to 1h17m. Milestones therefore carry a **multiplier each** rather
+  than sharing one. See §5.3.
+- **Achievements are cosmetic, with the hook live** (was §10.4). `AchievementDef`
+  carries a `multiplier`, every shipping achievement sets it to `1`, and the engine
+  genuinely multiplies by it. Making achievements a power source later is a content
+  edit, not an engine change.
+- **The writing lives in its own module** (was §10.5):
+  `packages/content/src/v1/copy.ts`, typed by `packages/content/src/copy.ts` and
+  exported as `CURRENT_COPY`. It is deliberately **not** part of `Content` — the
+  engine takes `Content` as an argument and must never read a string, and folding
+  copy in would make every engine fixture carry prose it never reads. Components
+  take the slice of copy they need as a prop; none of them imports `CURRENT_COPY`.
+- **Sound is synthesised, not recorded.** A small Web Audio layer builds every cue
+  from numbers in `apps/web/src/audio/cues.ts`. No audio files, nothing fetched, and
+  no `AudioContext` constructed until the player turns sound on. Muted by default.

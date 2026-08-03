@@ -1,0 +1,48 @@
+/* The titled region. See Panel.tsx and ui-sensibility §6. */
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--space-2);
+  overflow: hidden;
+}
+
+.panel__band {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-raised);
+  border-bottom: 1px solid var(--accent-line);
+}
+
+/* The banner is the heading's surface. It sits on the band's own ground, so the gold
+   edge reads as a cartouche rather than a second plaque stacked on the first. */
+.panel__title {
+  flex: 0 1 auto;
+  min-inline-size: 0;
+}
+
+.panel__trailing {
+  margin-inline-start: auto;
+  font-family: var(--font-numeric);
+  font-size: var(--text-sm);
+  color: var(--ink-muted);
+}
+
+.panel__actions {
+  display: flex;
+  gap: var(--space-2);
+  align-self: center;
+}
+
+/* Trailing sits at the edge when there are no actions; actions take that job when
+   there are, so the two never fight over the same margin. */
+.panel__actions:only-of-type {
+  margin-inline-start: auto;
+}
+
+.panel__body {
+  padding: var(--space-4);
+  background: var(--surface);
+}
