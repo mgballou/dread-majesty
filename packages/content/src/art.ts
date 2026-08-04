@@ -13,15 +13,20 @@ export interface ArtSlot {
   /** Drives the generated SVG fallback. */
   readonly fallback: {
     /** Silhouette the fallback draws. */
-    readonly shape: 'spire' | 'banner' | 'hovel' | 'figure' | 'sigil';
+    readonly shape: 'spire' | 'banner' | 'hovel' | 'figure' | 'sigil' | 'throne';
     /** Semantic token name. Never a raw colour. */
-    readonly tone: 'tier-1' | 'tier-2' | 'tier-3' | 'tier-4' | 'resource';
+    readonly tone: 'tier-1' | 'tier-2' | 'tier-3' | 'tier-4' | 'tier-5' | 'resource';
   };
   /** Accessible name. Survives even when the label is hidden. */
   readonly alt: string;
 }
 
 export const ART: Readonly<Record<string, ArtSlot>> = {
+  'tier/throne': {
+    src: null,
+    fallback: { shape: 'throne', tone: 'tier-5' },
+    alt: 'A high black throne under a broken arch',
+  },
   'tier/fortress': {
     src: null,
     fallback: { shape: 'spire', tone: 'tier-4' },

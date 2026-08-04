@@ -112,7 +112,7 @@ describe('railPlan', () => {
   it('offers an appointment on every tier nobody oversees', () => {
     const ids = appointments(plan()).map((option) => option.tierId);
 
-    expect(ids).toEqual(['fortress', 'legion', 'warren', 'minion']);
+    expect(ids).toEqual(['throne', 'fortress', 'legion', 'warren', 'minion']);
   });
 
   it('offers no appointment on a post already filled', () => {

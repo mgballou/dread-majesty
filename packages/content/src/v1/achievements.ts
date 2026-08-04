@@ -40,6 +40,10 @@ export const v1Achievements: readonly AchievementDef[] = [
   defineAchievement('fortress-25', { kind: 'tier-owned', tierId: 'fortress', atLeast: '25' }),
   defineAchievement('fortress-200', { kind: 'tier-owned', tierId: 'fortress', atLeast: '200' }),
 
+  defineAchievement('throne-1', { kind: 'tier-owned', tierId: 'throne', atLeast: '1' }),
+  defineAchievement('throne-25', { kind: 'tier-owned', tierId: 'throne', atLeast: '25' }),
+  defineAchievement('throne-200', { kind: 'tier-owned', tierId: 'throne', atLeast: '200' }),
+
   defineAchievement('evil-1e3', { kind: 'lifetime-evil', atLeast: '1e3' }),
   defineAchievement('evil-1e6', { kind: 'lifetime-evil', atLeast: '1e6' }),
   defineAchievement('evil-1e12', { kind: 'lifetime-evil', atLeast: '1e12' }),

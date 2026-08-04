@@ -134,7 +134,7 @@ describe('BuyRail', () => {
 
     const { container } = draw();
 
-    expect(container.querySelectorAll('.button:not(.button--primary)')).toHaveLength(3);
+    expect(container.querySelectorAll('.button:not(.button--primary)')).toHaveLength(4);
   });
 
   it('shows only the tiers the player has met, and one row beyond them', () => {
@@ -257,7 +257,7 @@ describe('BuyRail', () => {
 
     draw();
 
-    expect(screen.getAllByRole('progressbar')).toHaveLength(4);
+    expect(screen.getAllByRole('progressbar')).toHaveLength(5);
   });
 
   it('no longer says a word about nobody watching the place', () => {

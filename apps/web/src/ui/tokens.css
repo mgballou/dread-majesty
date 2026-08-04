@@ -41,11 +41,15 @@
 
   /* The chain, bottom rung to top. Cool and thin at the bottom, hot and saturated at
      the top, so a glance down the stage reads as a climb. None of these is the
-     accent, and none may sit within 45° of gold — the hue test pins that. */
+     accent, and none may sit within 45° of gold — the hue test pins that. The top
+     rung is Tyrian, the colour a throne is actually dyed. Measured: hue 307°, which
+     is 98° from gold and 31° from both of its neighbours, and it reads 4.5:1 against
+     --surface. */
   --raw-slate-400: #7c8ba1;
   --raw-moss-400: #6b8f5e;
   --raw-amethyst-400: #9c78b5;
   --raw-wine-400: #a85a76;
+  --raw-tyrian-400: #b25aa8;
 
   --raw-scrim: rgb(8 7 10 / 78%);
 
@@ -109,6 +113,7 @@
   --tone-tier-2: var(--raw-moss-400);
   --tone-tier-3: var(--raw-amethyst-400);
   --tone-tier-4: var(--raw-wine-400);
+  --tone-tier-5: var(--raw-tyrian-400);
 
   /* Evil itself. Ember is one resource among the chain's five now, not the thing
      that means act. */

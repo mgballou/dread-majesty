@@ -75,6 +75,12 @@ export function TierArt({ slot, size, decorative = false }: TierArtProps): React
  * The detail inside earns its place at stage size, where the drawing is 48px: arrow
  * loops, doorways, a lantern. Nothing in here is a second colour — the voids are the
  * ground showing through and the rest is `currentColor` at a handful of weights.
+ *
+ * The throne is the fifth and tallest rung, and reads apart from the fortress by the
+ * same outline rule: it is the only shape with a void at its foot and a broken arch
+ * over its head, and the only one narrower at the top than at the bottom — the
+ * fortress's towers stand in a symmetrical cluster filling the frame, the throne is
+ * one seat, alone.
  */
 function shape(kind: ArtSlot['fallback']['shape']): ReactNode {
   switch (kind) {
@@ -149,6 +155,21 @@ function shape(kind: ArtSlot['fallback']['shape']): ReactNode {
           <circle cx="20.5" cy="16.5" r="2" className="art__void" />
           <circle cx="27.5" cy="16.5" r="2" className="art__void" />
           <path d="M17 39.5 L29 39.5 L29 41.5 L17 41.5 Z" className="art__void" />
+        </g>
+      );
+    case 'throne':
+      return (
+        <g fill="currentColor">
+          <path d="M6 12 A18 18 0 0 1 42 12 L38 12 A14 14 0 0 0 10 12 Z" opacity="0.5" />
+          <rect x="4" y="8" width="4" height="6" opacity="0.5" />
+          <rect x="40" y="8" width="4" height="6" opacity="0.5" />
+          <path d="M17 6 L31 6 L33 30 L15 30 Z" opacity="0.74" />
+          <rect x="13" y="30" width="22" height="5" />
+          <path d="M11 35 L37 35 L39 46 L9 46 Z" />
+          <rect x="13" y="18" width="4" height="12" opacity="0.74" />
+          <rect x="31" y="18" width="4" height="12" opacity="0.74" />
+          <path d="M22 12 L24 8 L26 12 L24 16 Z" className="art__void" />
+          <rect x="20" y="38" width="8" height="8" className="art__void" />
         </g>
       );
     case 'sigil':

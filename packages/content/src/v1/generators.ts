@@ -98,6 +98,19 @@ export const v1: Content = {
 
   tiers: [
     {
+      id: 'throne',
+      name: 'Throne',
+      plural: 'Thrones',
+      produces: 'fortress',
+      yield: '1',
+      cycleMs: 90 * MINUTE,
+      costResource: 'evil',
+      baseCost: '2e13',
+      costRate: 1.26,
+      overseerCost: '8e15',
+      art: 'tier/throne',
+    },
+    {
       id: 'fortress',
       name: 'Fortress',
       plural: 'Fortresses',

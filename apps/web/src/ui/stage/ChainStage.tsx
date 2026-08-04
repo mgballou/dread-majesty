@@ -73,8 +73,8 @@ interface ChainStageProps {
 }
 
 /**
- * The chain, alive, running left to right: Fortresses, Dark Legions, Warrens, Minions,
- * and Evil at the end of it.
+ * The chain, alive, running left to right: Thrones, Fortresses, Dark Legions, Warrens,
+ * Minions, and Evil at the end of it.
  *
  * Generators producing other generators is the mechanical novelty of this game, and no
  * other game in the genre draws it. A list would show the same numbers and hide the
