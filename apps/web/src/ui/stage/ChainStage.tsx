@@ -163,7 +163,7 @@ export function ChainStage({
             <ChainLink
               produced={state.gens[tier.id].lifetimeProduced}
               version={version}
-              tone={toneOf(tier.art)}
+              tone={toneOf(rungs[index + 1]?.art ?? EVIL_ART)}
               surging={surge !== null}
               surgeIndex={(beats - 1 - index) * 2}
             />

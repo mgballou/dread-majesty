@@ -28,7 +28,14 @@ interface ChainLinkProps {
   produced: Decimal;
   /** Bumps whenever the state moved. The link compares against it, never a clock. */
   version: number;
-  /** Semantic tone the motes carry, from the art manifest. Null leaves them inherited. */
+  /**
+   * Semantic tone the motes carry: the tone of the thing **being delivered**, from the
+   * art manifest.
+   *
+   * The run's colour is its cargo, not its sender. A Warren firing sends Minions, so
+   * that run is Minion-toned; the last run sends Evil and is ember, whatever colour the
+   * Minions above it are. Null leaves them inherited.
+   */
   tone: ArtSlot['fallback']['tone'] | null;
   /**
    * True while an evocation is running.
