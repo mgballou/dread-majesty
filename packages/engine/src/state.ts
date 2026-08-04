@@ -73,7 +73,7 @@ export function createState(content: Content): GameState {
     overseers,
     smiteActiveMs: 0,
     smiteCooldownMs: 0,
-    stats: { playTimeMs: 0, smites: 0, prestiges: 0 },
+    stats: { playTimeMs: 0, smites: 0, prestiges: 0, runMs: 0 },
   };
 }
 

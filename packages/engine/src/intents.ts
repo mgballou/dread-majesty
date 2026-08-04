@@ -148,7 +148,7 @@ function prestige(
   const carried = {
     souls: state.souls.add(gain),
     lifetimeEvil: state.lifetimeEvil,
-    stats: { ...state.stats, prestiges: state.stats.prestiges + 1 },
+    stats: { ...state.stats, prestiges: state.stats.prestiges + 1, runMs: 0 },
     // Spec §5.4: a reset keeps achievements and unlock flags. A player who has seen
     // the Fortress row does not lose it for starting over. Overseers are pointedly
     // not on this list — spec §3.4 reverses the old rule that kept them, because a

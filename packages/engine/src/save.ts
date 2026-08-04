@@ -126,7 +126,13 @@ export function deserialize(blob: SaveBlob): GameState {
     overseers,
     smiteActiveMs: migrated.smiteActiveMs ?? 0,
     smiteCooldownMs: migrated.smiteCooldownMs ?? 0,
-    stats: { ...migrated.stats },
+    // `runMs` is spread first then re-applied with a fallback, not written as
+    // `{ runMs: 0, ...migrated.stats }`: `SaveBlob['stats']` reuses `GameState['stats']`
+    // wholesale, so its type already claims `runMs` is always present and tsc refuses
+    // the more obvious ordering as a dead default (TS2783). A save from before this
+    // field existed has no such guarantee at runtime, so the fallback still earns its
+    // place.
+    stats: { ...migrated.stats, runMs: migrated.stats.runMs ?? 0 },
   };
 }
 
