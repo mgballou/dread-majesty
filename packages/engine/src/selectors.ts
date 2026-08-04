@@ -32,9 +32,9 @@ export function productionPerSecond(
     if (owned.lte(0)) continue;
 
     const perCycle = owned
-      .mul(effectiveYield(state, content, tier))
+      .mul(effectiveYield(state, tier))
       .mul(tierMultiplier(state, content, owned));
-    total = total.add(perCycle.div(effectiveCycleMs(state, content, tier) / 1000));
+    total = total.add(perCycle.div(effectiveCycleMs(state, tier) / 1000));
   }
 
   return total;
@@ -61,14 +61,14 @@ export function overseenProductionPerSecond(
   let total = new Decimal(0);
 
   for (const tier of content.tiers) {
-    if (tier.produces !== producible || !hasAutomator(state, content, tier.id)) continue;
+    if (tier.produces !== producible || !hasAutomator(state, tier)) continue;
     const owned = state.gens[tier.id].owned;
     if (owned.lte(0)) continue;
 
     const perCycle = owned
-      .mul(effectiveYield(state, content, tier))
+      .mul(effectiveYield(state, tier))
       .mul(tierMultiplier(state, content, owned));
-    total = total.add(perCycle.div(effectiveCycleMs(state, content, tier) / 1000));
+    total = total.add(perCycle.div(effectiveCycleMs(state, tier) / 1000));
   }
 
   return total;
@@ -92,9 +92,16 @@ export function canAfford(
   return state.resources[tier.costResource].gte(cost);
 }
 
-/** Whether this tier has somebody automating it, and so runs without being told. */
+/**
+ * Whether this tier has somebody automating it, and so runs without being told.
+ *
+ * The convenience wrapper: callers here hold a `TierId`, not a `TierDef`, so
+ * resolving the tier is this function's own job — `hasAutomator` in `roster.ts` is
+ * the hot-path function underneath it and takes the tier directly.
+ */
 export function isAppointed(state: GameState, content: Content, tierId: TierId): boolean {
-  return hasAutomator(state, content, tierId);
+  const tier = content.tiers.find((candidate) => candidate.id === tierId);
+  return tier !== undefined && hasAutomator(state, tier);
 }
 
 /**
@@ -104,7 +111,8 @@ export function isAppointed(state: GameState, content: Content, tierId: TierId):
  * somebody automates — that last one never stopped, so there is nothing to rouse.
  */
 export function isRousable(state: GameState, content: Content, tierId: TierId): boolean {
-  if (hasAutomator(state, content, tierId)) return false;
+  const tier = content.tiers.find((candidate) => candidate.id === tierId);
+  if (tier && hasAutomator(state, tier)) return false;
 
   const gen = state.gens[tierId];
   return gen.owned.gt(0) && !gen.running;
