@@ -323,4 +323,24 @@ describe('BuyRail', () => {
 
     expect(screen.queryByText(/bought/)).not.toBeInTheDocument();
   });
+
+  it('bounds a quickened row\'s meter by its halved cycle, not the raw one', () => {
+    const minion = CURRENT.tiers.find((tier) => tier.id === 'minion')!;
+    state.overseers.minion = ['minion-goad'];
+    state.gens.minion.progressMs = 1900;
+
+    draw();
+
+    const meter = screen.getByRole('progressbar', { name: CURRENT_COPY.rail.cycle(minion.name) });
+
+    expect(meter).toHaveAttribute('aria-valuenow', '95');
+  });
+
+  it('states a swollen row\'s doubled yield, not the raw one', () => {
+    state.overseers.minion = ['minion-glut'];
+
+    draw();
+
+    expect(screen.getByText(/^5 Evil every/)).toBeInTheDocument();
+  });
 });
