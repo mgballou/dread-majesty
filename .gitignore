@@ -11,3 +11,4 @@ coverage/
 
 # Superpowers SDD scratch
 .superpowers/
+.claude/settings.local.json
