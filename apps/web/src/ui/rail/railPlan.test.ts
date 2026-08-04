@@ -13,6 +13,9 @@ import {
 
 const all = (): boolean => true;
 
+const MINION_HAND_COST =
+  CURRENT.tiers.find((tier) => tier.id === 'minion')?.overseers[0]?.cost ?? '0';
+
 let state: GameState;
 
 beforeEach(() => {
@@ -43,7 +46,9 @@ function appointAll(): void {
 
 describe('railPlan', () => {
   it('lifts the purchase that returns most per Evil spent, not the dearest affordable one', () => {
-    state.resources.evil = new Decimal(2600);
+    state.gens.warren.owned = new Decimal(12);
+    state.gens.warren.purchased = new Decimal(12);
+    state.resources.evil = new Decimal(20000);
 
     expect(plan().best?.tierId).toBe('minion');
   });
@@ -87,6 +92,9 @@ describe('railPlan', () => {
   });
 
   it('names something to save toward when nothing is affordable', () => {
+    state.gens.warren.owned = new Decimal(12);
+    state.gens.warren.purchased = new Decimal(12);
+
     expect(plan().saving?.tierId).toBe('minion');
   });
 
@@ -129,7 +137,7 @@ describe('railPlan', () => {
   it('prices an appointment at the Overseer cost from the content', () => {
     const minion = appointments(plan()).find((option) => option.tierId === 'minion');
 
-    expect(minion?.cost.eq(1000)).toBe(true);
+    expect(minion?.cost.eq(MINION_HAND_COST)).toBe(true);
   });
 
   it('values an appointment at the whole tier, because an idle tier makes nothing', () => {

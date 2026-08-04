@@ -2,9 +2,16 @@ import Decimal from 'break_eternity.js';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { CURRENT, CURRENT_COPY } from '@dm/content';
-import { createState, type GameState } from '@dm/engine';
+import { createState, prestigeGain, type GameState } from '@dm/engine';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { formatNumber } from '../format.ts';
 import { PrestigePanel } from './PrestigePanel.tsx';
+
+function soulsFor(lifetimeEvil: string): Decimal {
+  const at = createState(CURRENT);
+  at.lifetimeEvil = new Decimal(lifetimeEvil);
+  return prestigeGain(at, CURRENT);
+}
 
 let state: GameState;
 
@@ -27,7 +34,7 @@ function draw(onPrestige = vi.fn()) {
   };
 }
 
-const CLAIM = CURRENT_COPY.prestige.claim('670');
+const CLAIM = CURRENT_COPY.prestige.claim(formatNumber(soulsFor('1e16')));
 const CONFIRM = new RegExp(CURRENT_COPY.prestige.confirmAction);
 
 describe('PrestigePanel', () => {

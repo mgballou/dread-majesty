@@ -3,7 +3,7 @@ import { CURRENT } from '@dm/content';
 import { createState } from '@dm/engine';
 import { isPrestigeWorthShowing } from './reveals.ts';
 
-const firstSoul = 5e14 / 150 ** 2;
+const firstSoul = Number(CURRENT.prestige.scale) / CURRENT.prestige.k ** 2;
 
 describe('isPrestigeWorthShowing', () => {
   it('stays out of the way on a fresh save', () => {

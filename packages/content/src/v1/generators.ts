@@ -25,10 +25,16 @@ const TUNED_MILESTONES: readonly MilestoneDef[] = [25, 50, 100, 200, 300, 400].m
  *
  * That second half is the whole reason `MilestoneDef` carries a multiplier at all.
  * A rung worth ×m makes output scale as `count^(1 + log2 m)`, so the rung value sets
- * the growth *exponent*, not a constant. Measured, at ×2 a rung — that is, simply
- * extending the old ladder — the economy ran 2.2× faster and first prestige fell from
- * 2h46m to 1h17m. At ×1.25 it was 2h14m. At ×1.1 it is 2h28m, and the opening hour is
- * untouched either way.
+ * the growth *exponent*, not a constant. Measured against the four-tier economy this
+ * ladder was first fitted to: at ×2 a rung — that is, simply extending the old ladder —
+ * it ran 2.2× faster and first prestige fell from 2h46m to 1h17m. At ×1.25 it was
+ * 2h14m, at ×1.1 2h28m, and the opening hour was untouched either way.
+ *
+ * Those three figures are history, not the game. The retune below rebuilt every tier
+ * and added a fifth, so re-read them as the reason ×1.1 was picked rather than as
+ * anything true of the current run. What the rung is worth now is in the note on `v1`:
+ * with five tiers compounding it is the single largest lever on the mid-game, and
+ * dropping it to ×1.05 would flatten the steepest stretch of the run about fivefold.
  *
  * It runs to 1e21 because generator counts do. Sixty-odd entries is a cheap list, and
  * the engine stops walking at the first threshold a count has not reached.
@@ -40,58 +46,82 @@ const TAIL_MILESTONES: readonly MilestoneDef[] = (() => {
 })();
 
 /**
- * First tuned pass. Measured, not guessed — but a first pass, not a final answer.
+ * The retune of spec `2026-08-04-economy-retune` §5. Measured, not guessed.
  *
  * Tuned against `pnpm harness`, which reports the numbers below. Change anything
  * here and re-run it; the whole point of the harness is that balance is measurable.
  *
- *   Warrens        28m        first prestige   2h 29m
- *   Dark Legions   1h 01m     souls at 8h      243
- *   Fortresses     2h 37m     souls at 12h     2,338
+ *   Warrens        11m 53s    first prestige   45m 03s
+ *   Dark Legions   33m 53s    souls at 8h      8.2e6
+ *   Fortresses     1h 08m     souls at 12h     1.6e8
+ *   Thrones        2h 00m
  *
- * Recorded against the milestone ladder below. The opening — first Warren, first Dark
- * Legion — is within a couple of minutes of the six-rung ladder these tiers were
- * tuned against. The first Fortress and the first prestige come about 12% early, and
- * the long game runs richer: souls at 8h are 243 rather than 34.
+ * The whole chain inside two hours and a reset before the first, which is the evening
+ * §5.2 asks for. Every figure lands within a few per cent of its target.
  *
- * That richness is inherent, not a mistake. A ladder that never stops issuing raises
- * the growth exponent, and issuing for ever is the point (spec §5.3). It lands where
- * the design wanted anyway: 243 souls is ×5.9, and §5.4 aims for a first reset in the
- * 6–12h band at ×1.7 to ×5.5.
+ * When each Overseer first comes within reach, under the harness's policy — which is
+ * what the costs below are priced against:
  *
- * Every figure above moved by a minute or two when the harness took on §5.6, and no
- * number in this file moved to do it. The harness now buys Overseers out of the same
- * Evil the generators come from, and rouses a manual tier the slice after its cycle
- * frees. It costs the run a little, which is the honest answer.
+ *   Taskmaster      8m 25s    Quartermaster   1h 02m    Steward       3h 08m
+ *   Keeper of Whip 13m 37s    Marshal         1h 12m    Long Hour     3h 25m
+ *   Reckoner       15m 59s    Herald          1h 20m    Chancellor    3h 44m
+ *   Warden         28m 39s    Castellan       1h 51m
+ *   Mistress       38m 17s    Scaffold        2h 05m
+ *   Broodkeeper    48m 15s    Quarry          2h 22m
  *
- * When each Overseer first comes within reach, under that same policy — which is what
- * the costs below are priced by feel against:
+ * Each tier's automator comes within reach a few minutes before the tier above does —
+ * Taskmaster 8m against the first Warren at 11m, Warden 28m against the first Legion
+ * at 33m, Quartermaster 1h02m against the first Fortress at 1h08m, Castellan 1h51m
+ * against the first Throne at 2h. That gap is the trade §5.6 wants the player weighing,
+ * and it falls out of pricing every automator at 0.4× the next tier's base cost. The
+ * Throne has no tier above it and extrapolates the ratio. `goad` and `glut` then sit at
+ * ×4 and ×16 of their tier's automator, so both land after the tier above has arrived.
  *
- *   Minions        20m        Dark Legions     2h 23m
- *   Warrens        57m        Fortresses       5h 43m
+ * **What moved, and why.**
  *
- * The Minion tier keeps the original design docs' **rate** — 0.625 Evil a second at 90
- * base — because that opening pace reads well. Everything above it was rebuilt.
+ * *Yields.* Every tier above Minions used to hand over one unit a cycle. A Warren now
+ * breeds five Minions, a Legion takes four Warrens' worth of ground, a Fortress raises
+ * two Legions and a Throne two Fortresses. That is §5.1, and on its own it made the
+ * game roughly four times too fast — the costs below are what took it back.
  *
- * That rate now arrives as 2.5 Evil every 4s rather than 15 every 24s. It is the same
- * figure to the last digit, so not one number in the table above moved. The cycle was
- * shortened for the manual layer of §5.6: a tier you tap once and then watch for 24
- * seconds is dead air, and AdVenture Capitalist runs its opening business on a 0.6s
- * cycle for exactly that reason.
+ * *Cost curves.* Every `costRate` rose sharply: 1.089→1.07 at the Minion, but
+ * 1.12→1.25, 1.18→1.5, 1.22→1.8 and 1.26→2.2 above it. That looks brutal beside the old
+ * numbers and is not: §2 moved cost off `owned` and onto `purchased`, so a curve no
+ * longer compounds against the units the cascade hands out free. The same nominal rate
+ * is a far weaker brake than it was, and these restore the braking the old numbers had
+ * in play. The Minion goes the other way — flatter, so the bottom rail row stays worth
+ * pressing, which is the whole of §1.1.
  *
- * Overseer costs sit at roughly 0.4× the next tier's base cost, so appointing one
- * competes directly with reaching the tier above — which is the trade the player
- * should be weighing. The Fortress has no tier above it and extrapolates the ratio.
+ * *Cycles, at the two tiers a player watches.* The Warren drops 90s→60s and the Legion
+ * 10m→5m. The Fortress keeps 30m and the Throne 90m: at the top the cycle is a rate
+ * control rather than a tap rhythm, since a player owning Thrones has the Steward, and
+ * a long cycle up there is the cheapest brake on the mid-game that costs nothing in
+ * feel.
  *
- * The shape each higher tier aims for is a payback period of tens of minutes: one
- * unit yields one unit of the tier below per cycle, and the cost curve gates how far
- * you can stack it. The first version had a Warren yielding 100 Minions a minute,
- * which paid back its own cost roughly ten times over per minute and detonated the
- * whole economy inside half an hour.
+ * *Souls.* `scale` falls 5e14→5.7e13, which lands the first soul at 45m rather than
+ * three hours. Note that `k` and `scale` are one lever, not two: souls come out as
+ * `k·√(lifetime/scale)`, which is `√(lifetime / (scale/k²))`, so only the ratio has any
+ * effect and `k` stays at 150. Choosing when the first soul lands therefore fixes how
+ * many souls every later moment pays. The gain reaches the 40–50 §5.3 asks for at about
+ * 1h 30m, which is the first reset actually worth taking; at 45m it is worth exactly
+ * one soul, which nobody would take. `perSoul` stays at 0.02.
  *
- * Known rough edge: the 30m→1h stretch jumps about 1,100× as the first Dark Legion
- * lands. That is the moment the cascade becomes visible and it should feel like
- * something, but it may want softening once real players have run at it.
+ * The Minion tier keeps its **rate** — 2.5 Evil every 4s, 0.625 a second — because that
+ * opening pace reads well and it is the one figure the original design docs got right.
+ * Only what a Minion costs moved: 90→50 base, so the first purchase lands at 80 seconds
+ * instead of 144.
+ *
+ * **Known rough edge, and it is worse than it was.** The steepest stretch between two
+ * adjacent harness checkpoints is 4h→8h, where Evil per second multiplies by about
+ * 3.0e4 (lifetime Evil by 6.8e4). §4 asks for no stretch worth more than about 100×.
+ * That target is not reachable at these times and this is the flattest shape found that
+ * still hits them: the game has to climb from a hundred Minions at 15m to a five-tier
+ * cascade by 2h, and compressing the schedule roughly twofold squares the ratio between
+ * checkpoints that are themselves a doubling apart. The pre-retune build measured about
+ * 1.3e4 over the same span at half the pace. One lever is left and was left alone:
+ * dropping the tail rung below to ×1.05 and re-solving the base costs takes this to
+ * about 5.5e3, flatter than the build it replaces, but a rung worth 5% reads as nothing
+ * on a rail row that has to name it. That is a design call, not a balance one.
  */
 export const v1: Content = {
   version: '1',
@@ -102,28 +132,28 @@ export const v1: Content = {
       name: 'Throne',
       plural: 'Thrones',
       produces: 'fortress',
-      yield: '1',
+      yield: '2',
       cycleMs: 90 * MINUTE,
       costResource: 'evil',
-      baseCost: '2e13',
-      costRate: 1.26,
+      baseCost: '5e12',
+      costRate: 2.2,
       overseers: [
         {
           id: 'throne-hand',
           name: 'Steward of the High Seat',
-          cost: '8e15',
+          cost: '2e15',
           effect: { kind: 'automate' },
         },
         {
           id: 'throne-goad',
           name: 'Keeper of the Long Hour',
-          cost: '3.2e16',
+          cost: '8e15',
           effect: { kind: 'quicken', factor: 2 },
         },
         {
           id: 'throne-glut',
           name: 'Chancellor of Titles',
-          cost: '1.28e17',
+          cost: '3.2e16',
           effect: { kind: 'swell', factor: 2 },
         },
       ],
@@ -134,28 +164,28 @@ export const v1: Content = {
       name: 'Fortress',
       plural: 'Fortresses',
       produces: 'legion',
-      yield: '1',
+      yield: '2',
       cycleMs: 30 * MINUTE,
       costResource: 'evil',
-      baseCost: '5e9',
-      costRate: 1.22,
+      baseCost: '6e9',
+      costRate: 1.8,
       overseers: [
         {
           id: 'fortress-hand',
           name: 'Castellan of the Black Keep',
-          cost: '5e12',
+          cost: '2e12',
           effect: { kind: 'automate' },
         },
         {
           id: 'fortress-goad',
           name: 'Overseer of the Scaffold',
-          cost: '2e13',
+          cost: '8e12',
           effect: { kind: 'quicken', factor: 2 },
         },
         {
           id: 'fortress-glut',
           name: 'Master of the Quarry',
-          cost: '8e13',
+          cost: '3.2e13',
           effect: { kind: 'swell', factor: 2 },
         },
       ],
@@ -166,28 +196,28 @@ export const v1: Content = {
       name: 'Dark Legion',
       plural: 'Dark Legions',
       produces: 'warren',
-      yield: '1',
-      cycleMs: 10 * MINUTE,
+      yield: '4',
+      cycleMs: 5 * MINUTE,
       costResource: 'evil',
-      baseCost: '2000000',
-      costRate: 1.18,
+      baseCost: '3e7',
+      costRate: 1.5,
       overseers: [
         {
           id: 'legion-hand',
           name: 'Quartermaster of the Host',
-          cost: '2e9',
+          cost: '2.4e9',
           effect: { kind: 'automate' },
         },
         {
           id: 'legion-goad',
           name: 'Marshal of the Forced March',
-          cost: '8e9',
+          cost: '9.6e9',
           effect: { kind: 'quicken', factor: 2 },
         },
         {
           id: 'legion-glut',
           name: 'Herald of the Levy',
-          cost: '3.2e10',
+          cost: '3.84e10',
           effect: { kind: 'swell', factor: 2 },
         },
       ],
@@ -198,28 +228,28 @@ export const v1: Content = {
       name: 'Warren',
       plural: 'Warrens',
       produces: 'minion',
-      yield: '1',
-      cycleMs: 90 * SECOND,
+      yield: '5',
+      cycleMs: 60 * SECOND,
       costResource: 'evil',
-      baseCost: '2500',
-      costRate: 1.12,
+      baseCost: '1000',
+      costRate: 1.25,
       overseers: [
         {
           id: 'warren-hand',
           name: 'Warden of the Warrens',
-          cost: '800000',
+          cost: '1.2e7',
           effect: { kind: 'automate' },
         },
         {
           id: 'warren-goad',
           name: 'Mistress of the Quickening',
-          cost: '3200000',
+          cost: '4.8e7',
           effect: { kind: 'quicken', factor: 2 },
         },
         {
           id: 'warren-glut',
           name: 'Broodkeeper',
-          cost: '12800000',
+          cost: '1.92e8',
           effect: { kind: 'swell', factor: 2 },
         },
       ],
@@ -233,25 +263,25 @@ export const v1: Content = {
       yield: '2.5',
       cycleMs: 4 * SECOND,
       costResource: 'evil',
-      baseCost: '90',
-      costRate: 1.089,
+      baseCost: '50',
+      costRate: 1.07,
       overseers: [
         {
           id: 'minion-hand',
           name: 'Taskmaster of the Pits',
-          cost: '1000',
+          cost: '400',
           effect: { kind: 'automate' },
         },
         {
           id: 'minion-goad',
           name: 'Keeper of the Whip',
-          cost: '4000',
+          cost: '1600',
           effect: { kind: 'quicken', factor: 2 },
         },
         {
           id: 'minion-glut',
           name: 'Reckoner of the Tally',
-          cost: '16000',
+          cost: '6400',
           effect: { kind: 'swell', factor: 2 },
         },
       ],
@@ -272,8 +302,8 @@ export const v1: Content = {
 
   prestige: {
     k: 150,
-    // First soul lands around three hours (lifetime = scale / k^2 = 2.2e10).
-    scale: '5e14',
+    // First soul lands at 45m (lifetime = scale / k^2 = 2.53e9).
+    scale: '5.7e13',
     perSoul: 0.02,
   },
 
