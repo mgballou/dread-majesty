@@ -63,6 +63,7 @@ describe('railPlan', () => {
     appointAll();
     state.resources.evil = new Decimal('1e20');
     state.gens.minion.owned = new Decimal(400);
+    state.gens.minion.purchased = new Decimal(400);
 
     expect(plan().best?.tierId).toBe('warren');
   });
