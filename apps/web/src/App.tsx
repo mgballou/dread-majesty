@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import type { ReactNode } from 'react';
 import { CURRENT, CURRENT_COPY, type TierId } from '@dm/content';
-import { automatorOf, isAppointed, isRousable, isTierUnlocked } from '@dm/engine';
+import { isAppointed, isRousable, isTierUnlocked } from '@dm/engine';
 import { useSound } from './audio/useSound.ts';
 import { DevBar } from './dev/DevBar.tsx';
 import { isPrestigeWorthShowing } from './game/reveals.ts';
@@ -82,7 +82,8 @@ export function App(): ReactNode {
 
   const rungs = content.tiers.length;
   const met = content.tiers.filter((tier) => unlocked(tier.id)).length;
-  const filled = content.tiers.filter((tier) => appointed(tier.id)).length;
+  const posts = content.tiers.reduce((total, tier) => total + tier.overseers.length, 0);
+  const filled = content.tiers.reduce((total, tier) => total + state.overseers[tier.id].length, 0);
 
   const tabs: DeckTab[] = [
     {
@@ -111,7 +112,7 @@ export function App(): ReactNode {
       id: 'miscreants',
       title: copy.overseer.panelTitle,
       glyph: '◈',
-      trailing: `${filled}/${rungs}`,
+      trailing: `${filled}/${posts}`,
       ...(plan.best?.kind === 'appoint' ? { mark: copy.rail.best } : {}),
       panel: (
         <Miscreants
@@ -119,14 +120,8 @@ export function App(): ReactNode {
           copy={copy}
           state={state}
           plan={plan}
-          onAppoint={(tierId) => {
-            // Miscreants still asks for a tier, not a post — it offers only the
-            // automate post today. Task 12 lets it name the post directly.
-            const tier = content.tiers.find((candidate) => candidate.id === tierId);
-            const post = tier ? automatorOf(tier) : undefined;
-            if (!post) return;
-
-            const result = dispatch({ kind: 'appoint', overseerId: post.id });
+          onAppoint={(overseerId) => {
+            const result = dispatch({ kind: 'appoint', overseerId });
             if (result.ok) sound.play('unlock');
           }}
         />
