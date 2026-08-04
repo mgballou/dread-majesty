@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import type { StageCopy } from '@dm/content';
+import { CYCLE_SEGMENTS, quantise } from '../segments.ts';
 import { useReducedMotion } from '../useReducedMotion.ts';
 import './CycleRing.css';
 
@@ -11,13 +12,9 @@ const CENTRE = 24;
 const RADIUS = 21;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
-/**
- * How many discrete positions the ring holds under reduced motion.
- *
- * Eight is enough that a long cycle still visibly advances and few enough that each
- * change reads as a jump rather than a sweep. See the note on reduced motion below.
- */
-const REDUCED_STEPS = 8;
+/** The gap between arcs, in viewBox units. Wide enough to read, narrow enough to ignore. */
+const SEGMENT_GAP = 3;
+const SEGMENT_ARC = CIRCUMFERENCE / CYCLE_SEGMENTS;
 
 interface CycleRingProps {
   /** Milliseconds accumulated toward the next completion. A plain number on `TierState`. */
@@ -49,7 +46,7 @@ export function CycleRing({ progressMs, cycleMs, label, copy }: CycleRingProps):
   const reduced = useReducedMotion();
 
   const swept = cycleMs > 0 ? clamp(progressMs / cycleMs) : 0;
-  const fraction = reduced ? Math.floor(swept * REDUCED_STEPS) / REDUCED_STEPS : swept;
+  const fraction = reduced ? quantise(swept) : swept;
   const percent = Math.round(fraction * 100);
 
   return (
@@ -70,8 +67,14 @@ export function CycleRing({ progressMs, cycleMs, label, copy }: CycleRingProps):
           cx={CENTRE}
           cy={CENTRE}
           r={RADIUS}
-          strokeDasharray={CIRCUMFERENCE}
-          strokeDashoffset={CIRCUMFERENCE * (1 - fraction)}
+          strokeDasharray={`${CIRCUMFERENCE * fraction} ${CIRCUMFERENCE}`}
+        />
+        <circle
+          className="stage-ring__divisions"
+          cx={CENTRE}
+          cy={CENTRE}
+          r={RADIUS}
+          strokeDasharray={`${SEGMENT_GAP} ${SEGMENT_ARC - SEGMENT_GAP}`}
         />
       </svg>
     </div>

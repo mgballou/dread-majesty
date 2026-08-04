@@ -1,14 +1,7 @@
 import type { CSSProperties, ReactNode } from 'react';
+import { quantise } from './segments.ts';
 import { useReducedMotion } from './useReducedMotion.ts';
 import './Meter.css';
-
-/**
- * How many discrete positions the fill holds under reduced motion.
- *
- * Eight matches the teeth in the track, so a jump lands on a tooth and reads as a
- * deliberate step rather than a stutter. `CycleRing` quantises the same way.
- */
-const REDUCED_STEPS = 8;
 
 interface MeterProps {
   /**
@@ -37,7 +30,7 @@ type MeterStyle = CSSProperties & Record<'--meter-swept', string>;
  * The gold is low weight. Full strength gold means *act*, and a meter reports rather
  * than offers (ui-sensibility §3, §5).
  *
- * Under reduced motion the fill **jumps** between eight steps instead of sweeping.
+ * Under reduced motion the fill **jumps** between five steps instead of sweeping.
  * The progress itself never goes missing and the spoken value stays exact — reduced
  * motion drops movement, never content (§8).
  */
@@ -45,7 +38,7 @@ export function Meter({ label, value, max, className = '' }: MeterProps): ReactN
   const reduced = useReducedMotion();
 
   const swept = max > 0 ? clamp(value / max) : 0;
-  const shown = reduced ? Math.floor(swept * REDUCED_STEPS) / REDUCED_STEPS : swept;
+  const shown = reduced ? quantise(swept) : swept;
   const style: MeterStyle = { '--meter-swept': `${shown * 100}%` };
 
   return (

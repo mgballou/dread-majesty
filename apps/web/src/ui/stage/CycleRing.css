@@ -29,5 +29,16 @@
   fill: none;
   stroke: currentColor;
   stroke-width: 2;
-  stroke-linecap: round;
+}
+
+/*
+ * The gaps, drawn over the sweep in the ground colour rather than cut out of it.
+ * One geometry cutting both rings, so the divisions land in the same five places
+ * whatever the sweep is doing. Wider than the strokes it covers, or it leaves a hair
+ * of colour at the edge of each gap.
+ */
+.stage-ring__divisions {
+  fill: none;
+  stroke: var(--ground);
+  stroke-width: 4;
 }
