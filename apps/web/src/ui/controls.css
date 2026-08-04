@@ -1,14 +1,15 @@
 /*
  * The action tiers, built once (ui-sensibility §3).
  *
- * Primary wears the accent and is filled. Exactly one is on screen at a time —
- * that is a rule about composition this file cannot enforce, but every screen owes
- * it. Secondary is a structural outline. Quiet has no chrome at all and never
- * competes for the eye. Nothing else is a button.
+ * Primary wears the accent and is filled. Exactly one per region — the stage has one,
+ * the deck's open panel has one, and they are never in the same region. That is a rule
+ * about composition this file cannot enforce, but every region owes it. Secondary is a
+ * structural outline. Quiet has no chrome at all and never competes for the eye.
+ * Nothing else is a button.
  *
  * Gold is the accent, so gold appears here and almost nowhere else. A quiet or a
- * numeric button carries none of it: the moment a second control wears gold, gold
- * stops meaning act.
+ * numeric button carries none of it: a second gold control inside one region is what
+ * makes gold stop meaning act.
  *
  * Targets are at least 24px and spaced, per WCAG 2.2 2.5.8.
  */

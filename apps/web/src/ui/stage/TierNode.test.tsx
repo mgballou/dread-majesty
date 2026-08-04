@@ -30,6 +30,7 @@ function node(overrides: Partial<Parameters<typeof TierNode>[0]> = {}): ReactEle
       oversight={OVERSIGHT}
       feed={null}
       produced={new Decimal(0)}
+      version={0}
       surgeIndex={0}
       {...overrides}
     />

@@ -29,7 +29,7 @@ interface BannerProps {
  * from the shape before a word of it is.
  *
  * The gold is deliberately **low weight** — an edge and a rule, never a fill. Full
- * strength gold belongs to the one action on the screen, and a banner is not an
+ * strength gold belongs to its region's one action, and a banner is not an
  * action (§3, §5).
  *
  * Where `clip-path` is missing the chevron simply does not appear and the banner

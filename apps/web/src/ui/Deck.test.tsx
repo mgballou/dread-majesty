@@ -11,7 +11,7 @@ const TABS: DeckTab[] = [
     trailing: '2/4',
     panel: <p>What you raise</p>,
   },
-  { id: 'miscreants', title: 'The Miscreants', mark: 'Worth a look', panel: <p>Who watches</p> },
+  { id: 'miscreants', title: 'The Miscreants', panel: <p>Who watches</p> },
   { id: 'deeds', title: 'Deeds', panel: <p>What is remembered</p> },
   { id: 'ledger', title: 'The ledger', panel: <p>What is counted</p> },
 ];
@@ -139,30 +139,16 @@ describe('Deck', () => {
     expect(screen.getByText('2/4')).toBeInTheDocument();
   });
 
-  it('marks a shut panel that has something to act on', () => {
-    const { container } = draw();
-
-    expect(container.querySelector('.deck__dot')).toBeInTheDocument();
-  });
-
-  it('still says what that mark means, for anyone who cannot see it', () => {
-    draw();
-
-    expect(screen.getByRole('tab', { name: /Worth a look/ })).toBeInTheDocument();
-  });
-
   it('names the open panel under the tube rather than inside it', () => {
     draw();
 
     expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('The Muster');
   });
 
-  it('drops that word once the panel is open, because the panel says it', async () => {
-    const { user } = draw();
+  it('names every tab to assistive tech without showing the name on the tube', () => {
+    draw();
 
-    await user.click(screen.getByRole('tab', { name: /The Miscreants/ }));
-
-    expect(screen.queryByText('Worth a look')).not.toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /The Miscreants/ })).toBeInTheDocument();
   });
 
   it('lets the open panel be reached without a pointer, because it scrolls', () => {

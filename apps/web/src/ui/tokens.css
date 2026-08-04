@@ -27,7 +27,7 @@
   --raw-bone-500: #9990ad;
 
   /* Gold. Leaf at the top of the ramp, tarnish at the bottom. Full strength marks
-     the one action; everything below it is line work, a fill that is not an action,
+     a region's one action; everything below it is line work, a fill that is not an action,
      and the ground such a fill runs over. */
   --raw-gold-300: #e2bf5c;
   --raw-gold-400: #c9a227;
