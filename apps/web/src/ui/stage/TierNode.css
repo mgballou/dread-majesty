@@ -17,6 +17,8 @@
   --stage-node-medallion: calc(var(--space-8) * 2 + var(--space-4));
   --stage-node-art: calc(var(--space-8) + var(--space-4));
   --stage-node-width: calc(var(--space-8) * 5 + var(--space-4));
+  /* How hard the completion flash strikes. The surge rule below raises it. */
+  --stage-node-flash: 0.9;
 
   display: flex;
   flex-direction: column;
@@ -172,7 +174,7 @@
 
 @keyframes stage-node-fired {
   from {
-    opacity: var(--stage-node-flash, 0.9);
+    opacity: var(--stage-node-flash);
     scale: 1;
   }
 
@@ -184,7 +186,7 @@
 
 @keyframes stage-node-fired-still {
   from {
-    opacity: var(--stage-node-flash, 0.9);
+    opacity: var(--stage-node-flash);
   }
 
   to {
