@@ -135,6 +135,17 @@ function decide(state: GameState, content: Content): void {
  * The moment tier `N` stopped being worth buying by hand, per spec §5.8.1 — snapshot
  * of the crossing the instant it first held, not the instant the 60-second hold
  * confirmed it (see `OBSOLESCENCE_HOLD_MS`).
+ *
+ * **Why this is measured off the simulation and not off `railPlan`.** "The moment the
+ * rail stops lifting tier N" is the more obvious question, and `railPlan` already
+ * scores every spend, so reaching for it here is the first thing anyone tidying this
+ * file will try. Two reasons not to, both from spec §5.8.1. `railPlan` lives in
+ * `apps/web`, and the harness importing it would run the dependency backwards —
+ * `web → engine → content-types` is one-way, and this is the only place that would
+ * break it without a lint rule or a test catching the break. And `railPlan` scores
+ * against a 600-second horizon, so importing it would fold that horizon into the
+ * balance, where nobody would ever find it. The definition below depends on nothing
+ * but the simulation and the two selectors §5.8.1 names.
  */
 interface ObsolescencePoint {
   ms: number;
