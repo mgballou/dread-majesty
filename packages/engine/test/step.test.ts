@@ -156,7 +156,7 @@ describe('the roster', () => {
     expect(both.resources.evil.div(plain.resources.evil).toString()).toBe('4');
   });
 
-  it('never lets a quickened tier\'s progress exceed its effective cycle', () => {
+  it("never lets a quickened tier's progress exceed its effective cycle", () => {
     const state = appointed(fixture);
     state.gens.minion.owned = new Decimal(5);
     state.overseers.minion = [...state.overseers.minion, 'minion-goad'];

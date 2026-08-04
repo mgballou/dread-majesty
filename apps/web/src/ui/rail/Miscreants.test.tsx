@@ -232,7 +232,7 @@ describe('Miscreants', () => {
     ).toContain(OVERSEER.effect.automate);
   });
 
-  it('states the factor on a quickening post\'s row', () => {
+  it("states the factor on a quickening post's row", () => {
     draw();
 
     expect(
@@ -248,8 +248,6 @@ describe('Miscreants', () => {
       screen.getByRole('button', { name: new RegExp(OVERSEER.names['minion-hand']) }),
     );
 
-    expect(
-      screen.getByRole('dialog').textContent?.includes(OVERSEER.effect.automate),
-    ).toBe(true);
+    expect(screen.getByRole('dialog').textContent?.includes(OVERSEER.effect.automate)).toBe(true);
   });
 });
