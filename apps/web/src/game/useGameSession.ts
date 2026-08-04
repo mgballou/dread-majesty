@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AchievementId, Content } from '@dm/content';
 import {
   BASE_DT_MS,
+  ObsoleteSave,
   apply,
   catchUp,
   createState,
@@ -52,6 +53,9 @@ export interface Session {
   dismissOffline: () => void;
   /** Achievements earned since the last render. Empty most frames. */
   justEarned: readonly AchievementId[];
+  /** True when the save on disk was refused for being too old. Cleared on dismissal. */
+  saveRefused: boolean;
+  dismissRefusal: () => void;
   dispatch: (intent: Intent) => IntentResult;
   exportBlob: () => string;
   importBlob: (encoded: string) => boolean;
@@ -88,6 +92,7 @@ export function useGameSession(content: Content): Session {
   const [ready, setReady] = useState(false);
   const [offline, setOffline] = useState<OfflineReport | null>(null);
   const [justEarned, setJustEarned] = useState<readonly AchievementId[]>([]);
+  const [saveRefused, setSaveRefused] = useState(false);
   const loaded = useRef(false);
 
   /**
@@ -132,11 +137,12 @@ export function useGameSession(content: Content): Session {
 
           const report = catchUp(restored, content, Date.now() - blob.savedAtMs);
           if (report.elapsedMs >= RETURN_SUMMARY_FLOOR_MS) setOffline(report);
-        } catch {
-          // A save that will not load is a save the player cannot be helped with
-          // here. Starting fresh beats a blank screen; the old blob stays on disk
-          // until the first autosave overwrites it, so it is still recoverable by
-          // hand from the browser's storage inspector.
+        } catch (error) {
+          // A refused save is the one failure worth telling the player about: it is
+          // ours, it is permanent, and starting fresh in silence looks like data loss.
+          // Anything else is unreadable data nobody can be helped with here, and the
+          // old blob stays on disk until the first autosave overwrites it.
+          if (error instanceof ObsoleteSave) setSaveRefused(true);
         }
       }
 
@@ -272,6 +278,7 @@ export function useGameSession(content: Content): Session {
   );
 
   const dismissOffline = useCallback((): void => setOffline(null), []);
+  const dismissRefusal = useCallback((): void => setSaveRefused(false), []);
 
   return {
     state: stateRef.current,
@@ -280,6 +287,8 @@ export function useGameSession(content: Content): Session {
     offline,
     dismissOffline,
     justEarned,
+    saveRefused,
+    dismissRefusal,
     dispatch,
     exportBlob,
     importBlob,

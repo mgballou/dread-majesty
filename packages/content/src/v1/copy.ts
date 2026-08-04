@@ -329,6 +329,8 @@ export const v1Copy = {
     alreadyAppointed: 'That post is filled.',
     corruptSave: 'That is not a save. Nothing changed.',
     unmigratableSave: 'That save is older than this build can read.',
+    obsoleteSave:
+      'This save is from an early development build and no longer loads. Starting fresh.',
     storageBlocked: 'This browser will not let the game save. Close the tab and it is gone.',
   },
 } as const satisfies Copy;

@@ -160,6 +160,15 @@ export function App(): ReactNode {
   return (
     <div className="shell">
       <div className="shell__frame" inert={behindTheSummary}>
+        {session.saveRefused && (
+          <p className="shell__refusal" role="status">
+            {copy.errors.obsoleteSave}
+            <button type="button" className="button" onClick={session.dismissRefusal}>
+              {copy.prestige.cancel}
+            </button>
+          </p>
+        )}
+
         <Crown state={state} content={content} copy={copy} />
 
         <main className="shell__body">
