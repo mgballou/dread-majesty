@@ -29,10 +29,12 @@ interface QuantityChipProps {
  * with the quantity, and stops one rung short of `--accent` — full-strength gold means
  * *act*, and this governs the buttons rather than being one (ui-sensibility §3, §5).
  *
- * What the radio group gave for free and this has to pay for: the arrow keys move
- * through the set without cycling, and the accessible name says which quantity is set
- * rather than what pressing will do. A control whose label changes on press has to name
- * its state, or a screen reader user hears the future instead of the present.
+ * What the radio group gave for free and this has to pay for. The arrow keys move both
+ * ways, so nobody has to press three times to go back one — a press only ever goes
+ * forward, and that is the difference the arrows make up. And the accessible name says
+ * which quantity is set rather than what pressing will do: a control whose label changes
+ * on press has to name its state, or a screen reader user hears the future instead of
+ * the present.
  */
 export function QuantityChip({ quantity, onChange, copy }: QuantityChipProps): ReactNode {
   const step = BUY_QUANTITIES.indexOf(quantity) + 1;

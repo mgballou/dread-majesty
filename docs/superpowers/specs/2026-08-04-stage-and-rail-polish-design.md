@@ -32,8 +32,8 @@ make the chip compete with the buy button it governs.
 | Quantity | Field | Ink | Measured |
 | --- | --- | --- | --- |
 | ×1 | `--surface-raised` | `--ink-dim` | existing pair |
-| ×10 | `--accent-well` | `--ink-muted` | 12.4:1 |
-| ×100 | `--accent-line` | `--ink` | 4.81:1 |
+| ×10 | `--accent-well` | `--ink-muted` | 10.88:1 |
+| ×100 | `--accent-line` | `--ink` | 4.76:1 |
 | ×MAX | `--accent-soft` | `--on-accent` | 5.26:1 |
 
 All four clear §13's floor. `tokens.test.ts` recomputes them from the stylesheet, the

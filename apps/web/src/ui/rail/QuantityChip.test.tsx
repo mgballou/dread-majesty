@@ -51,6 +51,22 @@ describe('the chip', () => {
     expect(onChange).toHaveBeenCalledWith(1);
   });
 
+  it('still advances on Enter', async () => {
+    const onChange = vi.fn();
+    render(<QuantityChip quantity={10} onChange={onChange} copy={copy} />);
+    screen.getByRole('button').focus();
+    await userEvent.keyboard('{Enter}');
+    expect(onChange).toHaveBeenCalledWith(100);
+  });
+
+  it('still advances on Space', async () => {
+    const onChange = vi.fn();
+    render(<QuantityChip quantity={10} onChange={onChange} copy={copy} />);
+    screen.getByRole('button').focus();
+    await userEvent.keyboard(' ');
+    expect(onChange).toHaveBeenCalledWith(100);
+  });
+
   it('says which quantity is set', () => {
     render(<QuantityChip quantity={10} onChange={() => {}} copy={copy} />);
     expect(screen.getByRole('button')).toHaveAccessibleName(/Buy 10 at a time/);
