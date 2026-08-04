@@ -95,9 +95,13 @@
    * disappear and the tube reads as one flat bar with a single notch in it.
    */
   filter: drop-shadow(-2px 0 0 var(--accent-line));
-  /* The line that divides the strip from the panel, carried per segment so the open
-     one can drop it. Inset rather than a border: the box is a rectangle and the shape
-     is a chevron, so a border would not follow the clip. */
+  /* The line that divides the strip from the panel, carried per segment rather than
+     once across the strip, so the open one can drop it and join its panel.
+
+     Inset rather than a border because a border is part of the box model: it would
+     widen every segment, and the seams here are set by `flex: 1 1 0` against a
+     negative margin that pulls each point into the next notch. A shadow adds nothing
+     to the box, so the overlap arithmetic stays as it was. */
   box-shadow: inset 0 -1px 0 var(--accent-line);
 }
 
