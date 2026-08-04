@@ -3,7 +3,7 @@ import type { Content, TierDef, TierId } from '@dm/content';
 import type { GameState } from './types.ts';
 
 /**
- * Cost of the nth unit of a tier, zero-indexed by units already owned.
+ * Cost of the nth unit of a tier, zero-indexed by units already **bought**.
  *
  * cost(n) = floor(baseCost * costRate^n)
  */
@@ -14,7 +14,7 @@ export function costOfNth(tier: TierDef, n: Decimal): Decimal {
 export function nextCost(state: GameState, content: Content, tierId: TierId): Decimal | null {
   const tier = findTier(content, tierId);
   if (!tier) return null;
-  return costOfNth(tier, state.gens[tierId].owned);
+  return costOfNth(tier, state.gens[tierId].purchased);
 }
 
 /**
@@ -33,10 +33,10 @@ export function bulkCost(
   const tier = findTier(content, tierId);
   if (!tier) return null;
 
-  const owned = state.gens[tierId].owned;
+  const purchased = state.gens[tierId].purchased;
   let total = new Decimal(0);
   for (let i = 0; i < quantity; i += 1) {
-    total = total.add(costOfNth(tier, owned.add(i)));
+    total = total.add(costOfNth(tier, purchased.add(i)));
   }
   return total;
 }
@@ -74,16 +74,16 @@ export function maxAffordable(state: GameState, content: Content, tierId: TierId
   if (!tier) return 0;
 
   const budget = state.resources[tier.costResource];
-  const owned = state.gens[tierId].owned;
+  const purchased = state.gens[tierId].purchased;
 
-  if (budget.lt(costOfNth(tier, owned))) return 0;
+  if (budget.lt(costOfNth(tier, purchased))) return 0;
 
-  const ceiling = affordableCeiling({ tier, owned, budget });
+  const ceiling = affordableCeiling({ tier, owned: purchased, budget });
 
   let spent = new Decimal(0);
   let count = 0;
   while (count < ceiling) {
-    const next = spent.add(costOfNth(tier, owned.add(count)));
+    const next = spent.add(costOfNth(tier, purchased.add(count)));
     if (next.gt(budget)) break;
     spent = next;
     count += 1;

@@ -11,18 +11,19 @@ import {
   nextCost,
 } from '../src/index.ts';
 import { fixture } from './fixtures/content.ts';
+import { appointed } from './fixtures/state.ts';
 
 describe('cost curve', () => {
-  it('follows floor(baseCost * rate^owned)', () => {
+  it('follows floor(baseCost * rate^purchased)', () => {
     const state = createState(fixture);
-    state.gens.minion.owned = new Decimal(0);
+    state.gens.minion.purchased = new Decimal(0);
 
     expect(nextCost(state, fixture, 'minion')?.toString()).toBe('90');
 
-    state.gens.minion.owned = new Decimal(1);
+    state.gens.minion.purchased = new Decimal(1);
     expect(nextCost(state, fixture, 'minion')?.toString()).toBe('98'); // floor(90 * 1.089)
 
-    state.gens.minion.owned = new Decimal(2);
+    state.gens.minion.purchased = new Decimal(2);
     expect(nextCost(state, fixture, 'minion')?.toString()).toBe('106'); // floor(90 * 1.089^2)
   });
 
@@ -95,9 +96,9 @@ describe('maxAffordable against the summed loop', () => {
     expect(maxAffordable(state, fixture, 'minion')).toBeGreaterThan(5000);
   });
 
-  it('starts the curve from what is already owned', () => {
+  it('starts the curve from what has already been purchased', () => {
     const state = createState(fixture);
-    state.gens.minion.owned = new Decimal(400);
+    state.gens.minion.purchased = new Decimal(400);
     state.resources.evil = new Decimal('1e12');
     const count = maxAffordable(state, fixture, 'minion');
 
@@ -171,5 +172,34 @@ describe('purchase', () => {
     const result = apply(state, fixture, { kind: 'purchase', tierId: 'minion', quantity: 'max' });
 
     expect(result.ok).toBe(false);
+  });
+
+  it('does not move a tier price when the cascade raises its count', () => {
+    const state = appointed(fixture);
+    state.gens.minion.purchased = new Decimal(3);
+    const before = nextCost(state, fixture, 'minion');
+
+    state.gens.minion.owned = state.gens.minion.owned.add(5000);
+
+    expect(nextCost(state, fixture, 'minion')?.toString()).toBe(before?.toString());
+  });
+
+  it('moves a tier price when the player buys', () => {
+    const state = appointed(fixture);
+    state.resources.evil = new Decimal('1e9');
+    const before = nextCost(state, fixture, 'minion');
+
+    apply(state, fixture, { kind: 'purchase', tierId: 'minion', quantity: 1 });
+
+    expect(nextCost(state, fixture, 'minion')?.gt(before ?? 0)).toBe(true);
+  });
+
+  it('raises both counts on a purchase', () => {
+    const state = appointed(fixture);
+    state.resources.evil = new Decimal('1e9');
+
+    apply(state, fixture, { kind: 'purchase', tierId: 'minion', quantity: 4 });
+
+    expect(state.gens.minion.purchased.toString()).toBe('4');
   });
 });

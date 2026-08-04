@@ -15,6 +15,8 @@ export interface SaveBlob {
       lifetimeProduced: string;
       /** Added in save version 4. Optional because a version 3 blob does not carry it. */
       running?: boolean;
+      /** Added in save version 6. Optional because a version 5 blob does not carry it. */
+      purchased?: string;
     }
   >;
   souls: string;
@@ -48,6 +50,7 @@ export function serialize(state: GameState, savedAtMs: number): SaveBlob {
       progressMs: gen.progressMs,
       lifetimeProduced: gen.lifetimeProduced.toString(),
       running: gen.running,
+      purchased: gen.purchased.toString(),
     };
   }
 
@@ -87,6 +90,7 @@ export function deserialize(blob: SaveBlob): GameState {
       progressMs: saved?.progressMs ?? 0,
       lifetimeProduced: new Decimal(saved?.lifetimeProduced ?? '0'),
       running: saved?.running ?? false,
+      purchased: new Decimal(saved?.purchased ?? '0'),
     };
   }
 
@@ -162,6 +166,18 @@ const MIGRATIONS: Record<number, (blob: SaveBlob) => SaveBlob> = {
   // returning player may strike at once — which is the friendly way round, and the
   // alternative would be inventing a cooldown they never earned.
   4: (blob) => ({ ...blob, saveVersion: 5, smiteActiveMs: 0, smiteCooldownMs: 0 }),
+
+  // 5 → 6: cost keys off purchases rather than holdings. An old blob cannot say how
+  // many of each tier were bought, and guessing high would leave the player at prices
+  // they never earned. Zero is the honest floor: it hands back the tiers the cascade
+  // had priced out, which is the whole point of the change.
+  5: (blob) => {
+    const gens: SaveBlob['gens'] = {};
+    for (const [id, gen] of Object.entries(blob.gens)) {
+      gens[id] = { ...gen, purchased: '0' };
+    }
+    return { ...blob, saveVersion: 6, gens };
+  },
 };
 
 export function migrate(blob: SaveBlob): SaveBlob {

@@ -4,6 +4,19 @@ import type { AchievementId, ProducibleId, ResourceId, TierId } from '@dm/conten
 export interface TierState {
   owned: Decimal;
   /**
+   * Units the player has bought with their own Evil.
+   *
+   * The cost curve keys on this and never on `owned`. A tier that produces another
+   * tier would otherwise price its own product out of the game: cost is
+   * `base * rate^n`, and at 500 Minions produced the next Minion runs to about
+   * 9e18 Evil. `owned` still drives production, milestones, achievements and the
+   * chain display — everything the player is being rewarded for. See spec §2.
+   *
+   * The one free Minion `createState` grants does not count. A gift should not
+   * raise your prices.
+   */
+  purchased: Decimal;
+  /**
    * Milliseconds accumulated toward the next cycle completion.
    *
    * Integer milliseconds, never a fraction of a cycle. Accumulating `dt/cycleMs`
