@@ -213,7 +213,6 @@ export function App(): ReactNode {
 
         <DevBar
           content={content}
-          copy={copy}
           state={state}
           onReplace={session.replaceState}
           onOffline={session.simulateOffline}

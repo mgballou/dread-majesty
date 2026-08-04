@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { CURRENT, CURRENT_COPY } from '@dm/content';
+import { CURRENT } from '@dm/content';
 import { createState, type GameState } from '@dm/engine';
 import { DevBar } from './DevBar.tsx';
 
@@ -12,7 +12,6 @@ function mount(overrides: { state?: GameState } = {}) {
   render(
     <DevBar
       content={CURRENT}
-      copy={CURRENT_COPY}
       state={overrides.state ?? createState(CURRENT)}
       onReplace={onReplace}
       onOffline={onOffline}

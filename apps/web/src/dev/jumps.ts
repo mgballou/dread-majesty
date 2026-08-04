@@ -1,7 +1,7 @@
 import Decimal from 'break_eternity.js';
 import type { Content, OverseerId, TierDef, TierId } from '@dm/content';
 import { TIER_IDS } from '@dm/content';
-import { createState, type GameState } from '@dm/engine';
+import { automatorOf, createState, type GameState } from '@dm/engine';
 
 /**
  * States worth jumping to, built out of the content rather than written down.
@@ -27,6 +27,16 @@ const STOCK = 25;
 
 interface Board {
   readonly owned?: Partial<Record<TierId, number>>;
+  /**
+   * Units priced against the cost curve, if it should diverge from `owned`.
+   *
+   * Defaults to `owned` when a tier is unset — "all of it was bought" is the honest
+   * reading for `stock` and the milestone jumps, which only ever name a few dozen
+   * units. It stops being honest once a tier's `owned` count is dominated by what the
+   * tier above it produced rather than what was purchased outright (spec: generators
+   * produce other generators) — see `deep` and `absurd`, which set this explicitly.
+   */
+  readonly purchased?: Partial<Record<TierId, number>>;
   readonly evil?: Decimal | string;
   readonly lifetimeEvil?: Decimal | string;
   readonly souls?: number;
@@ -44,19 +54,20 @@ function board(content: Content, spec: Board): GameState {
   const state = createState(content);
 
   for (const id of TIER_IDS) {
-    const count = spec.owned?.[id];
+    const owned = spec.owned?.[id];
     // Only overwrite what the spec actually asked for. Writing `?? 0` over every tier
     // wiped the free Minion `createState` grants, and the "souls banked" jumps name no
     // counts at all — so they landed on a board with nothing owned, nothing running
     // and no Evil, which the game cannot be played out of.
-    if (count !== undefined) {
-      const owned = new Decimal(count);
-      state.gens[id].owned = owned;
-      // `purchased` prices the next unit; `owned` drives everything else. Setting
-      // only `owned` left a jumped-to board pricing its next purchase as if nothing
-      // had ever been bought — a "deep run" with a million Minions quoting base cost.
-      state.gens[id].purchased = owned;
-    }
+    if (owned !== undefined) state.gens[id].owned = new Decimal(owned);
+
+    // `purchased` prices the next unit; `owned` drives everything else. Leaving it at
+    // zero quoted a jumped-to board's next purchase at base cost no matter how much it
+    // held; setting it equal to `owned` overcorrected the other way — a tier fed by
+    // the one above it can hold far more than it ever bought outright, and pricing the
+    // next purchase off the full `owned` count quotes a number nothing can pay.
+    const purchased = spec.purchased?.[id] ?? owned;
+    if (purchased !== undefined) state.gens[id].purchased = new Decimal(purchased);
 
     // A tier you hold is a tier you have met. The rest latch on the next reconcile.
     state.unlocked[id] = state.gens[id].owned.gt(0);
@@ -133,6 +144,8 @@ export function jumps(content: Content): readonly Jump[] {
 
     const first = content.milestones[0];
     if (first) {
+      const automator = automatorOf(tier);
+
       list.push({
         id: `milestone:${tier.id}`,
         group: 'Hitting a milestone',
@@ -140,7 +153,12 @@ export function jumps(content: Content): readonly Jump[] {
         build: () =>
           board(content, {
             owned: { ...stocked, [tier.id]: first.at },
-            appointed: [...ids, ...tier.overseers.map((post) => post.id)],
+            // A tier at its very first milestone — 25 units — has just arrived there.
+            // A full three-post roster on it is a materially richer board than "just
+            // hit the rung" models: `goad` and `glut` cost 4x and 16x the automator
+            // and are no more plausible here than they are at `afford:`. Only the
+            // automator joins the beneath tiers' roster.
+            appointed: automator ? [...ids, automator.id] : ids,
           }),
       });
     }
@@ -167,7 +185,12 @@ export function jumps(content: Content): readonly Jump[] {
       id: `banked:${souls}`,
       group: 'Prestige',
       label: `${souls} soul${souls === 1 ? '' : 's'} banked, board freshly reset`,
-      build: () => board(content, { souls, appointed: everyId }),
+      // A reset clears the roster along with everything else it owns — an Overseer is
+      // power, not a record of having been earned once (spec §3.4), and `apply`'s
+      // prestige intent sets every tier's list back to `[]`. `owed:` models the moment
+      // just before that reset, when a full roster is still live and about to be
+      // spent; `banked:` models the moment after, so it appoints nobody.
+      build: () => board(content, { souls }),
     });
   }
 
@@ -178,6 +201,12 @@ export function jumps(content: Content): readonly Jump[] {
     build: () =>
       board(content, {
         owned: everyTierAt(1e6),
+        // A million owned came almost entirely from the chain producing it, not from
+        // buying it outright. 100 purchased is comfortably under what any tier's own
+        // curve can charge against the 1e30 granted — even the steepest tier here,
+        // Throne at rate 1.3, prices its 101st unit at roughly 2e23, leaving the board
+        // able to keep buying rather than pricing the very next unit as unpayable.
+        purchased: everyTierAt(100),
         evil: '1e30',
         lifetimeEvil: '1e40',
         souls: 10_000,
@@ -192,6 +221,9 @@ export function jumps(content: Content): readonly Jump[] {
     build: () =>
       board(content, {
         owned: everyTierAt(1e80),
+        // Same reasoning as `deep`, scaled to the far larger grant: 500 purchased
+        // still prices Throne's next unit at roughly 7.5e68 against 1e120 granted.
+        purchased: everyTierAt(500),
         evil: '1e120',
         lifetimeEvil: '1e140',
         souls: 1e9,
