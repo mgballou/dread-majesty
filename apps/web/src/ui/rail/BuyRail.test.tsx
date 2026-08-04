@@ -343,7 +343,7 @@ describe('BuyRail', () => {
 
     const row = container.querySelector('[data-tier="minion"] .rail__line');
 
-    expect(row).toHaveTextContent(/^5.*Evil every/);
+    expect(row).toHaveTextContent(/^5 Evil every/);
   });
 
   it('draws what the tier makes rather than naming it twice', () => {
@@ -360,5 +360,13 @@ describe('BuyRail', () => {
     const row = container.querySelector('[data-tier="minion"] .rail__line');
 
     expect(row).toHaveTextContent(/Evil/);
+  });
+
+  it('leaves the noun in the accessibility tree rather than hiding it from it', () => {
+    const { container } = draw();
+
+    const noun = container.querySelector('[data-tier="minion"] .rail__made');
+
+    expect(noun).not.toHaveAttribute('aria-hidden');
   });
 });
