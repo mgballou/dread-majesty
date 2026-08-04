@@ -17,11 +17,18 @@ describe('soulsEarned', () => {
     expect(soulsEarned(state, fixture).toString()).toBe(String(fixture.prestige.k));
   });
 
-  it('floors normally when nowhere near an integer boundary', () => {
+  it('floors normally with a fractional part below half, outside epsilon', () => {
     const state = createState(fixture);
     state.lifetimeEvil = new Decimal(fixture.prestige.scale).mul(0.0049);
 
     expect(soulsEarned(state, fixture).toString()).toBe('10');
+  });
+
+  it('floors normally with a fractional part above half, outside epsilon', () => {
+    const state = createState(fixture);
+    state.lifetimeEvil = new Decimal(fixture.prestige.scale).mul(0.008464);
+
+    expect(soulsEarned(state, fixture).toString()).toBe('13');
   });
 });
 
