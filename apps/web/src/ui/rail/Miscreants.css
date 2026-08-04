@@ -168,6 +168,18 @@
   color: var(--ink);
 }
 
+/* Said, never shown. The button's fill carries the same fact by looking. */
+.miscreant__lifted {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 /*
  * On a phone the standing comes off the end and sits under the name, so the entry
  * never pushes the page sideways (ui-sensibility §9).

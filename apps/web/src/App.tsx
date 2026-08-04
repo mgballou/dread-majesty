@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { CURRENT, CURRENT_COPY, type TierId } from '@dm/content';
 import { isAppointed, isRousable, isTierUnlocked } from '@dm/engine';
@@ -15,8 +15,8 @@ import { Crown } from './ui/crown/Crown.tsx';
 import { BuyRail } from './ui/rail/BuyRail.tsx';
 import { Miscreants } from './ui/rail/Miscreants.tsx';
 import { PrestigePanel } from './ui/rail/PrestigePanel.tsx';
-import { railPlan } from './ui/rail/railPlan.ts';
 import { useBuyQuantity } from './ui/rail/useBuyQuantity.ts';
+import { useRailPlan } from './ui/rail/useRailPlan.ts';
 import { ChainStage } from './ui/stage/ChainStage.tsx';
 import './App.css';
 
@@ -27,17 +27,17 @@ import './App.css';
  * the deck and the crown are mounted once and only their contents change. The return
  * summary is an overlay over that frame, never a replacement for it.
  *
- * **One accent, always, and always the right one.** The plan lifts whichever single
- * spend returns the most — a purchase, or the appointment of an Overseer — and when
- * nothing at all is affordable, which is the opening minutes and the moments after a
- * reset, there is no spend to lift, so Smite takes the accent instead.
+ * **One accent per region, and the regions do not move.** The stage's is Smite,
+ * whenever the blow is ready. The open panel's is the best affordable spend in that
+ * panel — the muster lifts a purchase, the miscreants an appointment, and neither can
+ * take the other's gold because they are never on screen together. The deck shows one
+ * panel at a time, so this is ui-sensibility §3 honoured rather than bent: the old
+ * single winner across both panels routinely left the panel you were looking at with no
+ * accent at all.
  *
- * The two spends are drawn in different panels of the deck, and only one panel is open
- * at a time, so the panel holding the lifted spend may well be shut. The shut tab wears
- * the word instead of the accent — navigation is not an action, and an accent on a tab
- * would say "press this" about going somewhere (ui-sensibility §3). One press later the
- * accented control is on screen. The plan is computed here because this is the only
- * place that can see all of it.
+ * The plan holds its choice. Scores are recomputed every slice and near-ties flipped
+ * constantly, so a challenger must beat the lifted option by a quarter before the gold
+ * moves. See `railPlan`'s `STICKY_MARGIN`.
  *
  * The prestige panel is still held back rather than shown at zero: a currency at zero
  * with no route to earning any teaches nothing.
@@ -64,10 +64,7 @@ export function App(): ReactNode {
   const needsHand = (tierId: TierId): boolean =>
     !isAppointed(state, content, tierId) && state.gens[tierId].owned.gt(0);
 
-  const plan = useMemo(
-    () => railPlan({ state, content, quantity, isUnlocked: unlocked }),
-    [state, content, quantity, unlocked, session.version],
-  );
+  const plan = useRailPlan({ state, content, quantity, isUnlocked: unlocked }, session.version);
 
   useEffect(() => {
     if (session.justEarned.length > 0) sound.play('milestone');
@@ -91,7 +88,6 @@ export function App(): ReactNode {
       title: copy.rail.title,
       glyph: 'muster',
       trailing: `${met}/${rungs}`,
-      ...(plan.best?.kind === 'purchase' ? { mark: copy.rail.best } : {}),
       panel: (
         <BuyRail
           content={content}
@@ -113,7 +109,6 @@ export function App(): ReactNode {
       title: copy.overseer.panelTitle,
       glyph: 'miscreants',
       trailing: `${filled}/${posts}`,
-      ...(plan.best?.kind === 'appoint' ? { mark: copy.rail.best } : {}),
       panel: (
         <Miscreants
           content={content}

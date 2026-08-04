@@ -21,7 +21,13 @@ beforeEach(() => {
 });
 
 function draw(isUnlocked: (id: TierId) => boolean = () => true) {
-  const plan = railPlan({ state, content: CURRENT, quantity: 1, isUnlocked });
+  const plan = railPlan({
+    state,
+    content: CURRENT,
+    quantity: 1,
+    isUnlocked,
+    held: { purchase: null, appoint: null },
+  });
   const onAppoint = vi.fn();
 
   return {
@@ -207,21 +213,23 @@ describe('Miscreants', () => {
     expect(container.querySelectorAll('.miscreant__post--best')).toHaveLength(1);
   });
 
-  it('says in words that the lifted post is the advised spend, never tone alone', () => {
+  it('names the lifted post as lifted, for anyone reading by ear', () => {
     state.gens.minion.owned = new Decimal(400);
     state.resources.evil = new Decimal(1000);
 
     draw();
 
-    expect(screen.getByText(CURRENT_COPY.rail.best)).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: new RegExp(OVERSEER.names['minion-hand']) }),
+    ).toHaveTextContent(CURRENT_COPY.rail.lifted);
   });
 
-  it('lifts nothing when the best spend is a purchase', () => {
+  it('still lifts its own best post even while a purchase scores higher', () => {
     state.resources.evil = new Decimal(2600);
 
     const { container } = draw();
 
-    expect(container.querySelectorAll('.miscreant__post--best')).toHaveLength(0);
+    expect(container.querySelectorAll('.miscreant__post--best')).toHaveLength(1);
   });
 
   it('states what a post does on its row', () => {

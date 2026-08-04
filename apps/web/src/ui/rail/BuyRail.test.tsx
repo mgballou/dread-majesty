@@ -31,8 +31,25 @@ function buyName(tierId: TierId, count: number): string {
   });
 }
 
+/**
+ * Matches a buy label whether or not it carries the lifted row's trailing words.
+ *
+ * `buyName` gives the sentence a row says by default. The lifted row says more —
+ * `copy.rail.lifted` on the end — so a test that does not care which row is lifted
+ * matches on the start of the name rather than all of it.
+ */
+function buyNameStart(tierId: TierId, count: number): RegExp {
+  return new RegExp(`^${buyName(tierId, count).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`);
+}
+
 function draw(isUnlocked: (id: TierId) => boolean = () => true, quantity: BuyQuantity = 1) {
-  const plan = railPlan({ state, content: CURRENT, quantity, isUnlocked });
+  const plan = railPlan({
+    state,
+    content: CURRENT,
+    quantity,
+    isUnlocked,
+    held: { purchase: null, appoint: null },
+  });
   const onPurchase = vi.fn();
   const onQuantity = vi.fn();
 
@@ -77,12 +94,20 @@ describe('BuyRail', () => {
     ).toBeInTheDocument();
   });
 
-  it('says outright that a row is affordable, never tone alone', () => {
+  it('enables an affordable row without saying so in words', () => {
     state.resources.evil = new Decimal(2600);
 
     draw();
 
-    expect(screen.getAllByText(CURRENT_COPY.rail.affordable).length).toBeGreaterThan(0);
+    expect(screen.getByRole('button', { name: buyNameStart('minion', 1) })).not.toBeDisabled();
+  });
+
+  it('leaves the shortfall silent once a row is affordable', () => {
+    state.resources.evil = new Decimal(2600);
+
+    const { container } = draw();
+
+    expect(container.querySelector('[data-tier="minion"] .rail__shortfall')).toHaveTextContent('');
   });
 
   it('lifts exactly one spend to the accent', () => {
@@ -99,12 +124,14 @@ describe('BuyRail', () => {
     expect(container.querySelectorAll('.button--primary')).toHaveLength(0);
   });
 
-  it('says in words which row is the best value, never tone alone', () => {
+  it('names the lifted row as lifted, for anyone reading by ear', () => {
     state.resources.evil = new Decimal(2600);
 
     draw();
 
-    expect(screen.getByText(CURRENT_COPY.rail.best)).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: new RegExp(CURRENT_COPY.rail.lifted) }),
+    ).toBeInTheDocument();
   });
 
   it('names what to save toward when nothing is affordable', () => {
@@ -205,7 +232,7 @@ describe('BuyRail', () => {
     state.resources.evil = new Decimal(2600);
 
     const { onPurchase } = draw();
-    await userEvent.click(screen.getByRole('button', { name: buyName('minion', 1) }));
+    await userEvent.click(screen.getByRole('button', { name: buyNameStart('minion', 1) }));
 
     expect(onPurchase).toHaveBeenCalledWith('minion', 1);
   });
@@ -214,7 +241,7 @@ describe('BuyRail', () => {
     state.resources.evil = new Decimal(2600);
 
     const { onPurchase } = draw(() => true, 10);
-    await userEvent.click(screen.getByRole('button', { name: buyName('minion', 10) }));
+    await userEvent.click(screen.getByRole('button', { name: buyNameStart('minion', 10) }));
 
     expect(onPurchase).toHaveBeenCalledWith('minion', 10);
   });
@@ -288,22 +315,22 @@ describe('BuyRail', () => {
     expect(screen.getByText(CURRENT_COPY.overseer.filled)).toBeInTheDocument();
   });
 
-  it('lifts nothing when the best spend is an appointment', () => {
+  it('still lifts its own best purchase even while an appointment scores higher', () => {
     state.gens.minion.owned = new Decimal(400);
     state.resources.evil = new Decimal(1000);
 
     const { container } = draw();
 
-    expect(container.querySelectorAll('.button--primary')).toHaveLength(0);
+    expect(container.querySelectorAll('.button--primary')).toHaveLength(1);
   });
 
-  it('calls no row the best one when the best spend is an appointment', () => {
+  it('still marks its own row as lifted even while an appointment scores higher', () => {
     state.gens.minion.owned = new Decimal(400);
     state.resources.evil = new Decimal(1000);
 
-    draw();
+    const { container } = draw();
 
-    expect(screen.queryByText(CURRENT_COPY.rail.best)).not.toBeInTheDocument();
+    expect(container.querySelectorAll('.rail__row--best')).toHaveLength(1);
   });
 
   it('says how many of a tier were bought when the cascade has made more', () => {

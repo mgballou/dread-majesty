@@ -182,12 +182,10 @@ function Post({ post, onAsk, copy }: PostProps): ReactNode {
           {!filled && (
             <span className="miscreant__cost">{copy.overseer.cost(formatNumber(price))}</span>
           )}
-          {emphasis !== 'none' && (
-            <span className="miscreant__flag">
-              {emphasis === 'best' ? copy.rail.best : copy.rail.saving}
-            </span>
-          )}
+          {emphasis === 'saving' && <span className="miscreant__flag">{copy.rail.saving}</span>}
         </span>
+
+        {emphasis === 'best' && <span className="miscreant__lifted">{copy.rail.lifted}</span>}
       </button>
     </li>
   );
@@ -235,9 +233,15 @@ function effectLine(post: OverseerDef, copy: OverseerCopy): string {
   }
 }
 
-/** Colour never carries a state alone, so every post says where it stands in a word. */
+/**
+ * Where a post stands, in a word, or nothing where there is no judgement to report.
+ *
+ * "Filled" and "Beyond reach" are states worth naming. Open-and-affordable is the
+ * default, and a default is not a status (ui-sensibility §12) — the price beside it and
+ * the live control are already the whole of what there is to say.
+ */
 function standing(post: PostState, copy: MiscreantsCopy): string {
   if (post.filled) return copy.overseer.filled;
   if (post.offer === null || !post.offer.affordable) return copy.overseer.beyond;
-  return copy.rail.affordable;
+  return '';
 }
