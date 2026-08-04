@@ -139,16 +139,21 @@ export function deserialize(blob: SaveBlob): GameState {
 /**
  * One function per version step, applied in a chain.
  *
- * Empty, because `MIN_SUPPORTED_SAVE_VERSION` currently equals `SAVE_VERSION`: every
- * save this build accepts is already current. The machinery stays because version 7
- * will want it, and because the chain — not any single hop — is the thing under test.
- *
  * **Never edit an entry once it has shipped.** A migration that has run against saves
  * in the wild cannot be corrected in place; there is no way to tell which saves
  * already passed through the old version. Correcting a mistake means appending
  * another step.
  */
-const MIGRATIONS: Record<number, (blob: SaveBlob) => SaveBlob> = {};
+const MIGRATIONS: Record<number, (blob: SaveBlob) => SaveBlob> = {
+  // 6 → 7: the per-run clock arrives. Zero is the honest default — a save written
+  // before this field existed cannot say when its run began, and "as if freshly
+  // reset" costs the player nothing but a short reading on the prestige panel.
+  6: (blob) => ({
+    ...blob,
+    saveVersion: 7,
+    stats: { ...blob.stats, runMs: blob.stats.runMs ?? 0 },
+  }),
+};
 
 export function migrate(blob: SaveBlob): SaveBlob {
   if (blob.saveVersion < MIN_SUPPORTED_SAVE_VERSION) throw new ObsoleteSave(blob.saveVersion);
