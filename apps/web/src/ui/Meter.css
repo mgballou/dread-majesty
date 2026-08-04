@@ -1,13 +1,13 @@
 /*
  * The chevron meter. See Meter.tsx.
  *
- * Three component tokens. The tooth pitch and the point length are read by more than
- * one rule and have to agree, and `--meter-swept` is the one value the component
- * hands CSS at render time.
+ * Three component tokens. The gap and the point length are read by more than one
+ * rule and have to agree, and `--meter-swept` is the one value the component hands
+ * CSS at render time.
  */
 
 .meter {
-  --meter-tooth: var(--space-2);
+  --meter-gap: 2px;
   --meter-point: var(--space-2);
   --meter-swept: 0%;
 
@@ -28,7 +28,7 @@
 }
 
 /* The sweep tracks the engine's 100ms slice. Under reduced motion the same fraction
-   lands in eight steps instead — the progress is identical, the travel is not. */
+   lands in five steps instead — the progress is identical, the travel is not. */
 .meter[data-motion='full'] .meter__fill {
   transition: inline-size var(--duration-fast) linear;
 }
@@ -38,22 +38,19 @@
 }
 
 /*
- * The teeth. Two mirrored hairline gradients, one across each half, so the pair reads
- * as a row of chevrons. Drawn over the fill, so a filled tooth reads as a notch and
- * an empty one as a tick — the track keeps its shape whether or not anything has run
- * through it.
+ * The divisions. Five cells cut by four gaps in the ground colour, drawn over the
+ * fill, so a part-run bar reads as a count of lit cells rather than as a distance
+ * along a line. The gap is a raw 2px on purpose: it is a hairline, the one measure
+ * the space scale has no rung for, and it is declared once here as a component token.
  */
 .meter__teeth {
   position: absolute;
   inset: 0;
-  background-image:
-    repeating-linear-gradient(115deg, var(--accent-line) 0 1px, transparent 1px var(--meter-tooth)),
-    repeating-linear-gradient(65deg, var(--accent-line) 0 1px, transparent 1px var(--meter-tooth));
-  background-repeat: no-repeat;
-  background-position:
-    0 0,
-    0 100%;
-  background-size: 100% 50%;
+  background-image: repeating-linear-gradient(
+    to right,
+    transparent 0 calc(20% - var(--meter-gap)),
+    var(--ground) calc(20% - var(--meter-gap)) 20%
+  );
 }
 
 /* The point, matching the banner. Absent where clip-path is, and a square-ended bar

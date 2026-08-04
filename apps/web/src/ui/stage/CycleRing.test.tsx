@@ -32,7 +32,9 @@ describe('CycleRing', () => {
       <CycleRing progressMs={24_000} cycleMs={24_000} label="Minions" copy={CURRENT_COPY.stage} />,
     );
 
-    expect(container.querySelector('.stage-ring__sweep')).toHaveAttribute('stroke-dashoffset', '0');
+    const sweep = container.querySelector('.stage-ring__sweep');
+    const [lit] = (sweep?.getAttribute('stroke-dasharray') ?? '').split(' ');
+    expect(Number(lit)).toBeCloseTo(2 * Math.PI * 21, 3);
   });
 
   it('carries a text alternative naming what is cycling', () => {
@@ -73,7 +75,7 @@ describe('CycleRing', () => {
       <CycleRing progressMs={10_000} cycleMs={24_000} label="Minions" copy={CURRENT_COPY.stage} />,
     );
 
-    expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '38');
+    expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '40');
   });
 
   it('still reports the cycle under reduced motion rather than dropping it', () => {
@@ -92,5 +94,25 @@ describe('CycleRing', () => {
     render(<CycleRing progressMs={0} cycleMs={24_000} label="Minions" copy={CURRENT_COPY.stage} />);
 
     expect(screen.getByRole('progressbar')).toHaveAttribute('data-motion', 'reduced');
+  });
+
+  it('sweeps a fifth of the circumference at a fifth of the cycle', () => {
+    const { container } = render(
+      <CycleRing progressMs={800} cycleMs={4000} label="Minions" copy={CURRENT_COPY.stage} />,
+    );
+
+    const sweep = container.querySelector('.stage-ring__sweep');
+    const [lit] = (sweep?.getAttribute('stroke-dasharray') ?? '').split(' ');
+    expect(Number(lit)).toBeCloseTo((2 * Math.PI * 21) / 5, 3);
+  });
+
+  it('cuts the ring into five', () => {
+    const { container } = render(
+      <CycleRing progressMs={0} cycleMs={4000} label="Minions" copy={CURRENT_COPY.stage} />,
+    );
+
+    const divisions = container.querySelector('.stage-ring__divisions');
+    const [, run] = (divisions?.getAttribute('stroke-dasharray') ?? '').split(' ');
+    expect(Number(run)).toBeCloseTo((2 * Math.PI * 21) / 5 - 3, 3);
   });
 });

@@ -81,7 +81,7 @@ describe('Meter', () => {
 
     render(<Meter label="Minion cycle" value={10_000} max={24_000} />);
 
-    expect(swept()).toBe('37.5%');
+    expect(swept()).toBe('40%');
   });
 
   it('still reports the exact value under reduced motion', () => {
@@ -118,5 +118,19 @@ describe('Meter', () => {
     render(<Meter label="Minion cycle" value={0} max={24_000} className="rail__cycle" />);
 
     expect(screen.getByRole('progressbar')).toHaveClass('rail__cycle');
+  });
+
+  it('reports the exact fraction under full motion', () => {
+    render(<Meter label="Minion cycle" value={37} max={100} />);
+
+    expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '37');
+  });
+
+  it('drops to whole segments under reduced motion', () => {
+    setReducedMotion(true);
+
+    render(<Meter label="Minion cycle" value={37} max={100} />);
+
+    expect(swept()).toBe('20%');
   });
 });
