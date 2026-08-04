@@ -92,9 +92,26 @@ describe('jumps', () => {
     expect(find('banked:10').build().gens.minion.owned.toString()).toBe('1');
   });
 
+  it('resets every post on a freshly reset board', () => {
+    const state = find('banked:10').build();
+    expect(TIER_IDS.every((id) => state.overseers[id].length === 0)).toBe(true);
+  });
+
   it('prices the next purchase off what the deep run actually holds', () => {
     const minion = CURRENT.tiers.find((tier) => tier.id === 'minion');
     const state = find('deep').build();
     expect(nextCost(state, CURRENT, 'minion')?.toString()).not.toBe(minion?.baseCost);
+  });
+
+  it('can still afford to grow on the deep run', () => {
+    const state = find('deep').build();
+    const next = nextCost(state, CURRENT, 'throne');
+    expect(next !== null && next.lte(state.resources.evil)).toBe(true);
+  });
+
+  it('appoints only the automator on a first milestone', () => {
+    const warren = CURRENT.tiers.find((tier) => tier.id === 'warren');
+    const automator = warren?.overseers.find((post) => post.effect.kind === 'automate');
+    expect(find('milestone:warren').build().overseers.warren).toEqual([automator?.id]);
   });
 });

@@ -1,6 +1,6 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import Decimal from 'break_eternity.js';
-import { RESOURCE_IDS, TIER_IDS, type Content, type Copy, type TierId } from '@dm/content';
+import { RESOURCE_IDS, TIER_IDS, type Content, type TierId } from '@dm/content';
 import { cloneState, type GameState } from '@dm/engine';
 import { jumps, type Jump } from './jumps.ts';
 import './DevBar.css';
@@ -12,7 +12,6 @@ const AWAY_HOURS = [1, 4, 24] as const;
 
 interface DevBarProps {
   content: Content;
-  copy: Copy;
   state: GameState;
   /** Swaps a freshly built state in, over the boundary an imported save crosses. */
   onReplace: (next: GameState) => void;
