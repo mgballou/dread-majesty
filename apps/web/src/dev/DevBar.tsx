@@ -42,8 +42,8 @@ export function DevBar(props: DevBarProps): ReactNode {
   return import.meta.env.DEV ? <DevPanel {...props} /> : null;
 }
 
-function DevPanel({ content, copy, state, onReplace, onOffline }: DevBarProps): ReactNode {
-  const list = useMemo(() => jumps(content, copy), [content, copy]);
+function DevPanel({ content, state, onReplace, onOffline }: DevBarProps): ReactNode {
+  const list = useMemo(() => jumps(content), [content]);
   const first = list[0];
 
   const [jumpId, setJumpId] = useState(first?.id ?? '');

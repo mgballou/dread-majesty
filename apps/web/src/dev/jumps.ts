@@ -1,7 +1,7 @@
 import Decimal from 'break_eternity.js';
-import type { Content, Copy, TierDef, TierId } from '@dm/content';
+import type { Content, OverseerId, TierDef, TierId } from '@dm/content';
 import { TIER_IDS } from '@dm/content';
-import { automatorOf, createState, type GameState } from '@dm/engine';
+import { createState, type GameState } from '@dm/engine';
 
 /**
  * States worth jumping to, built out of the content rather than written down.
@@ -30,7 +30,7 @@ interface Board {
   readonly evil?: Decimal | string;
   readonly lifetimeEvil?: Decimal | string;
   readonly souls?: number;
-  readonly appointed?: readonly TierId[];
+  readonly appointed?: readonly OverseerId[];
 }
 
 /**
@@ -43,17 +43,29 @@ interface Board {
 function board(content: Content, spec: Board): GameState {
   const state = createState(content);
 
-  for (const tier of content.tiers) {
-    const count = spec.owned?.[tier.id];
-    state.gens[tier.id].owned = new Decimal(count ?? 0);
-
-    // Jumps only ever ask for the automate post — the same stand-in the rail plan
-    // uses until Task 12 lets a jump name a post directly.
-    const automator = spec.appointed?.includes(tier.id) ? automatorOf(tier) : undefined;
-    state.overseers[tier.id] = automator ? [automator.id] : [];
+  for (const id of TIER_IDS) {
+    const count = spec.owned?.[id];
+    // Only overwrite what the spec actually asked for. Writing `?? 0` over every tier
+    // wiped the free Minion `createState` grants, and the "souls banked" jumps name no
+    // counts at all — so they landed on a board with nothing owned, nothing running
+    // and no Evil, which the game cannot be played out of.
+    if (count !== undefined) {
+      const owned = new Decimal(count);
+      state.gens[id].owned = owned;
+      // `purchased` prices the next unit; `owned` drives everything else. Setting
+      // only `owned` left a jumped-to board pricing its next purchase as if nothing
+      // had ever been bought — a "deep run" with a million Minions quoting base cost.
+      state.gens[id].purchased = owned;
+    }
 
     // A tier you hold is a tier you have met. The rest latch on the next reconcile.
-    state.unlocked[tier.id] = state.gens[tier.id].owned.gt(0);
+    state.unlocked[id] = state.gens[id].owned.gt(0);
+  }
+
+  for (const tier of content.tiers) {
+    state.overseers[tier.id] = tier.overseers
+      .filter((post) => spec.appointed?.includes(post.id) ?? false)
+      .map((post) => post.id);
   }
 
   const evil = new Decimal(spec.evil ?? 0);
@@ -82,7 +94,7 @@ function lifetimeForSouls(content: Content, souls: number): Decimal {
  * Content is authored expensive-first, which is the order the stage draws. A player
  * meets the tiers the other way round, and that is the order to offer them in.
  */
-export function jumps(content: Content, copy: Copy): readonly Jump[] {
+export function jumps(content: Content): readonly Jump[] {
   const rungs = [...content.tiers].reverse();
   const list: Jump[] = [
     {
@@ -96,7 +108,7 @@ export function jumps(content: Content, copy: Copy): readonly Jump[] {
   rungs.forEach((tier, index) => {
     const beneath = rungs.slice(0, index);
     const stocked = stock(beneath);
-    const ids = beneath.map((rung) => rung.id);
+    const ids = beneath.flatMap((rung) => rung.overseers.map((post) => post.id));
 
     list.push({
       id: `afford:${tier.id}`,
@@ -105,18 +117,19 @@ export function jumps(content: Content, copy: Copy): readonly Jump[] {
       build: () => board(content, { owned: stocked, evil: tier.baseCost, appointed: ids }),
     });
 
-    list.push({
-      id: `appoint:${tier.id}`,
-      group: 'Appointing an Overseer',
-      // Roster-aware from Task 5.
-      label: `Afford the ${copy.overseer.names[`${tier.id}-hand`]} — ${tier.overseers[0]?.cost ?? '0'} Evil banked`,
-      build: () =>
-        board(content, {
-          owned: { ...stocked, [tier.id]: STOCK },
-          evil: tier.overseers[0]?.cost ?? '0',
-          appointed: ids,
-        }),
-    });
+    for (const post of tier.overseers) {
+      list.push({
+        id: `appoint:${post.id}`,
+        group: 'Appointing an Overseer',
+        label: `Afford the ${post.name} — ${post.cost} Evil banked`,
+        build: () =>
+          board(content, {
+            owned: { ...stocked, [tier.id]: STOCK },
+            evil: post.cost,
+            appointed: ids,
+          }),
+      });
+    }
 
     const first = content.milestones[0];
     if (first) {
@@ -127,14 +140,14 @@ export function jumps(content: Content, copy: Copy): readonly Jump[] {
         build: () =>
           board(content, {
             owned: { ...stocked, [tier.id]: first.at },
-            appointed: [...ids, tier.id],
+            appointed: [...ids, ...tier.overseers.map((post) => post.id)],
           }),
       });
     }
   });
 
   const everything = stock(rungs);
-  const everyId = rungs.map((rung) => rung.id);
+  const everyId = rungs.flatMap((rung) => rung.overseers.map((post) => post.id));
 
   for (const souls of [1, 10, 100]) {
     list.push({
