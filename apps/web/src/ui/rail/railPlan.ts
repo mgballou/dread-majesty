@@ -1,14 +1,23 @@
 import Decimal from 'break_eternity.js';
-import { isTierId, type Content, type ProducibleId, type TierDef, type TierId } from '@dm/content';
 import {
-  automatorOf,
+  isTierId,
+  type Content,
+  type OverseerDef,
+  type OverseerId,
+  type ProducibleId,
+  type TierDef,
+  type TierId,
+} from '@dm/content';
+import {
   bulkCost,
   canAfford,
   canAppoint,
+  effectiveCycleMs,
+  effectiveYield,
   findTier,
-  isAppointed,
+  hasAutomator,
+  hasPost,
   maxAffordable,
-  overseerCost,
   tierMultiplier,
   type GameState,
 } from '@dm/engine';
@@ -51,6 +60,7 @@ export interface RailPurchase extends RailOptionShape {
 
 export interface RailAppointment extends RailOptionShape {
   kind: 'appoint';
+  overseerId: OverseerId;
 }
 
 export type RailOption = RailPurchase | RailAppointment;
@@ -86,10 +96,23 @@ export type SpendEmphasis = 'none' | 'best' | 'saving';
  * Purchases and appointments are ranked together but no longer drawn together: the
  * muster holds one and the miscreants the other. Both ask the same question of the
  * same plan, so both ask it here, and the plan can only ever answer yes once.
+ *
+ * Keyed on `overseerId` for an appointment, not `tierId` — three posts now share a
+ * tier and the plan can only ever lift one of them. Keying on the tier would light up
+ * every post of a tier when only one of its three won.
  */
-export function spendEmphasis(plan: RailPlan, kind: RailOptionKind, tierId: TierId): SpendEmphasis {
-  if (plan.best?.kind === kind && plan.best.tierId === tierId) return 'best';
-  if (plan.saving?.kind === kind && plan.saving.tierId === tierId) return 'saving';
+export function spendEmphasis(
+  plan: RailPlan,
+  kind: RailOptionKind,
+  key: TierId | OverseerId,
+): SpendEmphasis {
+  const matches = (option: RailOption | null): boolean =>
+    option !== null &&
+    option.kind === kind &&
+    (option.kind === 'appoint' ? option.overseerId === key : option.tierId === key);
+
+  if (matches(plan.best)) return 'best';
+  if (matches(plan.saving)) return 'saving';
   return 'none';
 }
 
@@ -143,6 +166,10 @@ export function spendEmphasis(plan: RailPlan, kind: RailOptionKind, tierId: Tier
  * - *It ignores the cycle an unappointed tier is already running.* That cycle pays
  *   out whether or not anybody is hired, so the appointment is credited with a
  *   little it did not earn. One cycle against a ten-minute horizon.
+ * - *A quicken or a swell over a tier nobody automates is scored as though the tier
+ *   ran anyway.* The same blind spot as the automator's own, applied to the other two
+ *   posts: an idle tier produces nothing to speed up or fatten, so the difference the
+ *   sum counts is a difference nobody without an automator ever collects.
  *
  * None of that makes it "the most expensive thing you can afford" wearing a better
  * name. It is a real measure with stated blind spots, and every one of them is a
@@ -157,8 +184,7 @@ export function railPlan({ state, content, quantity, isUnlocked }: RailPlanInput
     const purchase = purchaseOption({ state, content, tier, quantity });
     if (purchase) options.push(purchase);
 
-    const appointment = appointOption({ state, content, tier });
-    if (appointment) options.push(appointment);
+    options.push(...appointOptions({ state, content, tier }));
   }
 
   const best = pick(options.filter((option) => option.affordable));
@@ -202,44 +228,67 @@ interface AppointInput {
 }
 
 /**
- * Hiring this tier's automator, priced against what the tier would then produce.
+ * Filling one post, priced by what the tier produces before and after.
  *
- * **Ranks only the automate post.** A tier now has three — automate, quicken, swell
- * — but the ranking still asks one question, "what makes this tier run at all", and
- * that is the automate post's job alone. Weighing all fifteen posts against the
- * muster is the wider redesign spec C describes; this keeps today's ranking honest
- * about the one post it still understands.
+ * One measure for all three kinds. The automator is worth the tier's *whole* output,
+ * because an unappointed tier stops dead after every cycle (spec §5.6); a quicken or
+ * a swell is worth the difference its factor makes to a tier that is running. That
+ * puts the three on one axis, which is what lets §3's single accent land on the
+ * right one.
+ *
+ * A quicken or a swell over a tier nobody automates is scored as though the tier ran
+ * anyway. It is the same blind spot the header already owns for the automator: the
+ * measure assumes an idle tier stays idle, which is what happens while the tab is
+ * shut, and a player tapping perfectly loses nothing either way.
  *
  * Nothing for a post already filled — the option has to disappear once it is taken,
  * or the rail keeps offering a thing that cannot be bought and the ranking keeps
- * weighing it. Nothing for a tier the content leaves unautomated, either, though
- * every shipping tier has one.
+ * weighing it.
  */
-function appointOption({ state, content, tier }: AppointInput): RailAppointment | null {
-  if (isAppointed(state, content, tier.id)) return null;
+function appointOptions({ state, content, tier }: AppointInput): RailAppointment[] {
+  const options: RailAppointment[] = [];
 
-  const post = automatorOf(tier);
-  if (!post) return null;
+  for (const post of tier.overseers) {
+    if (hasPost(state, tier.id, post.id)) continue;
 
-  const cost = overseerCost(content, post.id);
-  if (cost === null || cost.lte(0)) return null;
+    const cost = new Decimal(post.cost);
+    if (cost.lte(0)) continue;
 
-  const owned = state.gens[tier.id].owned;
-  const gain = horizonEvil({
-    state,
-    content,
-    tier,
-    weighted: owned.mul(tierMultiplier(state, content, owned)),
-  });
+    const owned = state.gens[tier.id].owned;
+    const weighted = owned.mul(tierMultiplier(state, content, owned));
+    const before =
+      post.effect.kind === 'automate' && !hasAutomator(state, tier)
+        ? new Decimal(0)
+        : horizonEvil({ state, content, tier, weighted });
 
-  return {
-    kind: 'appoint',
-    tierId: tier.id,
-    cost,
-    affordable: canAppoint(state, content, post.id),
-    gain,
-    score: gain.div(cost),
-  };
+    const after = horizonEvil({
+      state,
+      content,
+      tier,
+      weighted,
+      cycleMs: effectiveCycleMs(state, tier) / factorOf(post, 'quicken'),
+      perCycle: effectiveYield(state, tier).mul(factorOf(post, 'swell')),
+    });
+
+    const gain = Decimal.max(0, after.sub(before));
+
+    options.push({
+      kind: 'appoint',
+      tierId: tier.id,
+      overseerId: post.id,
+      cost,
+      affordable: canAppoint(state, content, post.id),
+      gain,
+      score: gain.div(cost),
+    });
+  }
+
+  return options;
+}
+
+/** What this post multiplies, if it is of the kind asked about. One otherwise. */
+function factorOf(post: OverseerDef, kind: 'quicken' | 'swell'): number {
+  return post.effect.kind === kind ? post.effect.factor : 1;
 }
 
 /** Highest score wins. Ties go to whichever content lists first, so it is stable. */
@@ -301,18 +350,25 @@ interface HorizonInput {
   tier: TierDef;
   /** Milestone-weighted units of `tier` that start turning. */
   weighted: Decimal;
+  /** The cycle to price against. Defaults to what the tier runs on today. */
+  cycleMs?: number;
+  /** The per-unit yield to price against. Defaults to what the tier yields today. */
+  perCycle?: Decimal;
 }
 
 /**
  * Evil reaching the bottom of the chain over the horizon from `weighted` units of a
  * tier turning that were not turning before.
  *
- * The one sum both spends are measured by. A purchase hands it the units it adds;
- * an appointment hands it every unit the tier already holds, because none of them
- * was producing.
+ * The one sum every spend is measured by. A purchase hands it the units it adds; an
+ * automator hands it every unit the tier already holds, because none of them was
+ * producing; a quicken or a swell hands it an override of the cycle or the yield, so
+ * the same units are priced at the rate the post would put them on.
  */
-function horizonEvil({ state, content, tier, weighted }: HorizonInput): Decimal {
-  const perSecond = weighted.mul(new Decimal(tier.yield)).div(tier.cycleMs / 1000);
+function horizonEvil({ state, content, tier, weighted, cycleMs, perCycle }: HorizonInput): Decimal {
+  const each = perCycle ?? effectiveYield(state, tier);
+  const every = cycleMs ?? effectiveCycleMs(state, tier);
+  const perSecond = weighted.mul(each).div(every / 1000);
 
   return perSecond
     .mul(evilPerUnit({ state, content, producible: tier.produces }))
@@ -341,9 +397,9 @@ function evilPerUnit({ state, content, producible }: UnitValueInput): Decimal {
   if (!tier) return new Decimal(0);
 
   const owned = state.gens[producible].owned;
-  const perSecond = new Decimal(tier.yield)
+  const perSecond = effectiveYield(state, tier)
     .mul(tierMultiplier(state, content, owned))
-    .div(tier.cycleMs / 1000);
+    .div(effectiveCycleMs(state, tier) / 1000);
 
   return perSecond
     .mul(evilPerUnit({ state, content, producible: tier.produces }))
