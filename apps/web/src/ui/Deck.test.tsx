@@ -11,7 +11,7 @@ const TABS: DeckTab[] = [
     trailing: '2/4',
     panel: <p>What you raise</p>,
   },
-  { id: 'miscreants', title: 'The Miscreants', mark: 'Advised', panel: <p>Who watches</p> },
+  { id: 'miscreants', title: 'The Miscreants', mark: 'Worth a look', panel: <p>Who watches</p> },
   { id: 'deeds', title: 'Deeds', panel: <p>What is remembered</p> },
   { id: 'ledger', title: 'The ledger', panel: <p>What is counted</p> },
 ];
@@ -148,7 +148,7 @@ describe('Deck', () => {
   it('still says what that mark means, for anyone who cannot see it', () => {
     draw();
 
-    expect(screen.getByRole('tab', { name: /Advised/ })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /Worth a look/ })).toBeInTheDocument();
   });
 
   it('names the open panel under the tube rather than inside it', () => {
@@ -162,7 +162,7 @@ describe('Deck', () => {
 
     await user.click(screen.getByRole('tab', { name: /The Miscreants/ }));
 
-    expect(screen.queryByText('Advised')).not.toBeInTheDocument();
+    expect(screen.queryByText('Worth a look')).not.toBeInTheDocument();
   });
 
   it('lets the open panel be reached without a pointer, because it scrolls', () => {
