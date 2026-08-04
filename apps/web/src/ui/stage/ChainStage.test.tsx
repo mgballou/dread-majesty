@@ -263,15 +263,16 @@ describe('ChainStage', () => {
     expect(container.querySelector('.stage')).toHaveAttribute('data-surge', 'lit');
   });
 
-  it('sweeps a quickened rung\'s ring against its halved cycle, not the raw one', () => {
+  it("sweeps a quickened rung's ring against its halved cycle, not the raw one", () => {
     const state = fresh();
     state.overseers.minion = ['minion-goad'];
     state.gens.minion.progressMs = 1900;
 
     render(stage({ state, isUnlocked: onlyMinions() }));
 
-    expect(
-      screen.getByRole('progressbar', { name: 'Minions' }),
-    ).toHaveAttribute('aria-valuenow', '95');
+    expect(screen.getByRole('progressbar', { name: 'Minions' })).toHaveAttribute(
+      'aria-valuenow',
+      '95',
+    );
   });
 });
