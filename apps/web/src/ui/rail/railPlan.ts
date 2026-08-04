@@ -73,26 +73,62 @@ export interface RailAppointment extends RailOptionShape {
 
 export type RailOption = RailPurchase | RailAppointment;
 
+/**
+ * How much better a challenger must be before the accent moves to it.
+ *
+ * The ranking is recomputed every hundred-millisecond slice, and two options whose
+ * scores are close swap places constantly — which drew as the gold hopping between
+ * rows several times a second. A challenger has to be a quarter better before it takes
+ * the accent, and once it has, the same margin protects it. The hysteresis is
+ * directional, so there is no oscillation at the boundary.
+ *
+ * The held option's own score falls as it is bought — its next cost rises — so it hands
+ * over on its own eventually. Nothing has to expire.
+ */
+export const STICKY_MARGIN = 1.25;
+
+/** The lifted spend of each panel. Neither can take the other's accent. */
+export interface RailBest {
+  /** The muster's, or null when nothing there is affordable. */
+  purchase: RailPurchase | null;
+  /** The miscreants', or null when nothing there is affordable. */
+  appoint: RailAppointment | null;
+}
+
+/** What each panel lifted last time, so the ranking can prefer to keep lifting it. */
+export interface HeldKeys {
+  purchase: TierId | null;
+  appoint: OverseerId | null;
+}
+
 export interface RailPlan {
   /**
    * Every spend on the rail, purchases and appointments together in one list.
    *
-   * One list rather than two, because they are ranked against each other: a tier
-   * nobody oversees produces nothing, so hiring somebody and buying another unit are
-   * the same kind of question and get the same answer.
+   * Still one list: the two are still ranked by the same measure and the miscreants
+   * panel still reads its offers out of it. What changed is who wins — one winner per
+   * panel rather than one across the deck.
    */
   options: RailOption[];
-  /** The one spend that wears the accent. Null when nothing is affordable. */
-  best: RailOption | null;
-  /** What to save toward when nothing is affordable. Never wears the accent. */
-  saving: RailOption | null;
+  /**
+   * The spend each panel accents.
+   *
+   * One per panel, because the deck shows one panel at a time and a single winner
+   * across both meant the panel on screen frequently had no accent at all. See the
+   * spec's §2.2 — this keeps ui-sensibility §3 rather than breaking it.
+   */
+  best: RailBest;
+  /** What each panel should save toward when nothing in it is affordable. Never accented. */
+  saving: RailBest;
 }
 
-interface RailPlanInput {
+export interface RailPlanInput {
   state: GameState;
   content: Content;
   quantity: BuyQuantity;
   isUnlocked: (tierId: TierId) => boolean;
+  /** What each panel lifted last time, so a close challenger does not bump it. */
+  held: HeldKeys;
 }
 
 /** Whether the plan lifted a row, and on what grounds. */
@@ -103,7 +139,7 @@ export type SpendEmphasis = 'none' | 'best' | 'saving';
  *
  * Purchases and appointments are ranked together but no longer drawn together: the
  * muster holds one and the miscreants the other. Both ask the same question of the
- * same plan, so both ask it here, and the plan can only ever answer yes once.
+ * same plan, so both ask it here, and each panel answers for itself.
  *
  * Keyed on `overseerId` for an appointment, not `tierId` — three posts now share a
  * tier and the plan can only ever lift one of them. Keying on the tier would light up
@@ -119,8 +155,11 @@ export function spendEmphasis(
     option.kind === kind &&
     (option.kind === 'appoint' ? option.overseerId === key : option.tierId === key);
 
-  if (matches(plan.best)) return 'best';
-  if (matches(plan.saving)) return 'saving';
+  const best = kind === 'purchase' ? plan.best.purchase : plan.best.appoint;
+  const saving = kind === 'purchase' ? plan.saving.purchase : plan.saving.appoint;
+
+  if (matches(best)) return 'best';
+  if (matches(saving)) return 'saving';
   return 'none';
 }
 
@@ -183,7 +222,7 @@ export function spendEmphasis(
  * name. It is a real measure with stated blind spots, and every one of them is a
  * reason to keep the full list rendered for players who want to disagree.
  */
-export function railPlan({ state, content, quantity, isUnlocked }: RailPlanInput): RailPlan {
+export function railPlan({ state, content, quantity, isUnlocked, held }: RailPlanInput): RailPlan {
   const options: RailOption[] = [];
 
   for (const tier of content.tiers) {
@@ -195,13 +234,51 @@ export function railPlan({ state, content, quantity, isUnlocked }: RailPlanInput
     options.push(...appointOptions({ state, content, tier }));
   }
 
-  const best = pick(options.filter((option) => option.affordable));
+  const purchases = options.filter((option): option is RailPurchase => option.kind === 'purchase');
+  const appointments = options.filter(
+    (option): option is RailAppointment => option.kind === 'appoint',
+  );
+
+  const bestPurchase = sticky(
+    purchases.filter((option) => option.affordable),
+    held.purchase,
+    (option) => option.tierId,
+  );
+  const bestAppoint = sticky(
+    appointments.filter((option) => option.affordable),
+    held.appoint,
+    (option) => option.overseerId,
+  );
 
   return {
     options,
-    best,
-    saving: best ? null : pick(options),
+    best: { purchase: bestPurchase, appoint: bestAppoint },
+    saving: {
+      purchase: bestPurchase ? null : pick(purchases),
+      appoint: bestAppoint ? null : pick(appointments),
+    },
   };
+}
+
+/**
+ * The highest score, unless the one already lifted is close enough to keep.
+ *
+ * A held option that has gone — bought out, post filled, purse emptied — is not in
+ * `options`, so it simply loses its hold and the top scorer takes over. Nothing has to
+ * notice it disappeared.
+ */
+function sticky<T extends RailOption>(
+  options: T[],
+  held: string | null,
+  keyOf: (option: T) => string,
+): T | null {
+  const top = pick(options);
+  if (top === null || held === null) return top;
+
+  const incumbent = options.find((option) => keyOf(option) === held) ?? null;
+  if (incumbent === null || keyOf(top) === held) return top;
+
+  return top.score.gt(incumbent.score.mul(STICKY_MARGIN)) ? top : incumbent;
 }
 
 interface PurchaseInput {
@@ -300,8 +377,8 @@ function factorOf(post: OverseerDef, kind: 'quicken' | 'swell'): number {
 }
 
 /** Highest score wins. Ties go to whichever content lists first, so it is stable. */
-function pick(options: RailOption[]): RailOption | null {
-  let winner: RailOption | null = null;
+function pick<T extends RailOption>(options: T[]): T | null {
+  let winner: T | null = null;
   for (const option of options) {
     if (!winner || option.score.gt(winner.score)) winner = option;
   }
