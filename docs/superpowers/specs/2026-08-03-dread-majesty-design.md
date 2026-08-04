@@ -413,6 +413,47 @@ A sub-second cycle would break that and the harness must drop back to `BASE_DT_M
 
 It is a script, never a test, and must never gate CI.
 
+### 5.8 The obsolescence coefficient
+
+**This is the number the whole economy is tuned around.** Added 2026-08-04, after the
+first retune landed a rail that lifted a Warren over a Minion the instant one Warren
+was affordable.
+
+Every tier is eventually retired as a *purchase* by the tier above it: once you hold
+enough Warrens, buying a Minion by hand stops being worth the Evil, because the Warrens
+are pouring out more Minions than your purse ever could. **That moment is the
+obsolescence point**, and where it falls is the single most load-bearing decision in
+the balance.
+
+Two failures sit either side of it:
+
+- **Too early** — one Warren retires the Minion row, the tier the player just learned
+  becomes decoration, and the game teaches that nothing you buy stays relevant.
+- **Too late** — the player stacks the cheap tier for ever and the cascade, which is
+  the whole point of this game, never becomes the reason to climb.
+
+The rule:
+
+> A tier is retired by a **count** of the tier above it, or by the **rate** at which
+> that tier delivers — never by the first unit of it.
+
+Buying up the chain directly must stay a legitimate line for a patient player. It must
+not be the only line, and it must not arrive on unit one.
+
+**The coefficient scales with depth.** The gap between tiers grows as you climb — that
+is what makes each new tier an event rather than a step — so the obsolescence point
+climbs with it. Each tier's target is its obsolescence point times a depth factor, and
+that product is what `baseCost`, `costRate`, cycle, yield, Overseer prices and Overseer
+factors are all fitted to. Add a sixth tier and it inherits the same rule rather than a
+fresh guess.
+
+**It is not yet measured, and it must be.** §5.7's harness reports when each tier first
+*arrives*; it says nothing about when each tier stops being worth buying. Until it
+reports the obsolescence point per tier, this section is a principle without an
+instrument and the numbers under it are educated guesses. Extending the harness to walk
+the opening and record, per tier, the moment the tier above overtakes it, is the work
+that makes the rest of this section tunable.
+
 ---
 
 ## 6. Interface
