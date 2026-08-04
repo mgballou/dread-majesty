@@ -131,8 +131,63 @@ Everything below keeps its role, its name and its place.
 
 The retune also aims at the 30m→1h jump §5.2 flags as a rough edge — about 1,100× as
 the first Dark Legion lands. Generous yields and purchase-based costs leave more room
-to soften it than the first pass had. Target: no single stretch worth more than about
-100×.
+to soften it than the first pass had.
+
+**The target, restated, because the old one measured the wrong thing.** This section
+first asked for no single stretch between adjacent harness checkpoints worth more than
+about 100×, and it has twice been read as decades per hour without the section being
+amended — a target everyone privately agreed to ignore, carried in §5.2 with a ✗ against
+it. The raw ratio is not a measure of the game. The checkpoints are spaced from fifteen
+minutes to four days apart, so a raw ratio mostly reports **the spacing**: 1h→2h shows
+9.1e3 across one hour and 3d→7d shows 110× across ninety-six, and the calmer-looking
+number is the faster-growing hour by a factor of sixty.
+
+**The metric is growth normalised by interval length — decades per hour.** Take
+`log10(end ÷ start)` and divide by the hours between the two readings. That is
+comparable across every row of the table, and it is what "the game accelerates too
+sharply here" actually means. Target: **no stretch above about 5 decades per hour after
+the first quarter hour.** Inside the first quarter hour there is no target yet — see
+below, where the number that would have to justify one is measured for the first time.
+
+That threshold is read off a build judged to read well, so it is a description promoted
+to a target rather than a figure derived from anything. Worth saying out loud, because it
+is exactly what went wrong with the 100× it replaces. What would falsify it is the first
+build that clears it and still feels wrong.
+
+Measured against the shipping content:
+
+| Stretch | Evil/s raw | Evil/s dec/hr | Lifetime dec/hr |
+| --- | ---: | ---: | ---: |
+| 0→5m | 6× | 9.34 | — |
+| 5m→15m | 5.0e4 | **28.17** | **26.59** |
+| 15m→30m | 10.2× | 4.04 | 7.59 |
+| 30m→1h | 5.8× | 1.53 | 2.05 |
+| 1h→2h | 9.1e3 | 3.96 | 3.64 |
+| 2h→4h | 1.2e4 | 2.04 | 2.26 |
+| 4h→8h | 6.3e4 | 1.20 | 1.26 |
+| 8h→12h | 72× | 0.46 | 0.55 |
+| 12h→1d | 426× | 0.22 | 0.25 |
+| 1d→3d | 1.7e3 | 0.07 | 0.08 |
+| 3d→7d | 110× | 0.02 | 0.03 |
+
+Lifetime Evil has no 0→5m row because it starts at zero and a ratio from zero is not a
+number.
+
+Read this way the 4h→8h stretch §5.2 used to flag at 6.3e4 is the fifth calmest hour of
+the run, and the steepest by a wide margin is the opening — **not evenly, either.** The
+first five minutes run at 9.34 and the next ten at 28.17, so the acceleration sits in the
+5m→15m stretch: the Taskmaster lands at 9m 57s, the first Warren at 10m 53s, and the
+Minion count crosses three milestone rungs in between. **None of that was measured until
+this run**, because 15m was the instrument's floor. That is why §5.7's harness now
+carries a 5m checkpoint, and it is why the opening has a reading here rather than a
+target: 28 decades an hour may be exactly right for the stretch where a player is meant
+to feel the ground move, and nobody has yet played it and said.
+
+**One caveat, and it matters.** Evil per second is a rate. On **lifetime Evil** — the
+total the player actually watches climb — the ordering after the opening is different:
+it peaks at 15m→30m at 7.59 decades an hour against 3.64 at 1h→2h, so the target of 5 is
+cleared on the rate and missed on the total. Both readings are real and neither replaces
+the other. A claim about the cliff has to say which one it is measuring.
 
 ---
 
@@ -140,9 +195,26 @@ to soften it than the first pass had. Target: no single stretch worth more than 
 
 ### 5.1 Yields go up, cycles and costs come down
 
-Every tier above Minions yields several, not one. A Warren breeds — it should pour out
-Minions, not hand over one. What stops that detonating is the cycle length and the cost
-curve, and with §2 in place the cost curve finally works.
+A Warren breeds — it should pour out Minions, not hand over one. It yields five, and
+that is the shape this section was written for: raise what a unit hands over, and let
+the cycle length and the cost curve stop it detonating. With §2 in place the cost curve
+finally works.
+
+**Above the Warren the rule reversed, and §5.8 is why.** A Dark Legion now takes one
+Warren's worth of ground every ten minutes, a Fortress raises one Legion a half hour and
+a Throne one Fortress an hour and a half. Only the Warren still yields several.
+
+That is not a retreat from the paragraph above; it is the same paragraph applied to a
+constraint that did not exist when it was written. The obsolescence point of a tier is a
+*count* of the tier above it (§5.8.1), so what one unit of the producer hands over sets
+how few of them it takes to retire the tier below. Generous yields at the top meant two
+Warrens retiring the Minion and four Dark Legions retiring the Warren — the tier above
+killing the tier below on its opening units, which §5.8 forbids. Cutting the yield and
+buying the throughput back through the cost curve keeps the chain's pace and moves the
+crossing to where the rule wants it: 42 Warrens, 33 Legions, 39 Fortresses, 44 Thrones.
+
+The Warren keeps its five because nothing retires the Minion too early once the Minion's
+own curve is flat, so the count is bought there rather than here.
 
 ### 5.2 Targets
 
@@ -159,7 +231,10 @@ were refitted around it.
 | First Throne | ~2h | 3h 55m 29s | 2h 00m 05s | **2h 03m 09s** |
 | First prestige | ~45m | 1h 36m 49s | 45m 03s | **41m 11s** |
 | Souls at first reset | 40–50 | ~10 | 40–50 at 1h 30m | **40–50 at 1h 47m** |
-| Largest jump between checkpoints | under ~100× | 1.3e4 | 3.0e4 | **6.3e4** ✗ |
+| Steepest stretch after 15m, Evil/s | under ~5 dec/hr | — | — | **4.04 dec/hr** |
+| Steepest stretch after 15m, lifetime Evil | under ~5 dec/hr | — | — | **7.59 dec/hr** ✗ |
+| Steepest stretch inside 15m, Evil/s | no target yet | — | — | 28.17 dec/hr |
+| Largest raw jump between checkpoints | superseded, see §4 | 1.3e4 | 3.0e4 | 6.3e4 |
 
 All five arrival times land, none further than a seventh from its target and all well
 inside the fifth §5.2 allows. The souls row needs its reading stated: at the moment a
@@ -175,15 +250,29 @@ producer hands over; the base costs were then refitted to bring the arrival time
 inside their bands. The obsolescence points themselves are in §5.8 and in the note on
 `v1` in `packages/content/src/v1/generators.ts`.
 
-**The cliff is missed and is worse again.** §4 asks for no stretch between adjacent
-checkpoints worth more than about 100×; the steepest here is 4h→8h at 6.3e4 on Evil per
-second, against 3.0e4 at the first fit and 1.3e4 before. Part of that is the arithmetic
-of the rest of this table — the run has to climb from a thousand Minions at 15m to a
-five-tier cascade by 2h, and the checkpoints are a doubling apart, so halving every
-arrival time squares the ratio across them. The rest is §5.8 charged directly: flat cost
-curves mean counts climb where prices used to, and counts are what the milestone ladder
-pays on. See the note on `v1` for the one lever left — the milestone tail rung — and why
-it was not pulled.
+**The cliff rows now report what they measure, and one of them is still missed.** §4
+restates the target in decades per hour, so the old raw-ratio row is kept only as
+history: it mostly measured how far apart the checkpoints are, and the three builds under
+it were never comparable in the first place. The two earlier builds have no entry against
+the new metric because nobody recorded one, and inventing them from a raw 4h→8h ratio
+would be the same mistake again.
+
+On **Evil per second** the shipping build clears the target: the steepest stretch after
+the opening quarter hour is 15m→30m at 4.04 decades an hour, and the 4h→8h stretch that
+reads as 6.3e4 raw is the fifth calmest hour in the run at 1.20. On **lifetime Evil** it
+does not: the same stretch measures 7.59, against a target of 5. Both readings are real
+and they disagree about which build is steep, which is why §4 now says which one a claim
+is measuring. **Left missed on the total, hit on the rate**, and not reconciled.
+
+The opening row carries no verdict on purpose. The 5m checkpoint added to §5.7's harness
+measured it for the first time, at 28.17 decades an hour across 5m→15m, and §4 explains
+why that is a reading rather than a failure.
+
+Some of that is the arithmetic of the rest of this table — the run has to climb from a
+thousand Minions at 15m to a five-tier cascade by 2h. The rest is §5.8 charged directly:
+flat cost curves mean counts climb where prices used to, and counts are what the
+milestone ladder pays on. See the note on `v1` for the one lever left — the milestone
+tail rung — and why it was not pulled.
 
 **These were targets, not numbers.** `pnpm harness` set the numbers. Any figure in this
 section that the harness contradicts is wrong, and the harness wins.

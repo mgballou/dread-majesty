@@ -58,7 +58,19 @@ const DAY = 24 * HOUR;
  */
 const OBSOLESCENCE_HOLD_MS = 60 * 1000;
 
+/**
+ * The first row is 5m because 15m used to be the floor, and a floor hides whatever
+ * happens under it. Normalised for interval length, the opening is by some way the
+ * steepest stretch of the whole run, and nothing measured it. It is not even, either:
+ * this row split the opening quarter hour into 9.3 decades an hour for the first five
+ * minutes and 28.2 for the next ten, which is where the Taskmaster, the first Warren
+ * and three Minion milestone rungs all land. See §4 of the retune spec.
+ *
+ * This adds a sample. It changes no measurement: every other row of the table, and
+ * every figure above it, reads identically with and without it.
+ */
 const CHECKPOINTS = [
+  ['5m', 5 * MINUTE],
   ['15m', 15 * MINUTE],
   ['30m', 30 * MINUTE],
   ['1h', HOUR],
