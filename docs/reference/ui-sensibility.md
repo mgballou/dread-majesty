@@ -241,13 +241,19 @@ two screens.
 
 | Tier | Weight | Use |
 | --- | --- | --- |
-| Primary | The accent, filled | The one action. Exactly one per screen. |
+| Primary | The accent, filled | The one action. Exactly one per region. |
 | Secondary | Structural outline | Real alternatives that ask for another pass. |
 | Quiet | Ghost, no chrome | Reachable, never competing for the eye. |
 | Destructive | Danger tone, quiet weight | Never primary, never the default. |
 
 **Navigation is not an action.** A control that takes you somewhere is structural. The accent is
 spent on doing, never on going.
+
+**One region, one action.** A screen showing two regions at once — a live diagram beside
+a panelled deck — gets one accent in each. The failure the rule is guarding against is
+five equal buttons competing, not two accents in two places a person can learn. What
+must never happen is the accent *moving*: an accent that is sometimes here and sometimes
+there is worse than two that always are.
 
 **Emphasize by de-emphasizing.** When something will not stand out, the fix is usually to quiet
 its neighbours, not to shout louder.

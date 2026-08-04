@@ -517,8 +517,11 @@ above actually delivers, which is the only kind of "boosted" this rule cares abo
 wrong:
 
 **Stage — the chain, alive.** Six nodes: Thrones, Fortresses, Legions, Warrens, Minions, Evil.
-Each carries a count and a ring sweeping its cycle. On completion the ring snaps and
-motes travel down the link to the next node. When a Warren fires you *see* minions
+Each carries a count and a ring sweeping its cycle. On completion the ring flashes and
+motes travel down the link to the next node — and the run takes the tone of what it
+*delivers*, not of what sent it, so the last run into Evil is ember whatever colour the
+Minions above it are. Both progress indicators read in five segments rather than as a
+continuous sweep, so a glance gives a fraction. When a Warren fires you *see* minions
 pour into the Minion node and the Minion ring quicken. No game in the genre shows its
 own cascade. This one does, and it is the reason the diagram beats a list.
 
@@ -529,11 +532,21 @@ Each node is also the **tap target that rouses that tier** until its Overseer is
 appointed (§5.6). The verb belongs on the thing it acts on, not on a button somewhere
 else.
 
-**Rail — one accent, always.** `ui-sensibility.md` §3 forbids five equal buttons; the
+**Rail — one accent per panel.** `ui-sensibility.md` §3 forbids five equal buttons; the
 genre's scrolling list is nothing else. Every generator sits in the rail at secondary
-weight, and **the single best available purchase is lifted out and accented**. One
-primary action, always, and always the right one. The full list stays for players who
-want to disagree. Buy quantity (×1 / ×10 / ×100 / max) is a sticky global toggle.
+weight, and **the best available purchase in that panel is lifted out and accented**.
+The miscreants panel accents its own best appointment, and the stage accents Smite
+whenever the blow is ready. The deck shows one panel at a time, so at most two accented
+controls are ever on screen and both are always in the same place. A single winner
+across both panels — which is what this was — left whichever panel you were looking at
+with no accent at all whenever the other one won. See
+`2026-08-04-stage-and-rail-polish-design.md` §2.
+
+The accent holds its choice. Scores are recomputed every slice, so a challenger must
+beat the lifted spend by a quarter before the gold moves.
+
+Buy quantity (×1 / ×10 / ×100 / ×MAX) is a sticky global setting on one cycling chip,
+whose weight ramps with the quantity and never reaches full-strength gold.
 
 The rail carries the tiers the player has met, **plus exactly one named row for the
 tier after them** — what it is and what it costs. Three identical blank slots are not
@@ -541,7 +554,7 @@ a goal, they are a hole; one named row is the goal, and the rail still does not 
 when the tier arrives.
 
 **Gold is the accent.** The game is about majesty as much as dread, and orange alone
-was carrying none of it. Gold owns the single lifted action at full strength and the
+was carrying none of it. Gold owns each lifted action at full strength and the
 chevron banners and meters at low weight; ember drops to being the tone of Evil
 itself, one resource among the chain's five. No tier tone may sit near gold, or the
 accent stops meaning act.
