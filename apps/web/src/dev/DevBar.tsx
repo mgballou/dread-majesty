@@ -1,7 +1,7 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import Decimal from 'break_eternity.js';
 import { RESOURCE_IDS, TIER_IDS, type Content, type Copy, type TierId } from '@dm/content';
-import { automatorOf, cloneState, type GameState } from '@dm/engine';
+import { cloneState, type GameState } from '@dm/engine';
 import { jumps, type Jump } from './jumps.ts';
 import './DevBar.css';
 
@@ -99,11 +99,8 @@ function DevPanel({ content, copy, state, onReplace, onOffline }: DevBarProps): 
 
   function overseers(appointed: boolean): void {
     const next = cloneState(state);
-    // The dev button only ever toggles the automate post — the same stand-in the
-    // rail plan uses until Task 12 lets a control name a post directly.
     for (const tier of content.tiers) {
-      const automator = appointed ? automatorOf(tier) : undefined;
-      next.overseers[tier.id] = automator ? [automator.id] : [];
+      next.overseers[tier.id] = appointed ? tier.overseers.map((post) => post.id) : [];
     }
     onReplace(next);
     setNote(appointed ? 'Every Overseer appointed' : 'Every Overseer dismissed');

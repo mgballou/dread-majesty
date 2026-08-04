@@ -39,11 +39,31 @@ function draw(isUnlocked: (id: TierId) => boolean = () => true) {
   };
 }
 
+const TOTAL_POSTS = CURRENT.tiers.reduce((total, tier) => total + tier.overseers.length, 0);
+
 describe('Miscreants', () => {
-  it('shows a post for every rung of the chain', () => {
+  it('lists every post on every tier', () => {
     draw();
 
-    expect(screen.getAllByRole('listitem')).toHaveLength(CURRENT.tiers.length);
+    expect(screen.getAllByRole('listitem')).toHaveLength(TOTAL_POSTS);
+  });
+
+  it('groups the posts under their tier', () => {
+    draw();
+
+    expect(screen.getByRole('group', { name: 'Minions' })).toBeInTheDocument();
+  });
+
+  it('reports which post was chosen', async () => {
+    state.resources.evil = new Decimal(1000);
+
+    const { onAppoint, user } = draw();
+    await user.click(
+      screen.getByRole('button', { name: new RegExp(OVERSEER.names['minion-hand']) }),
+    );
+    await user.click(screen.getByRole('button', { name: OVERSEER.confirmAction }));
+
+    expect(onAppoint).toHaveBeenCalledWith('minion-hand');
   });
 
   it('names the Overseer of each post', () => {
@@ -67,13 +87,13 @@ describe('Miscreants', () => {
   it('draws one mark per post', () => {
     const { container } = draw();
 
-    expect(container.querySelectorAll('.miscreant__mark')).toHaveLength(CURRENT.tiers.length);
+    expect(container.querySelectorAll('.miscreant__mark')).toHaveLength(TOTAL_POSTS);
   });
 
   it('says outright that a post is beyond the purse', () => {
     draw();
 
-    expect(screen.getAllByText(OVERSEER.beyond)).toHaveLength(CURRENT.tiers.length);
+    expect(screen.getAllByText(OVERSEER.beyond)).toHaveLength(TOTAL_POSTS);
   });
 
   it('will not open a post the purse cannot reach', () => {
@@ -126,19 +146,6 @@ describe('Miscreants', () => {
     expect(
       screen.getByText(OVERSEER.confirmTitle(OVERSEER.names['minion-hand'])),
     ).toBeInTheDocument();
-  });
-
-  it('appoints when the question is answered', async () => {
-    state.resources.evil = new Decimal(1000);
-
-    const { onAppoint, user } = draw();
-    await user.click(
-      screen.getByRole('button', { name: new RegExp(OVERSEER.names['minion-hand']) }),
-    );
-
-    await user.click(screen.getByRole('button', { name: OVERSEER.confirmAction }));
-
-    expect(onAppoint).toHaveBeenCalledWith('minion');
   });
 
   it('appoints nobody when the question is refused', async () => {

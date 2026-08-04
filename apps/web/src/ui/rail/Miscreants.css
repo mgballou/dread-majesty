@@ -1,9 +1,10 @@
 /*
  * The officers. See Miscreants.tsx and spec §5.6.
  *
- * One component token: the posts are a fixed set of four and each holds a name, a
- * line about the holder and a price, so the entry has a height and the panel does not
- * discover it from whichever note wrapped.
+ * One component token: every post holds a name, a line about the holder and a price,
+ * so the entry has a height and the panel does not discover it from whichever note
+ * wrapped. Three posts per tier, grouped under the tier they watch — a fixed count
+ * either way, which is what fixes the panel's height for the whole game.
  */
 
 .miscreants {
@@ -17,6 +18,14 @@
   margin: 0;
   font-size: var(--text-sm);
   color: var(--ink-dim);
+}
+
+.miscreants__group + .miscreants__group {
+  margin-block-start: var(--space-4);
+}
+
+.miscreants__label {
+  margin-block-end: var(--space-2);
 }
 
 .miscreants__posts {

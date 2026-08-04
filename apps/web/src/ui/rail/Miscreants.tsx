@@ -1,7 +1,8 @@
 import Decimal from 'break_eternity.js';
 import { useState, type ReactNode } from 'react';
-import type { Content, Copy, TierDef, TierId } from '@dm/content';
-import { isAppointed, type GameState } from '@dm/engine';
+import type { Content, Copy, OverseerDef, OverseerId, TierDef } from '@dm/content';
+import { hasPost, type GameState } from '@dm/engine';
+import { Banner } from '../Banner.tsx';
 import { Confirm } from '../Confirm.tsx';
 import { formatNumber } from '../format.ts';
 import {
@@ -22,17 +23,23 @@ interface MiscreantsProps {
   state: GameState;
   /** Purchases and appointments on one ranking. Only the appointments are read. */
   plan: RailPlan;
-  onAppoint: (tierId: TierId) => void;
+  onAppoint: (overseerId: OverseerId) => void;
   copy: MiscreantsCopy;
 }
 
 interface PostState {
   tier: TierDef;
+  post: OverseerDef;
   filled: boolean;
-  /** Null once the post is filled, and for a rung the player has not reached. */
+  /** Null once filled, and for a rung the player has not reached. */
   offer: RailAppointment | null;
   price: Decimal;
   emphasis: SpendEmphasis;
+}
+
+interface TierPosts {
+  tier: TierDef;
+  posts: PostState[];
 }
 
 /**
@@ -47,6 +54,13 @@ interface PostState {
  * point — it names what is still ahead, which is the same argument the deeds panel
  * makes. It also fixes the panel's height for the whole game, so nothing here moves.
  *
+ * **Grouped by tier, three posts each.** A post's price only means anything beside
+ * the tier it watches — a Steward and a Taskmaster cost nothing alike, and a flat
+ * list of fifteen would read as one undifferentiated wall rather than five choices
+ * of three. The tier name is a `Banner` one level below the panel's own title, since
+ * this component is already mounted inside the deck's titled region and does not
+ * repeat that title itself.
+ *
  * The mark is a **diamond**, never a circle. Circles are generators, on the chain and
  * in the muster, and a player must be able to tell the two apart before reading a word
  * of either.
@@ -56,52 +70,71 @@ interface PostState {
  * place `notes` has ever had room to say who these people are.
  */
 export function Miscreants({ content, state, plan, onAppoint, copy }: MiscreantsProps): ReactNode {
-  const [asking, setAsking] = useState<TierId | null>(null);
+  const [asking, setAsking] = useState<OverseerId | null>(null);
 
-  // Roster-aware from Task 5: a tier now has three posts, but this panel still
-  // shows only the automator, so it reads out only the `-hand` option of the three.
-  const offers = new Map<TierId, RailAppointment>();
+  const offers = new Map<OverseerId, RailAppointment>();
   for (const option of plan.options) {
-    if (option.kind === 'appoint' && option.overseerId === `${option.tierId}-hand`) {
-      offers.set(option.tierId, option);
-    }
+    if (option.kind === 'appoint') offers.set(option.overseerId, option);
   }
 
   // Chain order, climbing, so the muster and the miscreants read down the same list.
-  const posts: PostState[] = [...content.tiers].reverse().map((tier) => {
-    const offer = offers.get(tier.id) ?? null;
+  const groups: TierPosts[] = [...content.tiers].reverse().map((tier) => ({
+    tier,
+    posts: tier.overseers.map((post) => {
+      const offer = offers.get(post.id) ?? null;
 
-    return {
-      tier,
-      filled: isAppointed(state, content, tier.id),
-      offer,
-      price: offer?.cost ?? new Decimal(tier.overseers[0]?.cost ?? '0'), // Roster-aware from Task 5.
-      emphasis: spendEmphasis(plan, 'appoint', `${tier.id}-hand`), // Roster-aware from Task 5.
-    };
-  });
+      return {
+        tier,
+        post,
+        filled: hasPost(state, tier.id, post.id),
+        offer,
+        price: offer?.cost ?? new Decimal(post.cost),
+        emphasis: spendEmphasis(plan, 'appoint', post.id),
+      };
+    }),
+  }));
 
-  const asked = posts.find((post) => post.tier.id === asking) ?? null;
+  const asked =
+    groups.flatMap((group) => group.posts).find((post) => post.post.id === asking) ?? null;
 
   return (
     <div className="miscreants">
-      <ul className="miscreants__posts" aria-label={copy.overseer.panelTitle}>
-        {posts.map((post) => (
-          <Post key={post.tier.id} post={post} onAsk={() => setAsking(post.tier.id)} copy={copy} />
-        ))}
-      </ul>
+      {groups.map((group) => (
+        <section
+          key={group.tier.id}
+          className="miscreants__group"
+          role="group"
+          aria-label={group.tier.plural}
+        >
+          <Banner as="h3" weight="secondary" className="miscreants__label">
+            {group.tier.name}
+          </Banner>
+
+          <ul className="miscreants__posts">
+            {group.posts.map((post) => (
+              <Post
+                key={post.post.id}
+                post={post}
+                onAsk={() => setAsking(post.post.id)}
+                copy={copy}
+              />
+            ))}
+          </ul>
+        </section>
+      ))}
 
       {asked !== null && (
         <Confirm
           open
-          title={copy.overseer.confirmTitle(copy.overseer.names[`${asked.tier.id}-hand`])} // Roster-aware from Task 5.
+          title={copy.overseer.confirmTitle(copy.overseer.names[asked.post.id])}
           confirmLabel={copy.overseer.confirmAction}
           cancelLabel={copy.overseer.cancel}
           onChoose={(choice) => {
-            if (choice === 'confirm') onAppoint(asked.tier.id);
+            if (choice === 'confirm') onAppoint(asked.post.id);
             setAsking(null);
           }}
         >
-          <p>{copy.overseer.notes[`${asked.tier.id}-hand`]}</p> {/* Roster-aware from Task 5. */}
+          <p>{copy.overseer.notes[asked.post.id]}</p>
           <p>{copy.overseer.cost(formatNumber(asked.price))}</p>
         </Confirm>
       )}
@@ -138,9 +171,8 @@ function Post({ post, onAsk, copy }: PostProps): ReactNode {
         <Diamond filled={filled} />
 
         <span className="miscreant__body">
-          {/* Roster-aware from Task 5. */}
-          <span className="miscreant__name">{copy.overseer.names[`${tier.id}-hand`]}</span>
-          <span className="miscreant__note">{copy.overseer.notes[`${tier.id}-hand`]}</span>
+          <span className="miscreant__name">{copy.overseer.names[post.post.id]}</span>
+          <span className="miscreant__note">{copy.overseer.notes[post.post.id]}</span>
         </span>
 
         <span className="miscreant__standing">

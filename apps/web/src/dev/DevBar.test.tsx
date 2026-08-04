@@ -82,7 +82,11 @@ describe('DevBar', () => {
 
     await user.click(screen.getByRole('button', { name: /appoint every overseer/i }));
 
-    expect(onReplace.mock.calls[0]?.[0].overseers.fortress).toEqual(['fortress-hand']);
+    expect(onReplace.mock.calls[0]?.[0].overseers.fortress).toEqual([
+      'fortress-hand',
+      'fortress-goad',
+      'fortress-glut',
+    ]);
   });
 
   it('dismisses every Overseer at once', async () => {
