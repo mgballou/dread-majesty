@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { CURRENT, CURRENT_COPY, TIER_IDS } from '@dm/content';
+import { CURRENT, TIER_IDS } from '@dm/content';
+import { nextCost } from '@dm/engine';
 import { jumps } from './jumps.ts';
 
-const list = jumps(CURRENT, CURRENT_COPY);
+const list = jumps(CURRENT);
 
 function find(id: string) {
   const jump = list.find((candidate) => candidate.id === id);
@@ -31,13 +32,14 @@ describe('jumps', () => {
 
   it('banks exactly what an Overseer costs', () => {
     const minion = CURRENT.tiers.find((tier) => tier.id === 'minion');
-    expect(find('appoint:minion').build().resources.evil.toString()).toBe(
-      minion?.overseers[0]?.cost,
-    );
+    const post = minion?.overseers[0];
+    expect(find(`appoint:${post?.id}`).build().resources.evil.toString()).toBe(post?.cost);
   });
 
   it('leaves the tier being appointed unappointed', () => {
-    expect(find('appoint:minion').build().overseers.minion).toEqual([]);
+    const minion = CURRENT.tiers.find((tier) => tier.id === 'minion');
+    const post = minion?.overseers[0];
+    expect(find(`appoint:${post?.id}`).build().overseers.minion).toEqual([]);
   });
 
   it('puts a tier on its first milestone', () => {
@@ -74,5 +76,25 @@ describe('jumps', () => {
 
   it('gives every jump a distinct id', () => {
     expect(new Set(list.map((jump) => jump.id)).size).toBe(list.length);
+  });
+
+  it('leaves every jump somewhere the player can act from', () => {
+    for (const jump of list) {
+      const state = jump.build();
+      const canDoSomething =
+        state.resources.evil.gt(0) || CURRENT.tiers.some((tier) => state.gens[tier.id].owned.gt(0));
+
+      expect({ id: jump.id, canDoSomething }).toHaveProperty('canDoSomething', true);
+    }
+  });
+
+  it('keeps the free Minion on a freshly reset board', () => {
+    expect(find('banked:10').build().gens.minion.owned.toString()).toBe('1');
+  });
+
+  it('prices the next purchase off what the deep run actually holds', () => {
+    const minion = CURRENT.tiers.find((tier) => tier.id === 'minion');
+    const state = find('deep').build();
+    expect(nextCost(state, CURRENT, 'minion')?.toString()).not.toBe(minion?.baseCost);
   });
 });
