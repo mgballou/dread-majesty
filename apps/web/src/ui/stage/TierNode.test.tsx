@@ -29,6 +29,7 @@ function node(overrides: Partial<Parameters<typeof TierNode>[0]> = {}): ReactEle
       copy={CURRENT_COPY.stage}
       oversight={OVERSIGHT}
       feed={null}
+      produced={new Decimal(0)}
       surgeIndex={0}
       {...overrides}
     />
@@ -235,6 +236,22 @@ describe('TierNode', () => {
     rerender(node({ feed: { produced, version: 1 } }));
 
     expect(container.querySelector('.stage-node__landing')).not.toBeInTheDocument();
+  });
+
+  it('marks its own completion when its lifetime output grows', () => {
+    const { container, rerender } = render(node({ produced: new Decimal(10) }));
+
+    rerender(node({ produced: new Decimal(14) }));
+
+    expect(container.querySelector('.stage-node__fired')).toBeInTheDocument();
+  });
+
+  it('marks nothing while its output stands still', () => {
+    const { container, rerender } = render(node({ produced: new Decimal(10) }));
+
+    rerender(node({ produced: new Decimal(10) }));
+
+    expect(container.querySelector('.stage-node__fired')).not.toBeInTheDocument();
   });
 
   it('says which motion branch it drew', () => {

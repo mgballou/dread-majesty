@@ -157,6 +157,7 @@ export function ChainStage({
                 onRouse: () => onRouse(tier.id),
               }}
               feed={feedFrom({ producer: rungs[index - 1], state, version })}
+              produced={state.gens[tier.id].lifetimeProduced}
               surgeIndex={(beats - 1 - index) * 2 + 1}
             />
             <ChainLink

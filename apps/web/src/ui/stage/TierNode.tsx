@@ -61,6 +61,14 @@ interface TierNodeProps {
   /** The rung above. Null for the head of the chain, which nothing feeds. */
   feed: Feed | null;
   /**
+   * This rung's own `lifetimeProduced`. Growth in it is this tier's cycle closing.
+   *
+   * Distinct from `feed`, which is the rung above delivering into this one. A node
+   * shows both, and they are different events: one is this tier working, the other is
+   * this tier being fed.
+   */
+  produced: Decimal;
+  /**
    * Where this rung falls in the wave, counted from the Evil end.
    *
    * The chain sets it; the stylesheet turns it into a delay. It lives here rather than
@@ -105,10 +113,12 @@ export function TierNode({
   copy,
   oversight,
   feed,
+  produced,
   surgeIndex,
 }: TierNodeProps): ReactNode {
   const reduced = useReducedMotion();
   const landing = usePulse(feed === null ? null : feed.produced, feed?.version ?? 0);
+  const fired = usePulse(isUnlocked ? produced : null, feed?.version ?? 0);
   const stateId = useId();
 
   // Set as a custom property, not as `color`. The chain takes every rung's colour over
@@ -153,6 +163,10 @@ export function TierNode({
           /* Re-keying on the arrival id restarts the mark. Same trick as the link's
              motes, and for the same reason: no timer, nothing to clean up. */
           <span className="stage-node__landing" key={landing.id} aria-hidden="true" />
+        )}
+
+        {fired !== null && (
+          <span className="stage-node__fired" key={`fire-${fired.id}`} aria-hidden="true" />
         )}
 
         {isTappable && oversight !== null && (

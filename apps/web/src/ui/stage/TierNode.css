@@ -143,6 +143,66 @@
 }
 
 /*
+ * This rung's own cycle closing.
+ *
+ * A ring flaring in the tier's tone, on the ring's own line rather than over the art,
+ * so it reads as the cycle completing and not as something arriving. The arrival mark
+ * sits inside the medallion; this sits on its edge.
+ */
+.stage-node__fired {
+  position: absolute;
+  inset: 0;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.stage-node[data-motion='full'] .stage-node__fired {
+  animation: stage-node-fired var(--duration-base) ease-out both;
+}
+
+/*
+ * Under reduced motion the flash holds still and fades rather than swelling. The
+ * completion is never missing, only stationary (ui-sensibility §8).
+ */
+.stage-node[data-motion='reduced'] .stage-node__fired {
+  animation: stage-node-fired-still var(--duration-base) linear both;
+}
+
+@keyframes stage-node-fired {
+  from {
+    opacity: var(--stage-node-flash, 0.9);
+    scale: 1;
+  }
+
+  to {
+    opacity: 0;
+    scale: 1.18;
+  }
+}
+
+@keyframes stage-node-fired-still {
+  from {
+    opacity: var(--stage-node-flash, 0.9);
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+/*
+ * Under a blow, harder. Every tier is producing several times what it usually does and
+ * the stage should say so rather than flashing at the same weight it always does.
+ */
+.stage[data-surge='lit'] .stage-node__fired {
+  --stage-node-flash: 1;
+
+  border-width: 3px;
+}
+
+/*
  * Dormant: manual, owned, and stopped. The clearest call to action on the stage.
  *
  * It reads as pressable three ways over, and none of them is colour alone: the face
