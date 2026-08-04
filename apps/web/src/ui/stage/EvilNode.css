@@ -110,12 +110,15 @@
 }
 
 .evil-node__report {
-  min-block-size: var(--space-4);
-  max-inline-size: 12rem;
+  /* Fixed, not a floor, and at every width. The five report lines run from nineteen
+     characters to thirty-four, and the node sits beside the chain — so an unpinned
+     report drags the whole track sideways every time a blow lands. */
+  inline-size: 11rem;
+  min-block-size: calc(var(--space-4) * 2);
+  text-align: center;
   margin: 0;
   font-size: var(--text-xs);
   font-style: italic;
-  text-align: center;
   color: var(--ink-dim);
 }
 
@@ -191,7 +194,7 @@
   }
 
   .evil-node__report {
-    max-inline-size: 9rem;
+    inline-size: 9rem;
   }
 
   .evil-node__total {

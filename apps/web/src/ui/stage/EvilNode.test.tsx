@@ -14,7 +14,6 @@ function evil(overrides: Partial<Parameters<typeof EvilNode>[0]> = {}): ReactEle
       name={CURRENT_COPY.evil.name}
       copy={CURRENT_COPY.smite}
       report=""
-      isTheAction={false}
       phase={{ kind: 'ready', share: 0 }}
       content={CURRENT}
       feed={null}
@@ -62,16 +61,22 @@ describe('EvilNode', () => {
     expect(onSmite).toHaveBeenCalledOnce();
   });
 
-  it('lifts to the accent while nothing else is worth buying', () => {
-    render(evil({ isTheAction: true }));
+  it('is lifted whenever the blow is ready', () => {
+    const { container } = render(evil({ phase: { kind: 'ready', share: 0 } }));
 
-    expect(strike()).toHaveClass('evil-node__strike--lifted');
+    expect(container.querySelector('.evil-node__strike--lifted')).not.toBeNull();
   });
 
-  it('stays at secondary weight once a purchase is the move', () => {
-    render(evil());
+  it('is not lifted while it is cooling', () => {
+    const { container } = render(evil({ phase: { kind: 'cooling', share: 0.4 } }));
 
-    expect(strike()).not.toHaveClass('evil-node__strike--lifted');
+    expect(container.querySelector('.evil-node__strike--lifted')).toBeNull();
+  });
+
+  it('is not lifted while it is running', () => {
+    const { container } = render(evil({ phase: { kind: 'active', share: 0.2 } }));
+
+    expect(container.querySelector('.evil-node__strike--lifted')).toBeNull();
   });
 
   it('holds the report line open before any blow has been struck', () => {
@@ -114,12 +119,6 @@ describe('EvilNode', () => {
     render(evil({ phase: { kind: 'cooling', share: 0.5 } }));
 
     expect(strike()).toBeDisabled();
-  });
-
-  it('never wears the accent while it cannot be struck', () => {
-    render(evil({ isTheAction: true, phase: { kind: 'cooling', share: 0.5 } }));
-
-    expect(strike()).not.toHaveClass('evil-node__strike--lifted');
   });
 
   it('marks which part of the blow it is in, for the stylesheet', () => {
