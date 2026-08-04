@@ -69,6 +69,13 @@ export function TierRow({
           <span className="rail__owned">{copy.rail.held(formatCount(gen.owned))}</span>
         </div>
 
+        {/* Always mounted, even with nothing to say. The cascade crosses the
+            purchased count without warning, and a line that mounts on that
+            crossing would move the price and the milestone line under it. */}
+        <p className="rail__bought">
+          {gen.purchased.lt(gen.owned) && copy.rail.bought(formatCount(gen.purchased))}
+        </p>
+
         <p className="rail__line">{produceLine(tier, content)}</p>
 
         <Meter

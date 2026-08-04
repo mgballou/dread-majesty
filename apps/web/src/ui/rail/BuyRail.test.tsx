@@ -305,4 +305,22 @@ describe('BuyRail', () => {
 
     expect(screen.queryByText(CURRENT_COPY.rail.best)).not.toBeInTheDocument();
   });
+
+  it('says how many of a tier were bought when the cascade has made more', () => {
+    state.gens.minion.purchased = new Decimal(12);
+    state.gens.minion.owned = new Decimal(4000);
+
+    draw();
+
+    expect(screen.getByText(/12 bought/)).toBeInTheDocument();
+  });
+
+  it('says nothing about purchases when every unit was bought', () => {
+    state.gens.minion.purchased = new Decimal(12);
+    state.gens.minion.owned = new Decimal(12);
+
+    draw();
+
+    expect(screen.queryByText(/bought/)).not.toBeInTheDocument();
+  });
 });
