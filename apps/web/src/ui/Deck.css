@@ -151,9 +151,16 @@
 }
 
 .deck__glyph {
-  font-size: var(--text-lg);
+  display: flex;
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
   color: var(--ink-dim);
   transition: color var(--duration-fast) ease-out;
+}
+
+.deck__mark {
+  inline-size: 100%;
+  block-size: 100%;
 }
 
 .deck__tab:hover .deck__glyph {

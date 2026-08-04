@@ -89,7 +89,7 @@ export function App(): ReactNode {
     {
       id: 'muster',
       title: copy.rail.title,
-      glyph: '⚒',
+      glyph: 'muster',
       trailing: `${met}/${rungs}`,
       ...(plan.best?.kind === 'purchase' ? { mark: copy.rail.best } : {}),
       panel: (
@@ -111,7 +111,7 @@ export function App(): ReactNode {
     {
       id: 'miscreants',
       title: copy.overseer.panelTitle,
-      glyph: '◈',
+      glyph: 'miscreants',
       trailing: `${filled}/${posts}`,
       ...(plan.best?.kind === 'appoint' ? { mark: copy.rail.best } : {}),
       panel: (
@@ -130,7 +130,7 @@ export function App(): ReactNode {
     {
       id: 'deeds',
       title: copy.deeds.title,
-      glyph: '✧',
+      glyph: 'deeds',
       trailing: copy.deeds.progress(
         String(state.earnedAchievements.length),
         String(content.achievements.length),
@@ -140,7 +140,7 @@ export function App(): ReactNode {
     {
       id: 'ledger',
       title: copy.ledger.title,
-      glyph: '※',
+      glyph: 'ledger',
       trailing: formatDuration(state.stats.playTimeMs),
       panel: (
         <Ledger

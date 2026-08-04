@@ -4,7 +4,13 @@ import { describe, expect, it } from 'vitest';
 import { Deck, type DeckTab } from './Deck.tsx';
 
 const TABS: DeckTab[] = [
-  { id: 'muster', title: 'The Muster', glyph: '⚒', trailing: '2/4', panel: <p>What you raise</p> },
+  {
+    id: 'muster',
+    title: 'The Muster',
+    glyph: 'muster',
+    trailing: '2/4',
+    panel: <p>What you raise</p>,
+  },
   { id: 'miscreants', title: 'The Miscreants', mark: 'Advised', panel: <p>Who watches</p> },
   { id: 'deeds', title: 'Deeds', panel: <p>What is remembered</p> },
   { id: 'ledger', title: 'The ledger', panel: <p>What is counted</p> },

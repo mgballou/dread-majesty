@@ -1,4 +1,5 @@
 import { useId, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
+import { DeckGlyph, type DeckGlyphKind } from './DeckGlyph.tsx';
 import './Deck.css';
 
 export interface DeckTab {
@@ -6,7 +7,7 @@ export interface DeckTab {
   id: string;
   title: string;
   /** Decorative mark set at the leading edge. Hidden from assistive tech. */
-  glyph?: string;
+  glyph?: DeckGlyphKind;
   /** Count or state, set to the trailing edge. */
   trailing?: ReactNode;
   /**
@@ -88,7 +89,7 @@ export function Deck({ tabs }: DeckProps): ReactNode {
               <span className="deck__field">
                 {tab.glyph !== undefined && (
                   <span className="deck__glyph" aria-hidden="true">
-                    {tab.glyph}
+                    <DeckGlyph kind={tab.glyph} />
                   </span>
                 )}
                 {/* Every tab is named to assistive technology and none of them is named
