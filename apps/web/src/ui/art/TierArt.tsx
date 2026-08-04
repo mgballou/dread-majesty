@@ -160,9 +160,16 @@ function shape(kind: ArtSlot['fallback']['shape']): ReactNode {
     case 'throne':
       return (
         <g fill="currentColor">
-          <path d="M6 12 A18 18 0 0 1 42 12 L38 12 A14 14 0 0 0 10 12 Z" opacity="0.5" />
-          <rect x="4" y="8" width="4" height="6" opacity="0.5" />
-          <rect x="40" y="8" width="4" height="6" opacity="0.5" />
+          <path
+            d="M8.96 13.53 L10.43 10.52 L12.49 7.89 L15.05 5.74 L18.01 4.17 L21.77 3.16 L21.1 7.36 L18.74 8.21 L16.61 9.54 L14.81 11.29 L13.4 13.37 L12.72 14.9 Z"
+            opacity="0.5"
+          />
+          <path
+            d="M39.04 13.53 L37.57 10.52 L35.51 7.89 L32.95 5.74 L29.99 4.17 L26.23 3.16 L26.9 7.36 L29.26 8.21 L31.39 9.54 L33.19 11.29 L34.6 13.37 L35.28 14.9 Z"
+            opacity="0.5"
+          />
+          <rect x="6" y="13" width="6" height="8" opacity="0.5" />
+          <rect x="36" y="13" width="6" height="8" opacity="0.5" />
           <path d="M17 6 L31 6 L33 30 L15 30 Z" opacity="0.74" />
           <rect x="13" y="30" width="22" height="5" />
           <path d="M11 35 L37 35 L39 46 L9 46 Z" />
