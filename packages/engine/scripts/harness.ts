@@ -81,7 +81,13 @@ function decide(state: GameState, content: Content): void {
 
   const posts = content.tiers
     .flatMap((tier) => tier.overseers)
-    .sort((one, other) => (new Decimal(one.cost).gt(new Decimal(other.cost)) ? 1 : -1));
+    .sort((one, other) => {
+      const a = new Decimal(one.cost);
+      const b = new Decimal(other.cost);
+      if (a.gt(b)) return 1;
+      if (a.lt(b)) return -1;
+      return 0;
+    });
 
   for (const post of posts) {
     if (canAppoint(state, content, post.id)) {
