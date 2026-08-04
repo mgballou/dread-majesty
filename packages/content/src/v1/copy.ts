@@ -23,6 +23,10 @@ export const v1Copy = {
   },
 
   tiers: {
+    throne: {
+      flavour:
+        'Commands the raising of Fortresses. Nobody has seen the seat empty in a generation.',
+    },
     fortress: {
       flavour: 'Raises Dark Legions. Black stone, stabling for four thousand.',
     },
@@ -92,6 +96,19 @@ export const v1Copy = {
     'fortress-200': {
       name: 'A Continent Roofed',
       description: 'Own 200 Fortresses. The masons have formed a guild.',
+    },
+
+    'throne-1': {
+      name: 'The High Seat',
+      description: 'Own a Throne. It fits exactly one, and everyone insists it is you.',
+    },
+    'throne-25': {
+      name: 'A Court of Chairs',
+      description: 'Own 25 Thrones. Nobody has settled who outranks whom.',
+    },
+    'throne-200': {
+      name: 'The Waiting List',
+      description: 'Own 200 Thrones. Succession is now a career.',
     },
 
     'evil-1e3': {
@@ -205,7 +222,7 @@ export const v1Copy = {
       `The next soul comes at ${lifetimeEvil} lifetime Evil.`,
     confirmTitle: 'Claim and begin again?',
     confirmBody: (souls: string): string =>
-      `You take ${souls} Damned Souls and start from nothing. Your souls, your deeds and everything you have unlocked stay. Your Evil, every Fortress, Legion, Warren and Minion, and every milestone go.`,
+      `You take ${souls} Damned Souls and start from nothing. Your souls, your deeds and everything you have unlocked stay. Your Evil, every Throne, Fortress, Legion, Warren and Minion, and every milestone go.`,
     confirmAction: 'Claim and begin again',
     cancel: 'Not yet',
     claimed: (souls: string): string => `${souls} Damned Souls. The realm starts again.`,
@@ -260,12 +277,14 @@ export const v1Copy = {
     automatic: 'Somebody is watching this. It moves without you.',
     cost: (amount: string): string => `${amount} Evil, once`,
     names: {
+      throne: 'Steward of the High Seat',
       fortress: 'Castellan of the Black Keep',
       legion: 'Quartermaster of the Host',
       warren: 'Warden of the Warrens',
       minion: 'Taskmaster of the Pits',
     },
     notes: {
+      throne: 'Keeps the seat warm, the arch propped, and the succession vague.',
       fortress: 'Holds every key in the Keep and sleeps with them. The building goes on.',
       legion: 'Moves the host, feeds it, and files the requisitions you never read.',
       warren: 'Knows each door in the Warrens and which of them still shut.',

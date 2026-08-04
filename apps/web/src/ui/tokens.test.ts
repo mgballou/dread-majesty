@@ -171,7 +171,13 @@ describe('contrast', () => {
   });
 
   it('keeps the chain tones perceivable against --surface', () => {
-    for (const name of ['--tone-tier-1', '--tone-tier-2', '--tone-tier-3', '--tone-tier-4']) {
+    for (const name of [
+      '--tone-tier-1',
+      '--tone-tier-2',
+      '--tone-tier-3',
+      '--tone-tier-4',
+      '--tone-tier-5',
+    ]) {
       expect(contrast(name, '--surface')).toBeGreaterThanOrEqual(3);
     }
   });
@@ -191,7 +197,13 @@ describe('contrast', () => {
  */
 describe('nothing crowds the accent', () => {
   it('keeps every chain tone clear of gold', () => {
-    for (const name of ['--tone-tier-1', '--tone-tier-2', '--tone-tier-3', '--tone-tier-4']) {
+    for (const name of [
+      '--tone-tier-1',
+      '--tone-tier-2',
+      '--tone-tier-3',
+      '--tone-tier-4',
+      '--tone-tier-5',
+    ]) {
       expect(hueDistance(name, '--accent')).toBeGreaterThanOrEqual(45);
     }
   });
@@ -199,6 +211,23 @@ describe('nothing crowds the accent', () => {
   it('keeps the full-strength accent brighter than its low-weight jobs', () => {
     for (const name of ['--accent-line', '--accent-soft', '--accent-well']) {
       expect(contrast('--accent', '--surface')).toBeGreaterThan(contrast(name, '--surface'));
+    }
+  });
+
+  it('keeps every chain tone clear of every other chain tone', () => {
+    const tones = [
+      '--tone-tier-1',
+      '--tone-tier-2',
+      '--tone-tier-3',
+      '--tone-tier-4',
+      '--tone-tier-5',
+    ];
+
+    for (const one of tones) {
+      for (const other of tones) {
+        if (one === other) continue;
+        expect(hueDistance(one, other)).toBeGreaterThanOrEqual(30);
+      }
     }
   });
 });

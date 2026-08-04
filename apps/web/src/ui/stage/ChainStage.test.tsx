@@ -253,7 +253,7 @@ describe('ChainStage', () => {
   it('tells the stylesheet how long the wave is', () => {
     const { container } = render(stage({ state: struck() }));
 
-    expect(container.querySelector('.stage')?.getAttribute('style')).toContain('--surge-span: 8');
+    expect(container.querySelector('.stage')?.getAttribute('style')).toContain('--surge-span: 10');
   });
 
   it('lights the chain under reduced motion too, so nothing goes missing', () => {

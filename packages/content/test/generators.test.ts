@@ -78,4 +78,14 @@ describe('the tiers', () => {
       expect(tier.art.length).toBeGreaterThan(0);
     }
   });
+
+  it('runs the chain from Thrones down to Evil', () => {
+    const order = v1.tiers.map((tier) => tier.id);
+
+    expect(order).toEqual(['throne', 'fortress', 'legion', 'warren', 'minion']);
+  });
+
+  it('has Thrones produce Fortresses', () => {
+    expect(v1.tiers.find((tier) => tier.id === 'throne')?.produces).toBe('fortress');
+  });
 });
