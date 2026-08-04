@@ -13,8 +13,6 @@ import type { BuyQuantity } from './quantity.ts';
 
 let state: GameState;
 
-const TEN_AT_A_TIME = CURRENT_COPY.rail.quantityOption('10');
-
 beforeEach(() => {
   localStorage.clear();
   state = createState(CURRENT);
@@ -249,7 +247,9 @@ describe('BuyRail', () => {
   it('hands the chosen quantity up rather than keeping it', async () => {
     const { onQuantity } = draw();
 
-    await userEvent.click(screen.getByRole('radio', { name: TEN_AT_A_TIME }));
+    await userEvent.click(
+      screen.getByRole('button', { name: new RegExp(`^${CURRENT_COPY.rail.quantity}`) }),
+    );
 
     expect(onQuantity).toHaveBeenCalledWith(10);
   });
@@ -258,15 +258,17 @@ describe('BuyRail', () => {
     state.resources.evil = new Decimal(2600);
 
     const { container } = draw();
-    await userEvent.click(screen.getByRole('radio', { name: TEN_AT_A_TIME }));
+    await userEvent.click(
+      screen.getByRole('button', { name: new RegExp(`^${CURRENT_COPY.rail.quantity}`) }),
+    );
 
     expect(container.querySelectorAll('.button--primary')).toHaveLength(1);
   });
 
-  it('names the quantity setting where it now sits, inside the list it governs', () => {
+  it('names the quantity setting where it sits, at the head of the list it governs', () => {
     draw();
 
-    expect(screen.getByRole('group', { name: CURRENT_COPY.rail.quantity })).toBeInTheDocument();
+    expect(screen.getByText(CURRENT_COPY.rail.quantity)).toBeInTheDocument();
   });
 
   it('sweeps the cycle between slices under normal motion', () => {

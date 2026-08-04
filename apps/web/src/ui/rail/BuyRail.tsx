@@ -5,7 +5,7 @@ import { nextCost, type GameState } from '@dm/engine';
 import { Banner } from '../Banner.tsx';
 import { formatNumber } from '../format.ts';
 import { TierRow, type RailScreenCopy } from './TierRow.tsx';
-import { QuantityToggle } from './QuantityToggle.tsx';
+import { QuantityChip } from './QuantityChip.tsx';
 import { spendEmphasis, type RailPlan, type RailPurchase } from './railPlan.ts';
 import type { BuyQuantity } from './quantity.ts';
 import '../controls.css';
@@ -47,7 +47,7 @@ interface BuyRailProps {
  * nothing at all and the shut tab beside it says so in a word. One thing is advised on
  * the screen, always, and it is never two.
  *
- * The quantity toggle is a setting, not the action, so it never wears the accent. It
+ * The quantity chip is a setting, not the action, so it never wears the accent. It
  * sits on its own strip at the head of the list rather than beside the title: it acts
  * on every row beneath it, and a control that changes what a list means belongs with
  * the list, not in the furniture above it.
@@ -84,7 +84,8 @@ export function BuyRail({
   return (
     <div className="muster">
       <div className="muster__setting">
-        <QuantityToggle quantity={quantity} onChange={onQuantity} copy={copy.rail} />
+        <span className="muster__setting-name">{copy.rail.quantity}</span>
+        <QuantityChip quantity={quantity} onChange={onQuantity} copy={copy.rail} />
       </div>
 
       <ul className="rail" aria-label={copy.rail.list}>

@@ -158,6 +158,18 @@ describe('contrast', () => {
     expect(contrast('--on-accent', '--accent')).toBeGreaterThanOrEqual(4.5);
   });
 
+  it('reads --ink-muted against --accent-well at AA', () => {
+    expect(contrast('--ink-muted', '--accent-well')).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it('reads --ink against --accent-line at AA', () => {
+    expect(contrast('--ink', '--accent-line')).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it('reads --on-accent against --accent-soft at AA', () => {
+    expect(contrast('--on-accent', '--accent-soft')).toBeGreaterThanOrEqual(4.5);
+  });
+
   it('holds the reading ramp against the panel it usually sits on', () => {
     for (const name of ['--ink', '--ink-muted', '--ink-dim']) {
       expect(contrast(name, '--surface-panel')).toBeGreaterThanOrEqual(4.5);
