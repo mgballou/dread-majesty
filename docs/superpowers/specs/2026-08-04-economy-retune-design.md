@@ -250,8 +250,8 @@ The five times moved by a few per cent between the first fit and the measured co
 and that is the price of §5.8. The obsolescence rule is fitted to counts of the tier
 above, which meant flattening every cost curve and cutting what one unit of each
 producer hands over; the base costs were then refitted to bring the arrival times back
-inside their bands. The obsolescence points themselves are in §5.8.1 and in the note on
-`v1` in `packages/content/src/v1/generators.ts`.
+inside their bands. The obsolescence points themselves are in this document's own §5.1
+above, and in the note on `v1` in `packages/content/src/v1/generators.ts`.
 
 **The cliff rows now report what they measure, and one of them is still missed.** §4
 restates the target in decades per hour, so the old raw-ratio row is kept only as

@@ -37,11 +37,13 @@ import type { BuyQuantity } from './quantity.ts';
  * never recommend anything but Minions. Both are correct answers to different
  * questions.
  *
- * **The payback-period claim above is retracted.** It cited a target for tiers above
- * Minions that lived in `packages/content/src/v1/generators.ts`; the retune's rewrite
- * of that file's note dropped it and left nothing to re-derive the ten minutes from.
- * The number stands only because nothing has shown it wrong, not because the reasoning
- * above still holds.
+ * **The payback-period claim above is retracted.** It cites §5.2 of
+ * `docs/superpowers/specs/2026-08-03-dread-majesty-design.md`, which still carries it
+ * verbatim at line 259 — the source was never lost. What is lost is its authority: the
+ * economy retune superseded that first-pass table twice over, first with its own fit
+ * and again once the obsolescence rule reshaped every cost curve, and neither pass
+ * re-measured a payback period to check ten minutes still holds. The number stands
+ * only because nothing has shown it wrong, not because the reasoning above still does.
  */
 export const HORIZON_SECONDS = 600;
 
