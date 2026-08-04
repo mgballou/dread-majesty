@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 
 /** One mark per panel of the deck. */
 export type DeckGlyphKind = 'muster' | 'miscreants' | 'deeds' | 'ledger';
@@ -39,8 +39,15 @@ export function DeckGlyph({ kind }: DeckGlyphProps): ReactNode {
  * The muster is a hammer, the thing that raises. The miscreants are a diamond, the
  * shape that already means "a post, not a generator" in that panel. The deeds are a
  * star. The ledger is a page with rules on it.
+ *
+ * **Returns `ReactElement`, not `ReactNode`, and that is the exhaustiveness check.**
+ * A switch with no `default` does not on its own make a missing case a type error:
+ * `ReactNode` includes `undefined`, so falling off the end returns a value the
+ * signature already allows and the build stays green while the tab draws nothing.
+ * `ReactElement` excludes `undefined`, so a fifth kind fails to compile — which is
+ * what a `default` case would have hidden.
  */
-function shape(kind: DeckGlyphKind): ReactNode {
+function shape(kind: DeckGlyphKind): ReactElement {
   switch (kind) {
     case 'muster':
       return (

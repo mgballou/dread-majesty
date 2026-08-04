@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import { ART, type ArtSlot } from '@dm/content';
 import './TierArt.css';
 
@@ -82,7 +82,7 @@ export function TierArt({ slot, size, decorative = false }: TierArtProps): React
  * fortress's towers stand in a symmetrical cluster filling the frame, the throne is
  * one seat, alone.
  */
-function shape(kind: ArtSlot['fallback']['shape']): ReactNode {
+function shape(kind: ArtSlot['fallback']['shape']): ReactElement {
   switch (kind) {
     case 'spire':
       return (
