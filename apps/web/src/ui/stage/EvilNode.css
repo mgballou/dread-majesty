@@ -49,7 +49,9 @@
   background: var(--surface-panel);
 }
 
-/* The one action on the screen, while there is nothing on the rail worth buying. */
+/* The stage's one action, gold whenever the blow is ready and never conditionally.
+   It used to wait until the rail had nothing worth buying, which meant the verb the
+   game is named for moved. One accent per region; this is the stage's. */
 .evil-node__strike--lifted {
   border-color: var(--accent-line);
 }
