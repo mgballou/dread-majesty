@@ -8,3 +8,6 @@ coverage/
 
 # Playwright MCP artifacts
 .playwright-mcp/
+
+# Superpowers SDD scratch
+.superpowers/
