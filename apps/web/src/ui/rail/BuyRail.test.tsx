@@ -126,7 +126,11 @@ describe('BuyRail', () => {
 
     draw();
 
-    expect(screen.getByText(CURRENT_COPY.rail.shortfall('2.4K'))).toBeInTheDocument();
+    const short = formatNumber(
+      (bulkCost(state, CURRENT, 'warren', 1) ?? new Decimal(0)).sub(state.resources.evil),
+    );
+
+    expect(screen.getByText(CURRENT_COPY.rail.shortfall(short))).toBeInTheDocument();
   });
 
   it('keeps every other control on the rail at secondary weight', () => {

@@ -146,18 +146,36 @@ curve, and with §2 in place the cost curve finally works.
 
 ### 5.2 Targets
 
-| | Now | Target |
-| --- | ---: | ---: |
-| First Warren | 28m | ~12m |
-| First Dark Legion | 1h 01m | ~35m |
-| First Fortress | 2h 37m | ~1h 10m |
-| First Throne | — | ~2h |
-| First prestige | 2h 29m | ~45m |
-| Souls at first reset | ~10 | 40–50 |
+Tuned and measured. The last column is what `pnpm harness` reports for the shipping
+content; "Before" is the same harness against the placeholder numbers at `37f645b`.
 
-**These are targets, not numbers.** `pnpm harness` sets the numbers, as it did the
-first pass. Any figure in this section that the harness contradicts is wrong, and the
-harness wins.
+| | Target | Before | Measured |
+| --- | ---: | ---: | ---: |
+| First Warren | ~12m | 26m 33s | **11m 53s** |
+| First Dark Legion | ~35m | 54m 21s | **33m 53s** |
+| First Fortress | ~1h 10m | 1h 54m 29s | **1h 08m 55s** |
+| First Throne | ~2h | 3h 55m 29s | **2h 00m 05s** |
+| First prestige | ~45m | 1h 36m 49s | **45m 03s** |
+| Souls at first reset | 40–50 | ~10 | **40–50 at 1h 30m** |
+| Largest jump between checkpoints | under ~100× | 1.3e4 | **3.0e4** ✗ |
+
+Six of seven land. The souls row needs its reading stated: at the moment a reset first
+becomes possible the gain is one soul by construction, and nobody would take it. The
+40–50 the row asks for arrives at about 1h 30m, and that is the first reset worth
+taking. The two cannot be set apart — `k` and `scale` enter the formula only as
+`scale/k²`, so fixing when the first soul lands fixes how many every later moment pays.
+
+**The cliff is missed and is worse than the build it replaces.** §4 asks for no stretch
+between adjacent checkpoints worth more than about 100×; the steepest here is 4h→8h at
+3.0e4 on Evil per second, against 1.3e4 before. It is the arithmetic of the rest of this
+table: the run has to climb from a hundred Minions at 15m to a five-tier cascade by 2h,
+and the checkpoints are a doubling apart, so halving every arrival time squares the
+ratio across them. The flattest shape found that still hits the five times measures
+3.0e4. See the note on `v1` in `packages/content/src/v1/generators.ts` for the one lever
+left — the milestone tail rung — and why it was not pulled.
+
+**These were targets, not numbers.** `pnpm harness` set the numbers. Any figure in this
+section that the harness contradicts is wrong, and the harness wins.
 
 ### 5.3 Souls arrive in bulk
 

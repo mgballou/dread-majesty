@@ -5,12 +5,16 @@ import { CURRENT, CURRENT_COPY } from '@dm/content';
 import type { TierId } from '@dm/content';
 import { createState, type GameState } from '@dm/engine';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { formatNumber } from '../format.ts';
 import { Miscreants } from './Miscreants.tsx';
 import { railPlan } from './railPlan.ts';
 
 let state: GameState;
 
 const OVERSEER = CURRENT_COPY.overseer;
+
+const MINION_HAND_COST =
+  CURRENT.tiers.find((tier) => tier.id === 'minion')?.overseers[0]?.cost ?? '0';
 
 beforeEach(() => {
   state = createState(CURRENT);
@@ -83,7 +87,7 @@ describe('Miscreants', () => {
   it('says what a post costs before it is opened', () => {
     draw();
 
-    const cost = OVERSEER.cost('1K');
+    const cost = OVERSEER.cost(formatNumber(new Decimal(MINION_HAND_COST)));
 
     expect(screen.getByText(cost)).toBeInTheDocument();
   });
