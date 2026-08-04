@@ -10,15 +10,15 @@ if (!minion) throw new Error('fixture has no minion tier');
 
 describe('an empty roster', () => {
   it('leaves the tier unautomated', () => {
-    expect(hasAutomator(createState(fixture), fixture, 'minion')).toBe(false);
+    expect(hasAutomator(createState(fixture), minion)).toBe(false);
   });
 
   it('leaves the cycle alone', () => {
-    expect(effectiveCycleMs(createState(fixture), fixture, minion)).toBe(minion.cycleMs);
+    expect(effectiveCycleMs(createState(fixture), minion)).toBe(minion.cycleMs);
   });
 
   it('leaves the yield alone', () => {
-    expect(effectiveYield(createState(fixture), fixture, minion).toString()).toBe(minion.yield);
+    expect(effectiveYield(createState(fixture), minion).toString()).toBe(minion.yield);
   });
 });
 
@@ -29,7 +29,7 @@ describe('a filled roster', () => {
     state.unlocked.minion = true;
     apply(state, fixture, { kind: 'appoint', overseerId: 'minion-hand' });
 
-    expect(hasAutomator(state, fixture, 'minion')).toBe(true);
+    expect(hasAutomator(state, minion)).toBe(true);
   });
 
   it('halves the cycle', () => {
@@ -38,7 +38,7 @@ describe('a filled roster', () => {
     state.unlocked.minion = true;
     apply(state, fixture, { kind: 'appoint', overseerId: 'minion-goad' });
 
-    expect(effectiveCycleMs(state, fixture, minion)).toBe(minion.cycleMs / 2);
+    expect(effectiveCycleMs(state, minion)).toBe(minion.cycleMs / 2);
   });
 
   it('doubles the yield', () => {
@@ -47,7 +47,7 @@ describe('a filled roster', () => {
     state.unlocked.minion = true;
     apply(state, fixture, { kind: 'appoint', overseerId: 'minion-glut' });
 
-    expect(effectiveYield(state, fixture, minion).toString()).toBe('30');
+    expect(effectiveYield(state, minion).toString()).toBe('30');
   });
 });
 
@@ -80,5 +80,40 @@ describe('appointing', () => {
     const result = apply(state, fixture, { kind: 'appoint', overseerId: 'minion-hand' });
 
     expect(result).toHaveProperty('reason', 'insufficient-resource');
+  });
+});
+
+describe('appointing a running tier', () => {
+  it('leaves it running when the new post quickens it', () => {
+    const state = createState(fixture);
+    state.resources.evil = new Decimal('1e9');
+    state.unlocked.minion = true;
+    apply(state, fixture, { kind: 'rouse', tierId: 'minion' });
+
+    apply(state, fixture, { kind: 'appoint', overseerId: 'minion-goad' });
+
+    expect(state.gens.minion.running).toBe(true);
+  });
+
+  it('leaves it running when the new post swells it', () => {
+    const state = createState(fixture);
+    state.resources.evil = new Decimal('1e9');
+    state.unlocked.minion = true;
+    apply(state, fixture, { kind: 'rouse', tierId: 'minion' });
+
+    apply(state, fixture, { kind: 'appoint', overseerId: 'minion-glut' });
+
+    expect(state.gens.minion.running).toBe(true);
+  });
+
+  it('stops it when the new post automates it', () => {
+    const state = createState(fixture);
+    state.resources.evil = new Decimal('1e9');
+    state.unlocked.minion = true;
+    apply(state, fixture, { kind: 'rouse', tierId: 'minion' });
+
+    apply(state, fixture, { kind: 'appoint', overseerId: 'minion-hand' });
+
+    expect(state.gens.minion.running).toBe(false);
   });
 });

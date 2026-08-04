@@ -88,7 +88,7 @@ function rouse(
 ): IntentResult {
   const tier = findTier(content, intent.tierId);
   if (!tier) return { ok: false, intent, reason: 'unknown-tier' };
-  if (hasAutomator(state, content, tier.id)) {
+  if (hasAutomator(state, tier)) {
     return { ok: false, intent, reason: 'already-appointed' };
   }
 

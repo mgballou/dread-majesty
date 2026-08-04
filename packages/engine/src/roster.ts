@@ -24,13 +24,18 @@ export function hasPost(state: GameState, tierId: TierId, overseerId: OverseerId
   return state.overseers[tierId].includes(overseerId);
 }
 
-/** Whether this tier runs without being told. The only question `step` asks. */
-export function hasAutomator(state: GameState, content: Content, tierId: TierId): boolean {
-  const tier = content.tiers.find((candidate) => candidate.id === tierId);
-  if (!tier) return false;
-
+/**
+ * Whether this tier runs without being told. The only question `step` asks.
+ *
+ * Takes `tier`, not `tierId` — `step`'s per-tier loop already holds the `TierDef` it
+ * is iterating, and finding it again here would be a second O(tiers) scan on top of
+ * the caller's own, 36,000 times to catch up an hour. `isAppointed` in `selectors.ts`
+ * is the id-taking convenience wrapper for callers that only have a `TierId`; this is
+ * the hot path underneath it.
+ */
+export function hasAutomator(state: GameState, tier: TierDef): boolean {
   return tier.overseers.some(
-    (post) => post.effect.kind === 'automate' && hasPost(state, tierId, post.id),
+    (post) => post.effect.kind === 'automate' && hasPost(state, tier.id, post.id),
   );
 }
 
@@ -47,11 +52,10 @@ export function automatorOf(tier: TierDef): OverseerDef | undefined {
  * is belt and braces against a factor that does not divide evenly — a fractional
  * cycle would make completions inexact, which is the one thing `step` cannot have.
  *
- * Takes `content` it does not read, matching every other query here — `tier` already
- * carries its own posts, but the signature stays uniform so a caller never has to
- * remember which of these needs the whole content and which does not.
+ * Takes `tier`, not `content` and a `tierId` — see `hasAutomator`'s note on why the
+ * hot-path functions here take what they need and nothing more.
  */
-export function effectiveCycleMs(state: GameState, _content: Content, tier: TierDef): number {
+export function effectiveCycleMs(state: GameState, tier: TierDef): number {
   let factor = 1;
   for (const post of tier.overseers) {
     if (post.effect.kind !== 'quicken') continue;
@@ -60,7 +64,7 @@ export function effectiveCycleMs(state: GameState, _content: Content, tier: Tier
   return Math.max(1, Math.round(tier.cycleMs / factor));
 }
 
-export function effectiveYield(state: GameState, _content: Content, tier: TierDef): Decimal {
+export function effectiveYield(state: GameState, tier: TierDef): Decimal {
   let amount = new Decimal(tier.yield);
   for (const post of tier.overseers) {
     if (post.effect.kind !== 'swell') continue;

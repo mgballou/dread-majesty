@@ -34,7 +34,7 @@ export function step(state: GameState, content: Content, dtMs: number): StepRepo
 
   for (const tier of content.tiers) {
     const gen = state.gens[tier.id];
-    const appointed = hasAutomator(state, content, tier.id);
+    const appointed = hasAutomator(state, tier);
 
     // What gates the timer is who is watching the tier (spec §5.6). An appointed
     // tier's timer is a world clock: it advances and wraps whether or not the tier
