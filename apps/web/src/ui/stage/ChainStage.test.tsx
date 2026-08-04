@@ -17,6 +17,10 @@ function onlyMinions(): (tierId: TierId) => boolean {
   return (tierId) => tierId === 'minion';
 }
 
+function throughWarren(): (tierId: TierId) => boolean {
+  return (tierId) => tierId === 'minion' || tierId === 'warren';
+}
+
 function nothing(): (tierId: TierId) => boolean {
   return () => false;
 }
@@ -144,6 +148,21 @@ describe('ChainStage', () => {
     const { container } = render(stage());
 
     expect(container.querySelectorAll('.stage-link')).toHaveLength(CURRENT.tiers.length);
+  });
+
+  it('pours Evil-toned motes down the last run', () => {
+    const { container } = render(stage());
+    const links = container.querySelectorAll('.stage-link');
+    const last = links[links.length - 1];
+
+    expect(last).toHaveStyle({ '--node-tone': 'var(--tone-resource)' });
+  });
+
+  it('pours Minion-toned motes down the run that feeds Minions', () => {
+    const { container } = render(stage({ isUnlocked: throughWarren() }));
+    const warren = container.querySelector('[data-tier="warren"] .stage-link');
+
+    expect(warren).toHaveStyle({ '--node-tone': 'var(--tone-tier-1)' });
   });
 
   it('treats the state as read-only', () => {

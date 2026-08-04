@@ -33,7 +33,7 @@
   position: absolute;
   inset-inline: 0;
   inset-block-start: calc(var(--stage-node-medallion, 5rem) / 2);
-  block-size: 1px;
+  block-size: 2px;
   background: var(--line);
 }
 
@@ -44,7 +44,7 @@
 .stage-link__surge {
   position: absolute;
   inset-block-start: calc(var(--stage-node-medallion, 5rem) / 2 - 1px);
-  block-size: 2px;
+  block-size: 3px;
   inline-size: var(--stage-link-spread);
   border-radius: 1px;
   background: linear-gradient(to right, transparent, currentColor);
