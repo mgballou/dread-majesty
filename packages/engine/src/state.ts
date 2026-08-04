@@ -10,8 +10,9 @@ import type { GameState, TierState } from './types.ts';
  * 3: adds `unlocked`.
  * 4: adds `overseers`, and `running` on every tier.
  * 5: adds the two smite countdowns.
+ * 6: adds purchased counts.
  */
-export const SAVE_VERSION = 5;
+export const SAVE_VERSION = 6;
 
 export function createState(content: Content): GameState {
   const resources = {} as Record<ResourceId, Decimal>;
@@ -24,6 +25,7 @@ export function createState(content: Content): GameState {
   for (const id of TIER_IDS) {
     gens[id] = {
       owned: new Decimal(0),
+      purchased: new Decimal(0),
       progressMs: 0,
       lifetimeProduced: new Decimal(0),
       running: false,
@@ -70,6 +72,7 @@ export function cloneState(state: GameState): GameState {
     const g = state.gens[id];
     gens[id] = {
       owned: new Decimal(g.owned),
+      purchased: new Decimal(g.purchased),
       progressMs: g.progressMs,
       lifetimeProduced: new Decimal(g.lifetimeProduced),
       running: g.running,

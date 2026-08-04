@@ -4,6 +4,7 @@ import {
   apply,
   CorruptSave,
   createState,
+  deserialize,
   exportSave,
   importSave,
   SAVE_VERSION,
@@ -143,6 +144,15 @@ describe('save round trip', () => {
     const restored = importSave(exportSave(original, 0));
 
     expect(serialize(restored, 0)).toEqual(serialize(original, 0));
+  });
+
+  it('round-trips purchased counts', () => {
+    const state = appointed(fixture);
+    state.gens.minion.purchased = new Decimal('12345');
+
+    const restored = deserialize(serialize(state, 0));
+
+    expect(restored.gens.minion.purchased.toString()).toBe('12345');
   });
 
   it('rejects a blob that is not a save', () => {

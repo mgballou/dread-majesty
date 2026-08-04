@@ -51,6 +51,7 @@ function purchase(
 
   state.resources[tier.costResource] = budget.sub(cost);
   state.gens[tier.id].owned = state.gens[tier.id].owned.add(quantity);
+  state.gens[tier.id].purchased = state.gens[tier.id].purchased.add(quantity);
 
   return { ok: true, intent, detail: `Bought ${quantity} ${tier.plural}` };
 }
