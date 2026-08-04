@@ -11,8 +11,9 @@ import type { GameState, TierState } from './types.ts';
  * 4: adds `overseers`, and `running` on every tier.
  * 5: adds the two smite countdowns.
  * 6: adds purchased counts.
+ * 7: adds the per-run clock.
  */
-export const SAVE_VERSION = 6;
+export const SAVE_VERSION = 7;
 
 /**
  * The oldest save this build will load.

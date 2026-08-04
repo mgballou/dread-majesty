@@ -16,6 +16,7 @@ import {
 } from '../src/index.ts';
 import { fixture } from './fixtures/content.ts';
 import { appointed } from './fixtures/state.ts';
+import type { GameState } from '../src/types.ts';
 
 describe('save round trip', () => {
   it('restores state exactly', () => {
@@ -167,5 +168,36 @@ describe('the version floor', () => {
     const blob = serialize(appointed(fixture), 0);
 
     expect(migrate(blob)).toEqual(blob);
+  });
+
+  it('migrates a version 6 save without a run clock to 0', () => {
+    const blob = serialize(appointed(fixture), 0);
+    // A real version 6 blob predates `runMs` entirely. `SaveBlob['stats']` reuses
+    // `GameState['stats']` wholesale, so the type has no way to describe that missing
+    // field — this cast recreates the pre-version-7 shape for the one test that needs it.
+    const legacyStats = { playTimeMs: 0, smites: 0, prestiges: 0 } as GameState['stats'];
+    const legacy = { ...blob, saveVersion: 6, stats: legacyStats };
+
+    const migrated = migrate(legacy);
+
+    expect(migrated.stats.runMs).toBe(0);
+  });
+
+  it('keeps a version 6 save that already carries a run clock', () => {
+    const blob = serialize(appointed(fixture), 0);
+    const legacy = { ...blob, saveVersion: 6, stats: { ...blob.stats, runMs: 900_000 } };
+
+    const migrated = migrate(legacy);
+
+    expect(migrated.stats.runMs).toBe(900_000);
+  });
+
+  it('still refuses a save below the floor once the chain has a live step', () => {
+    const blob = {
+      ...serialize(appointed(fixture), 0),
+      saveVersion: MIN_SUPPORTED_SAVE_VERSION - 1,
+    };
+
+    expect(() => deserialize(blob)).toThrow(ObsoleteSave);
   });
 });
