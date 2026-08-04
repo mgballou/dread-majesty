@@ -19,20 +19,14 @@
  * Overseer first comes within reach, and the manual layer is then priced by feel
  * against those times.
  */
-import type Decimal from 'break_eternity.js';
-import { CURRENT, type Content } from '@dm/content';
+import Decimal from 'break_eternity.js';
+import { CURRENT, type Content, type OverseerId } from '@dm/content';
 import { apply } from '../src/intents.ts';
-import { automatorOf } from '../src/roster.ts';
+import { hasPost } from '../src/roster.ts';
 import { createState } from '../src/state.ts';
 import { step } from '../src/step.ts';
 import { maxAffordable } from '../src/cost.ts';
-import {
-  canAppoint,
-  isAppointed,
-  isRousable,
-  prestigeGain,
-  productionPerSecond,
-} from '../src/selectors.ts';
+import { canAppoint, isRousable, prestigeGain, productionPerSecond } from '../src/selectors.ts';
 import type { GameState } from '../src/types.ts';
 
 const DT_MS = 1000;
@@ -72,10 +66,11 @@ const CHECKPOINTS = [
  * Rousing comes last because a tier bought or freed this second is then already
  * turning when the next slice runs. That is the perfect tapping the header explains.
  *
- * **Appoints only the automate post.** A tier now has three, and weighing all
- * fifteen against the buying pass is a retune of the simulated player, not of the
- * harness plumbing — out of scope here. The automate post is still the one that
- * decides whether a tier runs at all, so it is the one this measures.
+ * **All fifteen posts are in play, cheapest across the whole chain first** — not
+ * cheapest within a tier, not tier order. An early automator lands as soon as it is
+ * within reach rather than waiting behind a Castellan's quicken or swell. Buying
+ * still comes first (see above): a post is only ever paid for out of the change the
+ * generator stack left behind.
  */
 function decide(state: GameState, content: Content): void {
   for (const tier of content.tiers) {
@@ -84,9 +79,12 @@ function decide(state: GameState, content: Content): void {
     }
   }
 
-  for (const tier of [...content.tiers].reverse()) {
-    const post = automatorOf(tier);
-    if (post && canAppoint(state, content, post.id)) {
+  const posts = content.tiers
+    .flatMap((tier) => tier.overseers)
+    .sort((one, other) => (new Decimal(one.cost).gt(new Decimal(other.cost)) ? 1 : -1));
+
+  for (const post of posts) {
+    if (canAppoint(state, content, post.id)) {
       apply(state, content, { kind: 'appoint', overseerId: post.id });
     }
   }
@@ -107,9 +105,14 @@ function decide(state: GameState, content: Content): void {
 
 function run(content: Content): void {
   const state = createState(content);
+  // Lowest tier first, matching every other table in this report; the three posts
+  // within a tier stay in content order (automate, then quicken, then swell).
+  const posts = [...content.tiers]
+    .reverse()
+    .flatMap((tier) => tier.overseers.map((post) => ({ tier, post })));
   const firstOwned = new Map<string, number>();
-  const overseerAffordableAt = new Map<string, number>();
-  const overseerAppointedAt = new Map<string, number>();
+  const overseerAffordableAt = new Map<OverseerId, number>();
+  const overseerAppointedAt = new Map<OverseerId, number>();
   const rows: string[] = [];
   let firstPrestigeMs: number | null = null;
 
@@ -123,10 +126,9 @@ function run(content: Content): void {
 
     // Read before the buying pass spends anything, so this answers "could the player
     // have appointed at this moment", not "was there change left afterwards".
-    for (const tier of content.tiers) {
-      const post = automatorOf(tier);
-      if (!overseerAffordableAt.has(tier.id) && post && canAppoint(state, content, post.id)) {
-        overseerAffordableAt.set(tier.id, elapsed);
+    for (const { post } of posts) {
+      if (!overseerAffordableAt.has(post.id) && canAppoint(state, content, post.id)) {
+        overseerAffordableAt.set(post.id, elapsed);
       }
     }
 
@@ -136,8 +138,10 @@ function run(content: Content): void {
       if (!firstOwned.has(tier.id) && state.gens[tier.id].owned.gte(1)) {
         firstOwned.set(tier.id, elapsed);
       }
-      if (!overseerAppointedAt.has(tier.id) && isAppointed(state, content, tier.id)) {
-        overseerAppointedAt.set(tier.id, elapsed);
+    }
+    for (const { tier, post } of posts) {
+      if (!overseerAppointedAt.has(post.id) && hasPost(state, tier.id, post.id)) {
+        overseerAppointedAt.set(post.id, elapsed);
       }
     }
     if (firstPrestigeMs === null && prestigeGain(state, content).gte(1)) {
@@ -163,11 +167,11 @@ function run(content: Content): void {
   );
 
   console.log('\n  overseers');
-  for (const tier of [...content.tiers].reverse()) {
-    const affordable = overseerAffordableAt.get(tier.id);
-    const hired = overseerAppointedAt.get(tier.id);
+  for (const { post } of posts) {
+    const affordable = overseerAffordableAt.get(post.id);
+    const hired = overseerAppointedAt.get(post.id);
     console.log(
-      `    ${tier.plural.padEnd(14)}` +
+      `    ${post.name.padEnd(29)}` +
         `within reach ${(affordable === undefined ? 'never' : duration(affordable)).padEnd(14)}` +
         `appointed ${hired === undefined ? 'never' : duration(hired)}`,
     );
