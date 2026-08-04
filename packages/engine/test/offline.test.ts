@@ -83,4 +83,28 @@ describe('catchUp', () => {
     expect(report.produced.evil?.toString()).toBe('4875');
     expect(report.produced.minion?.toString()).toBe('200');
   });
+
+  it('advances the run clock by the same amount as total play time', () => {
+    const state = seeded(5, 1);
+
+    catchUp(state, fixture, HOUR_MS);
+
+    expect(state.stats.runMs).toBe(state.stats.playTimeMs);
+  });
+
+  it('advances the run clock by the capped amount past the offline cap', () => {
+    const state = seeded(5, 1);
+
+    catchUp(state, fixture, 12 * HOUR_MS);
+
+    expect(state.stats.runMs).toBe(fixture.offlineCapMs);
+  });
+
+  it('advances the run clock by nothing when the wall clock moved backwards', () => {
+    const state = seeded(5, 1);
+
+    catchUp(state, fixture, -5000);
+
+    expect(state.stats.runMs).toBe(0);
+  });
 });

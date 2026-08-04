@@ -33,7 +33,13 @@ export function catchUp(state: GameState, content: Content, elapsedMs: number): 
   const remainder = capped - whole * dt;
   if (remainder > 0) accumulate(produced, step(state, content, remainder));
 
+  // Both clocks move by the same clamped span: the Evil and the generators an
+  // absence produced are real regardless of who was watching, so the current run
+  // genuinely lasted this long, the same as lifetime play time did. They part ways
+  // only at `prestige`, which zeroes `runMs` and leaves `playTimeMs` alone — an
+  // absence is not a reset.
   state.stats.playTimeMs += capped;
+  state.stats.runMs += capped;
 
   return {
     elapsedMs: capped,
