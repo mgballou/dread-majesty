@@ -223,4 +223,33 @@ describe('Miscreants', () => {
 
     expect(container.querySelectorAll('.miscreant__post--best')).toHaveLength(0);
   });
+
+  it('states what a post does on its row', () => {
+    draw();
+
+    expect(
+      screen.getByRole('button', { name: new RegExp(OVERSEER.names['minion-hand']) }).textContent,
+    ).toContain(OVERSEER.effect.automate);
+  });
+
+  it('states the factor on a quickening post\'s row', () => {
+    draw();
+
+    expect(
+      screen.getByRole('button', { name: new RegExp(OVERSEER.names['minion-goad']) }).textContent,
+    ).toContain(OVERSEER.effect.quicken('2'));
+  });
+
+  it('states what a post does in the confirmation sheet too', async () => {
+    state.resources.evil = new Decimal(1000);
+
+    const { user } = draw();
+    await user.click(
+      screen.getByRole('button', { name: new RegExp(OVERSEER.names['minion-hand']) }),
+    );
+
+    expect(
+      screen.getByRole('dialog').textContent?.includes(OVERSEER.effect.automate),
+    ).toBe(true);
+  });
 });

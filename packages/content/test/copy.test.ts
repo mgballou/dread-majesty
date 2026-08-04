@@ -1,7 +1,27 @@
 import { describe, expect, it } from 'vitest';
 import { ACHIEVEMENT_IDS, OVERSEER_IDS, TIER_IDS } from '../src/ids.ts';
+import type { OverseerId } from '../src/ids.ts';
+import type { OverseerDef } from '../src/types.ts';
 import { v1Achievements } from '../src/v1/achievements.ts';
 import { v1Copy } from '../src/v1/copy.ts';
+import { v1 } from '../src/v1/generators.ts';
+
+function findPost(id: OverseerId): OverseerDef {
+  const post = v1.tiers.flatMap((tier) => tier.overseers).find((candidate) => candidate.id === id);
+  if (!post) throw new Error(`No post named ${id} in v1`);
+  return post;
+}
+
+function effectLine(post: OverseerDef): string {
+  switch (post.effect.kind) {
+    case 'automate':
+      return v1Copy.overseer.effect.automate;
+    case 'quicken':
+      return v1Copy.overseer.effect.quicken(String(post.effect.factor));
+    case 'swell':
+      return v1Copy.overseer.effect.swell(String(post.effect.factor));
+  }
+}
 
 function textIn(value: unknown): readonly string[] {
   if (typeof value === 'string') return [value];
@@ -43,6 +63,10 @@ describe.each(OVERSEER_IDS)('overseer %s', (id) => {
   it('has a note', () => {
     expect(v1Copy.overseer.notes[id].length).toBeGreaterThan(0);
   });
+
+  it('states its effect', () => {
+    expect(effectLine(findPost(id)).length).toBeGreaterThan(0);
+  });
 });
 
 describe('the Overseers', () => {
@@ -61,6 +85,7 @@ describe('the Overseers', () => {
     expect(v1Copy.overseer.names['warren-hand']).toBe('Warden of the Warrens');
     expect(v1Copy.overseer.names['legion-hand']).toBe('Quartermaster of the Host');
     expect(v1Copy.overseer.names['fortress-hand']).toBe('Castellan of the Black Keep');
+    expect(v1Copy.overseer.names['throne-hand']).toBe('Steward of the High Seat');
   });
 
   it('says different things about an overseen tier and a manual one', () => {

@@ -8,7 +8,9 @@
  */
 
 .miscreants {
-  --post-row: 5rem;
+  /* Name, note and effect line, each mounted every render — three lines fix the
+     height for good, so a post can never arrive taller than the one beside it. */
+  --post-row: 6.5rem;
 
   display: grid;
   gap: var(--space-3);
@@ -127,6 +129,15 @@
 }
 
 .miscreant__post--best .miscreant__note {
+  color: var(--ink-muted);
+}
+
+/*
+ * The mechanical fact, under the flavour. One step lower than the note — it informs
+ * a spend it does not compete with the price or the accent for attention (§3, §5).
+ */
+.miscreant__effect {
+  font-size: var(--text-xs);
   color: var(--ink-muted);
 }
 

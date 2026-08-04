@@ -314,6 +314,13 @@ export const v1Copy = {
       'minion-goad': 'Believes deeply in punctuality. Has views on the value of a second.',
       'minion-glut': 'Found four more minions in a ledger nobody had read. They are working now.',
     },
+    effect: {
+      automate: 'Takes the cycle off your hands, for good. It will not need telling twice.',
+      quicken: (factor: string): string =>
+        `Runs the cycle ${factor}× as fast. Whatever that costs, it isn't billed to you.`,
+      swell: (factor: string): string =>
+        `Delivers ${factor}× the take. Nobody has asked where the extra came from.`,
+    },
     panelTitle: 'Miscreants',
     what: 'Promoted for enthusiasm. They keep the work moving while you are elsewhere.',
     none: 'Nobody has done anything worth promoting yet.',
