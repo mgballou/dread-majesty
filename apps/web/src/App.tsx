@@ -186,7 +186,6 @@ export function App(): ReactNode {
               const result = dispatch({ kind: 'rouse', tierId });
               if (result.ok) sound.play('rouse');
             }}
-            smiteIsTheAction={plan.best === null}
             onSmite={() => {
               dispatch({ kind: 'smite' });
               sound.play('smite');

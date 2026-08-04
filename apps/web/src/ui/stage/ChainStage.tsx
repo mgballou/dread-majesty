@@ -66,8 +66,6 @@ interface ChainStageProps {
   needsHand: (tierId: TierId) => boolean;
   /** Start one manual cycle. */
   onRouse: (tierId: TierId) => void;
-  /** True while nothing on the rail is worth buying, which is when evoking is the move. */
-  smiteIsTheAction: boolean;
   /** Evoke. The chain runs the wave; the caller credits the Evil. */
   onSmite: () => void;
 }
@@ -94,8 +92,8 @@ interface ChainStageProps {
  * order of the wave lives in one place.
  *
  * Rousing lives on the rungs. The verb belongs on the thing it acts on (spec §6), so a
- * rung is the tap target until its Overseer is appointed. Neither verb is ever the
- * accent — the rail owns that — and every node says in words which state it is in.
+ * rung is the tap target until its Overseer is appointed, and every node says in words
+ * which state it is in.
  *
  * Untitled on purpose. The chain is the material (ui-sensibility §11), and the material
  * carries no heading of its own.
@@ -110,7 +108,6 @@ export function ChainStage({
   isRousable,
   needsHand,
   onRouse,
-  smiteIsTheAction,
   onSmite,
 }: ChainStageProps): ReactNode {
   const rungs = climbed(content, isUnlocked);
@@ -176,7 +173,6 @@ export function ChainStage({
         name={copy.evil.name}
         copy={copy.smite}
         report={report(state, copy.smite.results)}
-        isTheAction={smiteIsTheAction}
         phase={smite}
         content={content}
         feed={feedFrom({ producer: last, state, version })}

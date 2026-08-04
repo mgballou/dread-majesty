@@ -22,8 +22,6 @@ interface EvilNodeProps {
   copy: SmiteCopy;
   /** What the last blow came to, or empty before one has been struck. */
   report: string;
-  /** True while nothing on the rail is worth buying, which is when evoking is the move. */
-  isTheAction: boolean;
   /** Whether the blow is running, cooling, or ready — and how far through. */
   phase: SmitePhase;
   /** Read only for the smite durations, so the node can say them in seconds. */
@@ -44,6 +42,12 @@ interface EvilNodeProps {
  * Pinned outside the scrolling track, so the one thing a player presses can never be
  * scrolled off the screen however long the chain grows.
  *
+ * **Gold whenever the blow is ready, and never conditionally.** The stage is its own
+ * region and this is its one action; the deck's open panel carries the other. Two fixed
+ * places beats one moving place — the accent used to hop here whenever the rail had
+ * nothing worth buying, which meant the one verb the game is named for was findable
+ * only by looking for it. See the spec's §2.2.
+ *
  * The engine credits the blow the instant it is pressed — holding the intent back for
  * half a second to match the animation would make the control feel broken and would
  * drop taps. So the digits move immediately and the node marks the *arrival* when the
@@ -55,7 +59,6 @@ export function EvilNode({
   name,
   copy,
   report,
-  isTheAction,
   phase,
   content,
   feed,
@@ -70,9 +73,7 @@ export function EvilNode({
     <div className="evil-node" data-motion={reduced ? 'reduced' : 'full'} data-smite={phase.kind}>
       <button
         type="button"
-        className={
-          isTheAction && ready ? 'evil-node__strike evil-node__strike--lifted' : 'evil-node__strike'
-        }
+        className={ready ? 'evil-node__strike evil-node__strike--lifted' : 'evil-node__strike'}
         onClick={onSmite}
         disabled={!ready}
         aria-label={copy.spoken(shown)}
