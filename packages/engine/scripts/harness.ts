@@ -20,7 +20,14 @@
  * against those times.
  */
 import Decimal from 'break_eternity.js';
-import { CURRENT, type Content, type OverseerId, type TierDef, type TierId } from '@dm/content';
+import {
+  CURRENT,
+  type Content,
+  type OverseerDef,
+  type OverseerId,
+  type TierDef,
+  type TierId,
+} from '@dm/content';
 import { apply } from '../src/intents.ts';
 import { effectiveCycleMs, effectiveYield, hasPost } from '../src/roster.ts';
 import { createState } from '../src/state.ts';
@@ -149,11 +156,32 @@ function run(content: Content): void {
   // per slice, since neither side of the pairing changes during the run. The top
   // tier (nothing produces it) drops out here, which is why a five-tier chain yields
   // four pairs rather than five (spec §5.8.1). Lowest tier first, matching `posts`.
-  const obsolescencePairs: Array<{ tier: TierDef; producer: TierDef }> = [];
+  //
+  // `boostPosts` is the producer's `quicken`/`swell` posts only — never `automate`.
+  // The simulated player taps a manual tier the instant its cycle frees (this file's
+  // header), so appointing an automator changes that tier's output by nothing at
+  // all; it only removes the tap. `quicken` and `swell` are the only posts that
+  // change what the tier above actually delivers, which is what the 2026-08-04
+  // sharpening of §5.8 asks "was this tier boosted" to mean.
+  const obsolescencePairs: Array<{
+    tier: TierDef;
+    producer: TierDef;
+    boostPosts: readonly OverseerDef[];
+  }> = [];
   for (const tier of [...content.tiers].reverse()) {
     const producer = content.tiers.find((candidate) => candidate.produces === tier.id);
-    if (producer) obsolescencePairs.push({ tier, producer });
+    if (!producer) continue;
+    const boostPosts = producer.overseers.filter(
+      (post) => post.effect.kind === 'quicken' || post.effect.kind === 'swell',
+    );
+    obsolescencePairs.push({ tier, producer, boostPosts });
   }
+
+  // The lowest milestone threshold, the other half of "boosted" alongside a
+  // quicken/swell post. `content.milestones[0]` is `undefined` only for content
+  // with no milestones at all, which no shipping tier list has; treated as "this
+  // producer can never be boosted by count", never as a crash.
+  const firstMilestoneAt = content.milestones[0]?.at ?? null;
 
   const firstOwned = new Map<string, number>();
   const overseerAffordableAt = new Map<OverseerId, number>();
@@ -162,6 +190,9 @@ function run(content: Content): void {
   // held onto in case the next second breaks it and the candidate must be discarded.
   const obsolescenceCandidate = new Map<TierId, ObsolescencePoint>();
   const obsolescenceAt = new Map<TierId, ObsolescencePoint>();
+  // First moment each producer tier was boosted — keyed by the producer, not the
+  // tier it retires, since a boost is a fact about the producer alone.
+  const firstBoostAt = new Map<TierId, number>();
   const rows: string[] = [];
   let firstPrestigeMs: number | null = null;
 
@@ -211,10 +242,21 @@ function run(content: Content): void {
     // `TierDef` and skips a second lookup) is never zero, so `purchasable` is never
     // divided by zero.
     const income = overseenProductionPerSecond(state, content, 'evil');
-    for (const { tier, producer } of obsolescencePairs) {
+    for (const { tier, producer, boostPosts } of obsolescencePairs) {
+      const ownedProducer = state.gens[producer.id].owned;
+
+      // Boost detection runs every second regardless of whether this tier has
+      // already been retired: the column reports *when* the producer was first
+      // boosted, which can land before or after retirement equally, and "after" or
+      // "never" is exactly the finding the 2026-08-04 rule exists to catch.
+      if (!firstBoostAt.has(producer.id)) {
+        const reachedMilestone = firstMilestoneAt !== null && ownedProducer.gte(firstMilestoneAt);
+        const postFilled = boostPosts.some((post) => hasPost(state, producer.id, post.id));
+        if (reachedMilestone || postFilled) firstBoostAt.set(producer.id, elapsed);
+      }
+
       if (obsolescenceAt.has(tier.id)) continue;
 
-      const ownedProducer = state.gens[producer.id].owned;
       const delivered = ownedProducer
         .mul(effectiveYield(state, producer))
         .mul(tierMultiplier(state, content, ownedProducer))
@@ -280,15 +322,26 @@ function run(content: Content): void {
   );
   for (const { tier, producer } of obsolescencePairs) {
     const point = obsolescenceAt.get(tier.id);
+    const boostAt = firstBoostAt.get(producer.id);
+    const boosted = boostAt === undefined ? 'never' : duration(boostAt);
+
     if (!point) {
-      console.log(`    ${tier.plural.padEnd(14)} never`);
+      console.log(`    ${tier.plural.padEnd(14)}when never${' '.repeat(4)}boosted ${boosted}`);
       continue;
     }
+
+    // The 2026-08-04 rule: a tier may not be retired until the tier above it has
+    // been boosted. `never` counts as broken along with any boost that landed after
+    // the retirement it should have earned — both compare here as "not before".
+    const rule = boostAt !== undefined && boostAt <= point.ms ? 'before' : 'after';
+
     console.log(
       `    ${tier.plural.padEnd(14)}` +
         `when ${duration(point.ms).padEnd(14)}` +
         `how many ${`${short(point.owned)} ${producer.plural}`.padEnd(18)}` +
-        `how fast ${shortRate(point.delivered)}/s`,
+        `how fast ${(shortRate(point.delivered) + '/s').padEnd(11)}` +
+        `boosted ${boosted.padEnd(14)}` +
+        `rule ${rule}`,
     );
   }
 
