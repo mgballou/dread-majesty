@@ -24,7 +24,7 @@ enough. **Level 1 is the bar.** A new app starts at Level 1 or it is not started
 | Flow | Screens exist and route correctly. | The app **carries** you. Finishing one thing puts you on the next. |
 | Landing | A menu of where you could go. | A picture of the work, pushing at the one thing to do. |
 | Unit | The record. | The object the person reasons in. |
-| Actions | Buttons work. | **One primary per screen.** Later choices come after the first, not beside it. |
+| Actions | Buttons work. | **One primary per region.** Later choices come after the first, not beside it. |
 | Place | Routes remember URLs. | The app holds your place: scroll, cursor, selection, draft. |
 | Dead ends | Empty, done and error render. | Every terminal state names what happens next. |
 | Colour | Tokens exist. A palette is picked. | Tokens carry **jobs**. One colour means *act*; none is decoration. |
@@ -232,10 +232,11 @@ app.
 
 ---
 
-## 3. One action per screen
+## 3. One action per region
 
-Every screen answers "what is the one thing to do here" before it is designed. Two answers means
-two screens.
+Every region answers "what is the one thing to do here" before it is designed. Most screens are
+one region, and for those this reads as one action per screen. Two answers in one region means
+two regions, or two screens.
 
 **Five equal buttons is the failure.** Give a set of actions real tiers:
 
@@ -249,11 +250,15 @@ two screens.
 **Navigation is not an action.** A control that takes you somewhere is structural. The accent is
 spent on doing, never on going.
 
-**One region, one action.** A screen showing two regions at once — a live diagram beside
-a panelled deck — gets one accent in each. The failure the rule is guarding against is
-five equal buttons competing, not two accents in two places a person can learn. What
-must never happen is the accent *moving*: an accent that is sometimes here and sometimes
-there is worse than two that always are.
+**What counts as a region.** A part of the screen a person attends to as a whole, and can
+tell apart from its neighbours without being told: a live diagram beside a panelled deck is
+two. A row, a card and a list are not — they are the inside of one region, and one accent
+covers them all. Split a screen into regions to describe it, never to license a second
+accent.
+
+The failure this rule guards against is five equal buttons competing, not two accents in
+two places a person can learn. What must never happen is the accent *moving*: an accent
+that is sometimes here and sometimes there is worse than two that always are.
 
 **Emphasize by de-emphasizing.** When something will not stand out, the fix is usually to quiet
 its neighbours, not to shout louder.
@@ -308,7 +313,7 @@ to assess.
 
 Three rules carry a whole palette. Name yours; these are the shape.
 
-**1. One colour means act.** The accent marks the single thing to do on this screen, and a count
+**1. One colour means act.** The accent marks the single thing to do in a region, and a count
 of work still waiting. Nothing else earns it. *A sprinkled accent is exactly why nothing stands
 out.*
 
@@ -641,7 +646,7 @@ Two naming rules that outrank the table:
 7. Compose from **shared primitives**. A missing one gets built in the shared place now, not here
    "for now".
 8. **Titled regions use the heading primitive.**
-9. **Actions get tiers.** Exactly one primary.
+9. **Actions get tiers.** Exactly one primary per region.
 10. **Later choices are sequenced**, not laid beside the first.
 11. **Waiting is a placeholder in place**, sized to the content.
 12. **Place-keeping named**: what is remembered on leaving, what is restored on return.
@@ -658,7 +663,7 @@ Two naming rules that outrank the table:
 The app reads as one product when:
 
 - Finishing something puts you on the next thing, everywhere.
-- Every screen has one obvious action, and it is the only thing wearing the accent.
+- Every region has one obvious action, and it is the only thing there wearing the accent.
 - No flow ends without naming what happens next.
 - Returning to a screen lands where you left it.
 - Every jump between areas appears in one readable list.
