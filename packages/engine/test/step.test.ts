@@ -99,4 +99,60 @@ describe('slice semantics', () => {
 
     expect(state.resources.evil.toString()).toBe('15');
   });
+
+  it('splits a slice the same way with a quickened tier', () => {
+    const once = appointed(fixture);
+    once.gens.minion.owned = new Decimal(5);
+    once.overseers.minion = [...once.overseers.minion, 'minion-goad'];
+    step(once, fixture, 24_000);
+
+    const twice = appointed(fixture);
+    twice.gens.minion.owned = new Decimal(5);
+    twice.overseers.minion = [...twice.overseers.minion, 'minion-goad'];
+    step(twice, fixture, 12_000);
+    step(twice, fixture, 12_000);
+
+    expect(twice.resources.evil.toString()).toBe(once.resources.evil.toString());
+  });
+});
+
+describe('the roster', () => {
+  it('pays twice as often when the tier is quickened', () => {
+    const plain = appointed(fixture);
+    plain.gens.minion.owned = new Decimal(5);
+    step(plain, fixture, 24_000);
+
+    const quick = appointed(fixture);
+    quick.gens.minion.owned = new Decimal(5);
+    quick.overseers.minion = [...quick.overseers.minion, 'minion-goad'];
+    step(quick, fixture, 24_000);
+
+    expect(quick.resources.evil.div(plain.resources.evil).toString()).toBe('2');
+  });
+
+  it('pays twice as much when the tier is swollen', () => {
+    const plain = appointed(fixture);
+    plain.gens.minion.owned = new Decimal(5);
+    step(plain, fixture, 24_000);
+
+    const fat = appointed(fixture);
+    fat.gens.minion.owned = new Decimal(5);
+    fat.overseers.minion = [...fat.overseers.minion, 'minion-glut'];
+    step(fat, fixture, 24_000);
+
+    expect(fat.resources.evil.div(plain.resources.evil).toString()).toBe('2');
+  });
+
+  it('compounds a quickened and a swollen tier', () => {
+    const plain = appointed(fixture);
+    plain.gens.minion.owned = new Decimal(5);
+    step(plain, fixture, 24_000);
+
+    const both = appointed(fixture);
+    both.gens.minion.owned = new Decimal(5);
+    both.overseers.minion = [...both.overseers.minion, 'minion-goad', 'minion-glut'];
+    step(both, fixture, 24_000);
+
+    expect(both.resources.evil.div(plain.resources.evil).toString()).toBe('4');
+  });
 });
