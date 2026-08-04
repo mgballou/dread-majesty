@@ -61,7 +61,6 @@ export function TierRow({
 }: TierRowProps): ReactNode {
   const gen = state.gens[tier.id];
   const shortfall = purchase.cost.sub(state.resources[tier.costResource]);
-  const mark = flag(emphasis, copy);
 
   return (
     <li className={`rail__slot rail__row rail__row--${emphasis}`} data-tier={tier.id}>
@@ -72,7 +71,7 @@ export function TierRow({
           <Banner as="h3" weight="secondary" className="rail__name">
             {tier.plural}
           </Banner>
-          {mark !== null && <span className="rail__flag">{mark}</span>}
+          {emphasis === 'saving' && <span className="rail__flag">{copy.rail.saving}</span>}
           {isAppointed(state, content, tier.id) && (
             <span className="rail__flag rail__flag--overseen">{copy.overseer.filled}</span>
           )}
@@ -107,11 +106,7 @@ export function TierRow({
           type="button"
           className={`button button--numeric${emphasis === 'best' ? ' button--primary' : ''}`}
           disabled={!purchase.affordable}
-          aria-label={copy.rail.buy({
-            count: String(purchase.count),
-            tier: plural(tier, purchase.count),
-            cost: copy.rail.cost(formatNumber(purchase.cost)),
-          })}
+          aria-label={buyLabel({ tier, purchase, emphasis, copy })}
           onClick={() => onPurchase(tier.id, quantity)}
         >
           <span aria-hidden="true">{quantityLabel(quantity)}</span>
@@ -119,19 +114,35 @@ export function TierRow({
         </button>
 
         <span className="rail__shortfall">
-          {purchase.affordable
-            ? copy.rail.affordable
-            : copy.rail.shortfall(formatNumber(shortfall))}
+          {purchase.affordable ? '' : copy.rail.shortfall(formatNumber(shortfall))}
         </span>
       </div>
     </li>
   );
 }
 
-/** Colour never carries a state alone. The lifted row says so in words. */
-function flag(emphasis: SpendEmphasis, copy: RailScreenCopy): string | null {
-  if (emphasis === 'none') return null;
-  return emphasis === 'best' ? copy.rail.best : copy.rail.saving;
+interface BuyLabelInput {
+  tier: TierDef;
+  purchase: RailPurchase;
+  emphasis: SpendEmphasis;
+  copy: RailScreenCopy;
+}
+
+/**
+ * The buy button, spoken in full — and, on the lifted row, saying that it is lifted.
+ *
+ * The word used to sit beside the tier's name on screen. It comes off because the row
+ * says the same thing by weight, and a filled control among outlined ones survives
+ * greyscale. It stays here because weight is not available to anyone reading by ear.
+ */
+function buyLabel({ tier, purchase, emphasis, copy }: BuyLabelInput): string {
+  const said = copy.rail.buy({
+    count: String(purchase.count),
+    tier: plural(tier, purchase.count),
+    cost: copy.rail.cost(formatNumber(purchase.cost)),
+  });
+
+  return emphasis === 'best' ? `${said} — ${copy.rail.lifted}` : said;
 }
 
 interface ProduceLineProps {

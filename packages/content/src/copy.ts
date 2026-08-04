@@ -161,8 +161,6 @@ export interface RailCopy {
   readonly title: string;
   /** Names the run of generators to anyone who cannot see it laid out. */
   readonly list: string;
-  /** Sits on the one row the rail lifts to the accent. */
-  readonly best: string;
   /** Sits on every other affordable-or-not row. */
   readonly saving: string;
   readonly locked: string;
@@ -177,9 +175,7 @@ export interface RailCopy {
     readonly tier: string;
     readonly cost: string;
   }) => string;
-  /** Said outright, because tone alone may not carry the state. */
-  readonly affordable: string;
-  /** The other half of that state. `amount` arrives formatted. */
+  /** Said when a row cannot be afforded yet. `amount` arrives formatted. */
   readonly shortfall: (amount: string) => string;
   readonly quantity: string;
   /** Names one numeric quantity option. `count` arrives formatted. */
@@ -198,6 +194,14 @@ export interface RailCopy {
    * same number twice, and the line is there to explain a price, not to decorate.
    */
   readonly bought: (count: string) => string;
+  /**
+   * Added to the lifted control's spoken name, never shown.
+   *
+   * On screen the state is carried by weight — the lifted control is filled where every
+   * other is outlined, which survives greyscale and needs no word. This is the same fact
+   * for anyone reading by ear.
+   */
+  readonly lifted: string;
 }
 
 /**
