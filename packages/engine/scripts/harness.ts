@@ -288,7 +288,7 @@ function run(content: Content): void {
       `    ${tier.plural.padEnd(14)}` +
         `when ${duration(point.ms).padEnd(14)}` +
         `how many ${`${short(point.owned)} ${producer.plural}`.padEnd(18)}` +
-        `how fast ${short(point.delivered)}/s`,
+        `how fast ${shortRate(point.delivered)}/s`,
     );
   }
 
@@ -324,6 +324,25 @@ function snapshot(state: GameState, content: Content, label: string): string {
 
 function short(value: Decimal): string {
   return value.lt(1e6) ? value.floor().toString() : value.toExponential(1).replace('e+', 'e');
+}
+
+/**
+ * A delivery rate needs more resolution below 1 than `short()` gives — `short()`
+ * floors anything under 1e6 to a whole number, and every obsolescence crossing
+ * (spec §5.8.1) happens at a small rate by construction: it is the instant a
+ * trickle from the tier above first overtakes a purse that can only buy a few
+ * units a second. Flooring that would print `0/s` for every single reading and
+ * make a genuinely-zero rate (no producer yet) indistinguishable from a real but
+ * small one. `short()` itself stays untouched — every other table in this report
+ * depends on its behaviour at scale, and this column defers to it at 1e6 and
+ * above so the two stay consistent once the numbers get large.
+ */
+function shortRate(value: Decimal): string {
+  if (value.eq(0)) return '0';
+  if (value.gte(1e6)) return short(value);
+
+  const n = value.toNumber();
+  return n < 1 ? n.toPrecision(3) : n.toFixed(2);
 }
 
 function duration(ms: number): string {
