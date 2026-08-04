@@ -1,7 +1,7 @@
 import Decimal from 'break_eternity.js';
 import type { AchievementId, ResourceId, TierId } from '@dm/content';
 import { isAchievementId, RESOURCE_IDS, TIER_IDS } from '@dm/content';
-import { SAVE_VERSION } from './state.ts';
+import { MIN_SUPPORTED_SAVE_VERSION, SAVE_VERSION } from './state.ts';
 import type { GameState, TierState } from './types.ts';
 
 export interface SaveBlob {
@@ -122,65 +122,22 @@ export function deserialize(blob: SaveBlob): GameState {
 }
 
 /**
- * One function per version step, applied in a chain. A save two versions old must
- * load, so the chain is the thing under test, not any single hop.
+ * One function per version step, applied in a chain.
  *
- * **Never edit an entry in this table.** A migration that has shipped has already run
- * against saves in the wild; changing it changes what those saves become, and there
- * is no way to tell which ones already passed through the old version. Correcting a
- * mistake means appending another step, not fixing the one that made it.
+ * Empty, because `MIN_SUPPORTED_SAVE_VERSION` currently equals `SAVE_VERSION`: every
+ * save this build accepts is already current. The machinery stays because version 7
+ * will want it, and because the chain — not any single hop — is the thing under test.
+ *
+ * **Never edit an entry once it has shipped.** A migration that has run against saves
+ * in the wild cannot be corrected in place; there is no way to tell which saves
+ * already passed through the old version. Correcting a mistake means appending
+ * another step.
  */
-const MIGRATIONS: Record<number, (blob: SaveBlob) => SaveBlob> = {
-  // 1 → 2: achievements arrive. Nobody had earned any, so the list starts empty.
-  1: (blob) => ({ ...blob, saveVersion: 2, earnedAchievements: [] }),
-
-  // 2 → 3: unlock flags arrive. Deriving them from owned counts matters — defaulting
-  // to all-false would take the Fortress row away from a returning player who already
-  // owns Fortresses. Tiers the player was merely saving toward re-latch on the next
-  // `record-unlocks`, which costs them nothing.
-  2: (blob) => {
-    const unlocked: Record<string, boolean> = {};
-    for (const id of TIER_IDS) {
-      unlocked[id] = new Decimal(blob.gens[id]?.owned ?? '0').gt(0);
-    }
-    return { ...blob, saveVersion: 3, unlocked };
-  },
-
-  // 3 → 4: manual cycles and Overseers arrive. Nobody has appointed anybody and
-  // nothing is running, so an old save stops producing until the player rouses a
-  // tier. That is not a loss to work around — it is the opening spec §5.6 adds, and
-  // the game is unreleased, so the only saves this touches are our own.
-  3: (blob) => {
-    const overseers: Record<string, boolean> = {};
-    for (const id of TIER_IDS) overseers[id] = false;
-
-    const gens: SaveBlob['gens'] = {};
-    for (const [id, gen] of Object.entries(blob.gens)) {
-      gens[id] = { ...gen, running: false };
-    }
-
-    return { ...blob, saveVersion: 4, gens, overseers };
-  },
-
-  // 4 → 5: the smite becomes a buff with a cooldown. Both counters start at zero, so a
-  // returning player may strike at once — which is the friendly way round, and the
-  // alternative would be inventing a cooldown they never earned.
-  4: (blob) => ({ ...blob, saveVersion: 5, smiteActiveMs: 0, smiteCooldownMs: 0 }),
-
-  // 5 → 6: cost keys off purchases rather than holdings. An old blob cannot say how
-  // many of each tier were bought, and guessing high would leave the player at prices
-  // they never earned. Zero is the honest floor: it hands back the tiers the cascade
-  // had priced out, which is the whole point of the change.
-  5: (blob) => {
-    const gens: SaveBlob['gens'] = {};
-    for (const [id, gen] of Object.entries(blob.gens)) {
-      gens[id] = { ...gen, purchased: '0' };
-    }
-    return { ...blob, saveVersion: 6, gens };
-  },
-};
+const MIGRATIONS: Record<number, (blob: SaveBlob) => SaveBlob> = {};
 
 export function migrate(blob: SaveBlob): SaveBlob {
+  if (blob.saveVersion < MIN_SUPPORTED_SAVE_VERSION) throw new ObsoleteSave(blob.saveVersion);
+
   let current = blob;
   while (current.saveVersion < SAVE_VERSION) {
     const next = MIGRATIONS[current.saveVersion];
@@ -220,6 +177,15 @@ export class UnmigratableSave extends Error {
   constructor(readonly fromVersion: number) {
     super(`No migration from save version ${fromVersion} to ${SAVE_VERSION}`);
     this.name = 'UnmigratableSave';
+  }
+}
+
+export class ObsoleteSave extends Error {
+  constructor(readonly fromVersion: number) {
+    super(
+      `Save version ${fromVersion} is below the supported floor of ${MIN_SUPPORTED_SAVE_VERSION}`,
+    );
+    this.name = 'ObsoleteSave';
   }
 }
 

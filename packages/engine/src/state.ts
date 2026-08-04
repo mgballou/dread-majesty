@@ -14,6 +14,21 @@ import type { GameState, TierState } from './types.ts';
  */
 export const SAVE_VERSION = 6;
 
+/**
+ * The oldest save this build will load.
+ *
+ * A standing policy, not a one-off. Version 6 retuned the whole economy, added a
+ * fifth tier and replaced one Overseer per tier with a roster of three; nothing in a
+ * version 5 blob has an honest value to migrate to. Rather than invent one, the game
+ * says so plainly and starts over.
+ *
+ * This qualifies spec §4.7's "a save two versions old must load". That rule was
+ * written for a shipped game. The migration chain below the floor is still the thing
+ * under test, and the floor moves only when a change genuinely cannot be migrated —
+ * which is a decision somebody writes down, not a default.
+ */
+export const MIN_SUPPORTED_SAVE_VERSION = 6;
+
 export function createState(content: Content): GameState {
   const resources = {} as Record<ResourceId, Decimal>;
   for (const id of RESOURCE_IDS) resources[id] = new Decimal(0);

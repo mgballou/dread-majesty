@@ -189,4 +189,13 @@ describe('useGameSession', () => {
 
     expect(result.current.state.stats.playTimeMs).toBe(0);
   });
+
+  it('reports a refused save rather than starting fresh in silence', async () => {
+    const validBlob = serialize(createState(CURRENT), 0);
+    await writeSave({ ...validBlob, saveVersion: 1 });
+
+    const { result } = await ready();
+
+    expect(result.current.saveRefused).toBe(true);
+  });
 });

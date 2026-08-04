@@ -268,7 +268,7 @@ export interface LedgerCopy {
 /**
  * Failure text.
  *
- * The first seven names match the engine's `IntentFailure` members and the last three
+ * The first seven names match the engine's `IntentFailure` members and the last four
  * its save errors. They are spelled out rather than imported: content sits below the
  * engine and may not depend on it.
  */
@@ -282,6 +282,8 @@ export interface ErrorCopy {
   readonly alreadyAppointed: string;
   readonly corruptSave: string;
   readonly unmigratableSave: string;
+  /** Shown when a save predates the supported floor and cannot be brought forward. */
+  readonly obsoleteSave: string;
   readonly storageBlocked: string;
 }
 

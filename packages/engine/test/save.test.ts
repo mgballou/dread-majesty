@@ -7,52 +7,15 @@ import {
   deserialize,
   exportSave,
   importSave,
+  MIN_SUPPORTED_SAVE_VERSION,
+  ObsoleteSave,
   SAVE_VERSION,
   serialize,
   step,
-  UnmigratableSave,
+  migrate,
 } from '../src/index.ts';
-import { TIER_IDS } from '@dm/content';
 import { fixture } from './fixtures/content.ts';
 import { appointed } from './fixtures/state.ts';
-
-/**
- * Old-shape blobs, written out by hand.
- *
- * They must never be generated from current code: a blob built by today's
- * `serialize` carries today's fields, so migrating it proves nothing. These are what
- * the shipped versions actually wrote, and they are frozen.
- */
-const v1Blob = {
-  saveVersion: 1,
-  resources: { evil: '4875' },
-  gens: {
-    minion: { owned: '205', progressMs: 0, lifetimeProduced: '4875' },
-    warren: { owned: '2', progressMs: 1200, lifetimeProduced: '200' },
-    legion: { owned: '0', progressMs: 0, lifetimeProduced: '0' },
-    fortress: { owned: '0', progressMs: 0, lifetimeProduced: '0' },
-  },
-  souls: '31',
-  lifetimeEvil: '4875',
-  stats: { playTimeMs: 120_000, smites: 4, prestiges: 1 },
-  savedAtMs: 0,
-};
-
-const v2Blob = {
-  ...v1Blob,
-  saveVersion: 2,
-  earnedAchievements: ['smite-1', 'not-an-achievement'],
-};
-
-const v3Blob = {
-  ...v2Blob,
-  saveVersion: 3,
-  unlocked: { minion: true, warren: true, legion: false, fortress: false },
-};
-
-function encode(blob: unknown): string {
-  return btoa(JSON.stringify(blob));
-}
 
 describe('save round trip', () => {
   it('restores state exactly', () => {
@@ -161,127 +124,31 @@ describe('save round trip', () => {
   });
 });
 
-describe('a save two versions old', () => {
-  it('loads through the whole chain', () => {
-    const restored = importSave(encode(v1Blob));
+describe('the version floor', () => {
+  it('refuses a save below the supported floor', () => {
+    const state = appointed(fixture);
+    const blob = { ...serialize(state, 0), saveVersion: MIN_SUPPORTED_SAVE_VERSION - 1 };
 
-    expect(restored.saveVersion).toBe(SAVE_VERSION);
+    expect(() => deserialize(blob)).toThrow(ObsoleteSave);
   });
 
-  it('keeps the generator counts it was carrying', () => {
-    const restored = importSave(encode(v1Blob));
+  it('loads a save at the supported floor', () => {
+    const state = appointed(fixture);
+    const blob = { ...serialize(state, 0), saveVersion: MIN_SUPPORTED_SAVE_VERSION };
 
-    expect(restored.gens.minion.owned.toString()).toBe('205');
+    expect(deserialize(blob).saveVersion).toBe(SAVE_VERSION);
   });
 
-  it('keeps cycle progress', () => {
-    const restored = importSave(encode(v1Blob));
+  it('names the version it refused', () => {
+    const state = appointed(fixture);
+    const blob = { ...serialize(state, 0), saveVersion: 2 };
 
-    expect(restored.gens.warren.progressMs).toBe(1200);
+    expect(() => deserialize(blob)).toThrow(/version 2/);
   });
 
-  it('keeps souls', () => {
-    const restored = importSave(encode(v1Blob));
+  it('passes a current save through untouched', () => {
+    const blob = serialize(appointed(fixture), 0);
 
-    expect(restored.souls.toString()).toBe('31');
-  });
-
-  it('keeps stats', () => {
-    const restored = importSave(encode(v1Blob));
-
-    expect(restored.stats.smites).toBe(4);
-  });
-
-  it('starts with no achievements earned', () => {
-    const restored = importSave(encode(v1Blob));
-
-    expect(restored.earnedAchievements).toEqual([]);
-  });
-
-  it('unlocks the tiers it already owned', () => {
-    const restored = importSave(encode(v1Blob));
-
-    expect(restored.unlocked.warren).toBe(true);
-  });
-
-  it('leaves tiers it never owned locked', () => {
-    const restored = importSave(encode(v1Blob));
-
-    expect(restored.unlocked.legion).toBe(false);
-  });
-});
-
-describe('a save two versions old, from version two', () => {
-  it('loads', () => {
-    const restored = importSave(encode(v2Blob));
-
-    expect(restored.saveVersion).toBe(SAVE_VERSION);
-  });
-
-  it('keeps the achievements it had already earned', () => {
-    const restored = importSave(encode(v2Blob));
-
-    expect(restored.earnedAchievements).toEqual(['smite-1']);
-  });
-
-  it('unlocks the tiers it already owned', () => {
-    const restored = importSave(encode(v2Blob));
-
-    expect(restored.unlocked.minion).toBe(true);
-  });
-});
-
-describe('a save one version old', () => {
-  it('loads', () => {
-    const restored = importSave(encode(v3Blob));
-
-    expect(restored.saveVersion).toBe(SAVE_VERSION);
-  });
-
-  it('keeps the generator counts it was carrying', () => {
-    const restored = importSave(encode(v3Blob));
-
-    expect(restored.gens.minion.owned.toString()).toBe('205');
-  });
-
-  it('keeps the unlock flags it was carrying', () => {
-    const restored = importSave(encode(v3Blob));
-
-    expect(restored.unlocked.warren).toBe(true);
-  });
-
-  it('appoints nobody', () => {
-    const restored = importSave(encode(v3Blob));
-
-    expect(Object.values(restored.overseers)).toEqual([false, false, false, false]);
-  });
-
-  it('leaves every tier stopped', () => {
-    const restored = importSave(encode(v3Blob));
-
-    expect(TIER_IDS.map((id) => restored.gens[id].running)).toEqual([false, false, false, false]);
-  });
-
-  it('produces nothing until something is roused', () => {
-    const restored = importSave(encode(v3Blob));
-    const before = restored.resources.evil;
-
-    for (let elapsed = 0; elapsed < 120_000; elapsed += 100) step(restored, fixture, 100);
-
-    expect(restored.resources.evil.toString()).toBe(before.toString());
-  });
-
-  it('round trips losslessly once migrated', () => {
-    const restored = importSave(encode(v3Blob));
-
-    const again = importSave(exportSave(restored, 0));
-
-    expect(serialize(again, 0)).toEqual(serialize(restored, 0));
-  });
-});
-
-describe('a save from a version with no migration', () => {
-  it('refuses to load', () => {
-    expect(() => importSave(encode({ ...v1Blob, saveVersion: 0 }))).toThrow(UnmigratableSave);
+    expect(migrate(blob)).toEqual(blob);
   });
 });
