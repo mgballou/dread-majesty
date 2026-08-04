@@ -1,6 +1,6 @@
 import Decimal from 'break_eternity.js';
 import { useState, type ReactNode } from 'react';
-import type { Content, Copy, OverseerDef, OverseerId, TierDef } from '@dm/content';
+import type { Content, Copy, OverseerCopy, OverseerDef, OverseerId, TierDef } from '@dm/content';
 import { hasPost, type GameState } from '@dm/engine';
 import { Banner } from '../Banner.tsx';
 import { Confirm } from '../Confirm.tsx';
@@ -135,6 +135,7 @@ export function Miscreants({ content, state, plan, onAppoint, copy }: Miscreants
           }}
         >
           <p>{copy.overseer.notes[asked.post.id]}</p>
+          <p>{effectLine(asked.post, copy.overseer)}</p>
           <p>{copy.overseer.cost(formatNumber(asked.price))}</p>
         </Confirm>
       )}
@@ -173,6 +174,7 @@ function Post({ post, onAsk, copy }: PostProps): ReactNode {
         <span className="miscreant__body">
           <span className="miscreant__name">{copy.overseer.names[post.post.id]}</span>
           <span className="miscreant__note">{copy.overseer.notes[post.post.id]}</span>
+          <span className="miscreant__effect">{effectLine(post.post, copy.overseer)}</span>
         </span>
 
         <span className="miscreant__standing">
@@ -215,6 +217,22 @@ function Diamond({ filled }: DiamondProps): ReactNode {
       {filled && <path className="miscreant__seal" d="M12 7 17 12 12 17 7 12Z" />}
     </svg>
   );
+}
+
+/**
+ * What a post's effect does, derived from `OverseerDef.effect` rather than authored
+ * per post — the mechanical fact is data the content already carries, so a line built
+ * from it cannot drift from what the post actually does (spec §7).
+ */
+function effectLine(post: OverseerDef, copy: OverseerCopy): string {
+  switch (post.effect.kind) {
+    case 'automate':
+      return copy.effect.automate;
+    case 'quicken':
+      return copy.effect.quicken(formatNumber(new Decimal(post.effect.factor)));
+    case 'swell':
+      return copy.effect.swell(formatNumber(new Decimal(post.effect.factor)));
+  }
 }
 
 /** Colour never carries a state alone, so every post says where it stands in a word. */

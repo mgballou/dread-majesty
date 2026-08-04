@@ -225,6 +225,19 @@ export interface OverseerCopy {
   readonly cost: (amount: string) => string;
   readonly names: Readonly<Record<OverseerId, string>>;
   readonly notes: Readonly<Record<OverseerId, string>>;
+  /**
+   * What a post's effect does, stated plainly enough that a player can weigh the
+   * spend against the price. Keyed by `effect.kind` rather than by `OverseerId` — the
+   * mechanical fact is the same shape for every post of a kind, so this derives one
+   * line per post from `OverseerDef.effect` instead of authoring fifteen that could
+   * drift from what the post actually does. `factor` arrives already formatted, e.g.
+   * "2".
+   */
+  readonly effect: {
+    readonly automate: string;
+    readonly quicken: (factor: string) => string;
+    readonly swell: (factor: string) => string;
+  };
   /** The panel these appointments live in, beside the muster. */
   readonly panelTitle: string;
   /** One line saying what the panel is for. */
