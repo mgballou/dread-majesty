@@ -140,10 +140,15 @@ the same error the whole way up.
 
 **A mote is the thing being delivered.** The link takes the tone of the node it feeds.
 
-### 3.2 The runs are hairlines that stop short
+### 3.2 The runs are hairlines
 
-`stage-link::before` is `1px` and the run does not reach the discs at either end, so
-the chain reads as six separate nodes rather than one chain. Thicker, and touching.
+`stage-link::before` is `1px`, which is too thin to hold the eye across the gap, so the
+chain reads as six separate nodes rather than one chain. Two pixels, and the lit run
+goes to three so it still reads as heavier than a resting one.
+
+**Corrected during implementation.** This section first claimed the run also stopped
+short of the discs at either end. It does not — `.stage-link::before` already carried
+`inset-inline: 0` and spanned the full gap. Thickness was the whole of the fault.
 
 ### 3.3 Rings never mark their own completion
 
