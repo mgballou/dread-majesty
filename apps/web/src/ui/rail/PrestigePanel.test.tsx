@@ -2,9 +2,9 @@ import Decimal from 'break_eternity.js';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { CURRENT, CURRENT_COPY } from '@dm/content';
-import { createState, prestigeGain, type GameState } from '@dm/engine';
+import { createState, msToNextSoul, prestigeGain, type GameState } from '@dm/engine';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { formatNumber } from '../format.ts';
+import { formatDuration, formatNumber } from '../format.ts';
 import { PrestigePanel } from './PrestigePanel.tsx';
 
 function soulsFor(lifetimeEvil: string): Decimal {
@@ -160,5 +160,30 @@ describe('PrestigePanel', () => {
     await userEvent.click(screen.getByRole('button', { name: CURRENT_COPY.prestige.cancel }));
 
     expect(screen.queryByRole('button', { name: CONFIRM })).toBeNull();
+  });
+
+  it('reports how long this run has lasted', () => {
+    state.stats.runMs = 4_320_000;
+
+    draw();
+
+    expect(screen.getByText('1h 12m')).toBeInTheDocument();
+  });
+
+  it('reports how long the next soul will take', () => {
+    state.gens.minion.owned = new Decimal(1000);
+    state.overseers.minion = ['minion-hand'];
+
+    draw();
+
+    const waitMs = msToNextSoul(state, CURRENT);
+    expect(waitMs).not.toBeNull();
+    expect(screen.getByText(formatDuration(waitMs ?? 0))).toBeInTheDocument();
+  });
+
+  it('says nothing definite when nothing is running', () => {
+    draw();
+
+    expect(screen.getByText(CURRENT_COPY.prestige.nextSoulUnknown)).toBeInTheDocument();
   });
 });
