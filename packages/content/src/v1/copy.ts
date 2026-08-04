@@ -222,7 +222,7 @@ export const v1Copy = {
       `The next soul comes at ${lifetimeEvil} lifetime Evil.`,
     runLength: 'This reign',
     nextSoul: 'Next soul in',
-    nextSoulUnknown: 'No telling',
+    nextSoulUnknown: 'Beyond reckoning',
     confirmTitle: 'Claim and begin again?',
     confirmBody: (souls: string): string =>
       `You take ${souls} Damned Souls and start from nothing. Your souls, your deeds and everything you have unlocked stay. Your Evil, every Throne, Fortress, Legion, Warren and Minion, and every milestone go.`,
