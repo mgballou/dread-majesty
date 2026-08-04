@@ -114,4 +114,10 @@ describe('jumps', () => {
     const automator = warren?.overseers.find((post) => post.effect.kind === 'automate');
     expect(find('milestone:warren').build().overseers.warren).toEqual([automator?.id]);
   });
+
+  it('carries only the automator on a beneath tier reaching for the next one', () => {
+    const minion = CURRENT.tiers.find((tier) => tier.id === 'minion');
+    const automator = minion?.overseers.find((post) => post.effect.kind === 'automate');
+    expect(find('afford:warren').build().overseers.minion).toEqual([automator?.id]);
+  });
 });

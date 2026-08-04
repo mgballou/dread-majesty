@@ -119,7 +119,18 @@ export function jumps(content: Content): readonly Jump[] {
   rungs.forEach((tier, index) => {
     const beneath = rungs.slice(0, index);
     const stocked = stock(beneath);
-    const ids = beneath.flatMap((rung) => rung.overseers.map((post) => post.id));
+    // Automator only, not the whole roster. A board reaching for its first Warren has
+    // put its Minions on automatic and moved on — it has not also filled `goad` and
+    // `glut`, which together cost more than the Warren it is reaching for. `everyId`
+    // below is the other rule: it feeds `owed:`, `deep` and `absurd`, where a fully
+    // staffed chain is the point rather than an accident, so it keeps every post. This
+    // is the same distinction `automatorOf` exists to make for `milestone:` — the
+    // third site this exact `TierId[]` → `OverseerId[]` conversion has quietly
+    // widened a roster by mapping every post instead of just the automate one.
+    const ids = beneath.flatMap((rung) => {
+      const automator = automatorOf(rung);
+      return automator ? [automator.id] : [];
+    });
 
     list.push({
       id: `afford:${tier.id}`,
