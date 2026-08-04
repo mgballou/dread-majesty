@@ -509,6 +509,10 @@ so appointing an automator changes that tier's output by nothing at all; it only
 removes the tap. `quicken` and `swell` are the only posts that change what the tier
 above actually delivers, which is the only kind of "boosted" this rule cares about.
 
+---
+
+## 6. Interface
+
 `ui-sensibility.md` is normative. Three things it forces that the genre normally gets
 wrong:
 
