@@ -24,6 +24,10 @@ interface PrestigePanelProps {
  * confirmation is the platform's own `<dialog>`, which supplies focus handling and
  * dismissal that a hand-rolled overlay gets wrong (§13). The way out is listed first,
  * so the destructive choice is not the one focus lands on.
+ *
+ * Deciding whether to end a run is spending time, not just souls, so the figures
+ * also name the reign's length and the rough wait for the next soul — the two things
+ * every other number on this panel left out.
  */
 export function PrestigePanel({
   content,
