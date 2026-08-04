@@ -388,6 +388,10 @@ The harness stays a script and must never gate CI.
 
 ## 10. Not in this spec
 
+**Spec A — this one — is delivered.** Every section above is built, tested and played
+by hand, including the rail row that names what the price tracks. B, C and D can start
+from here.
+
 - Smite decay, escalating cooldown, smite upgrades and the item shop. **Spec B.**
 - Gold on an available smite, the thicker rail track, the Evil-toned pulse, ring
   completion pulses, segmented meters, the production rate line, the icon mechanism,
