@@ -339,8 +339,26 @@ describe('BuyRail', () => {
   it("states a swollen row's doubled yield, not the raw one", () => {
     state.overseers.minion = ['minion-glut'];
 
-    draw();
+    const { container } = draw();
 
-    expect(screen.getByText(/^5 Evil every/)).toBeInTheDocument();
+    const row = container.querySelector('[data-tier="minion"] .rail__line');
+
+    expect(row).toHaveTextContent(/^5.*Evil every/);
+  });
+
+  it('draws what the tier makes rather than naming it twice', () => {
+    const { container } = draw();
+
+    const row = container.querySelector('[data-tier="minion"] .rail__line');
+
+    expect(row?.querySelector('.art')).not.toBeNull();
+  });
+
+  it('keeps the noun for anyone reading by ear', () => {
+    const { container } = draw();
+
+    const row = container.querySelector('[data-tier="minion"] .rail__line');
+
+    expect(row).toHaveTextContent(/Evil/);
   });
 });

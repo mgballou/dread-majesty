@@ -12,11 +12,15 @@ import { TierArt } from '../art/TierArt.tsx';
 import { Banner } from '../Banner.tsx';
 import { formatCount, formatDuration, formatNumber } from '../format.ts';
 import { Meter } from '../Meter.tsx';
+import { EVIL_ART } from '../stage/EvilNode.tsx';
 import { quantityLabel, type BuyQuantity } from './quantity.ts';
 import type { RailPurchase, SpendEmphasis } from './railPlan.ts';
 
 /** Matches `--rail-art` in BuyRail.css, so the signpost row is the height of a row. */
 export const ROW_ART_SIZE = 40;
+
+/** Big enough to tell apart, small enough to sit in a line. */
+const LINE_MARK_SIZE = 16;
 
 /** What the rail and everything it renders reads out of the copy module. */
 export type RailScreenCopy = Pick<Copy, 'rail' | 'milestone' | 'overseer'>;
@@ -82,7 +86,9 @@ export function TierRow({
           {gen.purchased.lt(gen.owned) && copy.rail.bought(formatCount(gen.purchased))}
         </p>
 
-        <p className="rail__line">{produceLine(state, tier, content)}</p>
+        <p className="rail__line">
+          <ProduceLine state={state} tier={tier} content={content} />
+        </p>
 
         <Meter
           className="rail__cycle"
@@ -128,12 +134,35 @@ function flag(emphasis: SpendEmphasis, copy: RailScreenCopy): string | null {
   return emphasis === 'best' ? copy.rail.best : copy.rail.saving;
 }
 
-function produceLine(state: GameState, tier: TierDef, content: Content): string {
+interface ProduceLineProps {
+  state: GameState;
+  tier: TierDef;
+  content: Content;
+}
+
+/**
+ * What one unit of this tier makes, and how often.
+ *
+ * The mark rather than the noun: the row is already titled with this tier's name and
+ * sits in a list of them, so the noun was the one word on the line carrying nothing.
+ * What the row *makes* is the fact worth having, and at this size a silhouette says it
+ * faster than a word does.
+ *
+ * The noun stays, spoken. Nothing here is available only by looking.
+ */
+function ProduceLine({ state, tier, content }: ProduceLineProps): ReactNode {
   const amount = effectiveYield(state, tier);
   const made = content.tiers.find((candidate) => candidate.id === tier.produces);
   const noun = made ? (amount.eq(1) ? made.name : made.plural) : 'Evil';
 
-  return `${formatCount(amount)} ${noun} every ${formatDuration(effectiveCycleMs(state, tier))}, each`;
+  return (
+    <>
+      {formatCount(amount)}{' '}
+      <TierArt slot={made ? made.art : EVIL_ART} size={LINE_MARK_SIZE} decorative />
+      <span className="rail__made">{noun}</span> every{' '}
+      {formatDuration(effectiveCycleMs(state, tier))}, each
+    </>
+  );
 }
 
 function milestoneLine(
