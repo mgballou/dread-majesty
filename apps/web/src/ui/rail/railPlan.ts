@@ -115,9 +115,9 @@ export function spendEmphasis(plan: RailPlan, kind: RailOptionKind, tierId: Tier
  * that tier's *whole* contribution over the horizon, not a marginal slice of it —
  * the same sum as a purchase with every owned unit counted as newly arrived. That
  * puts the two on one axis, which is the point: the harness has the Minion Overseer
- * affordable at 20 minutes and the first Warren at 28, and for those eight minutes
- * the appointment really is the best thing to spend on. A rail that could not lift
- * it would be lifting the wrong thing, and §3 gives it only one chance to be right.
+ * affordable at 8m 25s and the first Warren at 11m 53s, and for those three and a half
+ * minutes the appointment really is the best thing to spend on. A rail that could not
+ * lift it would be lifting the wrong thing, and §3 gives it only one chance to be right.
  *
  * **What it gets wrong, plainly:**
  *
