@@ -1,7 +1,13 @@
 import Decimal from 'break_eternity.js';
 import type { ReactNode } from 'react';
 import type { Content, Copy, MilestoneCopy, TierDef, TierId } from '@dm/content';
-import { isAppointed, milestoneProgress, type GameState } from '@dm/engine';
+import {
+  effectiveCycleMs,
+  effectiveYield,
+  isAppointed,
+  milestoneProgress,
+  type GameState,
+} from '@dm/engine';
 import { TierArt } from '../art/TierArt.tsx';
 import { Banner } from '../Banner.tsx';
 import { formatCount, formatDuration, formatNumber } from '../format.ts';
@@ -76,13 +82,13 @@ export function TierRow({
           {gen.purchased.lt(gen.owned) && copy.rail.bought(formatCount(gen.purchased))}
         </p>
 
-        <p className="rail__line">{produceLine(tier, content)}</p>
+        <p className="rail__line">{produceLine(state, tier, content)}</p>
 
         <Meter
           className="rail__cycle"
           label={copy.rail.cycle(tier.name)}
           value={gen.progressMs}
-          max={tier.cycleMs}
+          max={effectiveCycleMs(state, tier)}
         />
 
         <p className="rail__line rail__line--milestone">
@@ -122,12 +128,12 @@ function flag(emphasis: SpendEmphasis, copy: RailScreenCopy): string | null {
   return emphasis === 'best' ? copy.rail.best : copy.rail.saving;
 }
 
-function produceLine(tier: TierDef, content: Content): string {
-  const amount = new Decimal(tier.yield);
+function produceLine(state: GameState, tier: TierDef, content: Content): string {
+  const amount = effectiveYield(state, tier);
   const made = content.tiers.find((candidate) => candidate.id === tier.produces);
   const noun = made ? (amount.eq(1) ? made.name : made.plural) : 'Evil';
 
-  return `${formatCount(amount)} ${noun} every ${formatDuration(tier.cycleMs)}, each`;
+  return `${formatCount(amount)} ${noun} every ${formatDuration(effectiveCycleMs(state, tier))}, each`;
 }
 
 function milestoneLine(

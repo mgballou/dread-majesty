@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { ART, type ArtSlot, type Content, type Copy, type TierDef, type TierId } from '@dm/content';
-import { automatorOf, smitePhase, type GameState } from '@dm/engine';
+import { automatorOf, effectiveCycleMs, smitePhase, type GameState } from '@dm/engine';
 import { ChainLink } from './ChainLink.tsx';
 import { EvilNode, EVIL_ART } from './EvilNode.tsx';
 import { TierNode, type Feed } from './TierNode.tsx';
@@ -142,7 +142,10 @@ export function ChainStage({
               name={tier.plural}
               art={tier.art}
               count={state.gens[tier.id].owned}
-              cycle={{ progressMs: state.gens[tier.id].progressMs, cycleMs: tier.cycleMs }}
+              cycle={{
+                progressMs: state.gens[tier.id].progressMs,
+                cycleMs: effectiveCycleMs(state, tier),
+              }}
               tone={toneOf(tier.art)}
               isUnlocked={isUnlocked(tier.id)}
               copy={copy.stage}
