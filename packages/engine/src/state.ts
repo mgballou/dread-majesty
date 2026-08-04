@@ -10,7 +10,8 @@ import type { GameState, TierState } from './types.ts';
  * 3: adds `unlocked`.
  * 4: adds `overseers`, and `running` on every tier.
  * 5: adds the two smite countdowns.
- * 6: adds purchased counts.
+ * 6: adds purchased counts, and turns `overseers` from a per-tier flag into the
+ *    posts held, in content order.
  * 7: adds the per-run clock.
  */
 export const SAVE_VERSION = 7;

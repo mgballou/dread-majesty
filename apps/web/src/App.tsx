@@ -165,7 +165,7 @@ export function App(): ReactNode {
           <p className="shell__refusal" role="status">
             {copy.errors.obsoleteSave}
             <button type="button" className="button" onClick={session.dismissRefusal}>
-              {copy.prestige.cancel}
+              {copy.close}
             </button>
           </p>
         )}
