@@ -34,7 +34,10 @@ const TUNED_MILESTONES: readonly MilestoneDef[] = [25, 50, 100, 200, 300, 400].m
  * and added a fifth, so re-read them as the reason ×1.1 was picked rather than as
  * anything true of the current run. What the rung is worth now is in the note on `v1`:
  * with five tiers compounding it is the single largest lever on the mid-game, and
- * dropping it to ×1.05 would flatten the steepest stretch of the run about fivefold.
+ * dropping it to ×1.05 would flatten the steepest stretch of the run by a good deal.
+ * No figure is quoted here on purpose: the last one measured was against a build that
+ * has since been refitted around the obsolescence rule, and a stale number in two places
+ * is worse than none in one.
  *
  * It runs to 1e21 because generator counts do. Sixty-odd entries is a cheap list, and
  * the engine stops walking at the first threshold a count has not reached.
@@ -113,8 +116,16 @@ const TAIL_MILESTONES: readonly MilestoneDef[] = (() => {
  * A Dark Legion takes one Warren's worth of ground every ten minutes rather than four
  * every five; a Fortress raises one Legion a half hour and a Throne one Fortress an
  * hour and a half. Fewer per unit means more units before the crossing, and the 25-rung
- * arrives while there is still headroom. Total throughput is held by the base costs
- * below, so this buys the count without slowing the chain.
+ * arrives while there is still headroom. Measured on the Warren row: at yield 4 the
+ * crossing came at 9 Dark Legions, at yield 2 at 15, at yield 1 on a ten-minute cycle
+ * at 37.
+ *
+ * What holds the throughput back up differs by tier, and the Dark Legion is the odd one
+ * out. The Fortress and the Throne got it back from their base costs, 6e9→3e8 and
+ * 5e12→8e11. The Dark Legion's base did not move at all — its curve did, 1.5→1.1, which
+ * is what buys the units the cut yield gave away. And the chain did slow a little either
+ * way: the first Dark Legion 33m 53s→39m 35s, the first Fortress 1h 08m→1h 14m. Both
+ * still land inside their bands, which is the whole of what §5.2 asks.
  *
  * *Cost curves above the Warren, flattened for the same reason from the other side.*
  * Dark Legion 1.5→1.1, Fortress 1.8→1.3, Throne 2.2→1.3. A tier whose price rockets
@@ -123,9 +134,11 @@ const TAIL_MILESTONES: readonly MilestoneDef[] = (() => {
  * below it has died. Flattening the curve is what puts the rung within reach at all.
  *
  * *Base costs, refitted to hold the five times.* Warren 1000→1500, Fortress 6e9→3e8,
- * Throne 5e12→8e11; the Dark Legion keeps 3e7. Every Overseer price moved with them,
- * since all fifteen follow the next tier's base cost at 0.4×, 1.6× and 6.4× — the
- * Throne's three extrapolating that ratio, having no tier above to price against.
+ * Throne 5e12→8e11; the Dark Legion keeps 3e7. Twelve of the fifteen Overseer prices
+ * moved with them. The Warren's three did not, and could not: they are priced off the
+ * Dark Legion's base, which is the one base that stayed put. All fifteen follow the same
+ * rule as before — 0.4×, 1.6× and 6.4× the next tier's base cost, the Throne's three
+ * extrapolating that ratio, having no tier above to price against.
  *
  * *Souls.* `scale` stays at 5.7e13 and `k` at 150. The two are one lever, not two:
  * souls come out as `k·√(lifetime/scale)`, which is `√(lifetime / (scale/k²))`, so only
@@ -136,14 +149,17 @@ const TAIL_MILESTONES: readonly MilestoneDef[] = (() => {
  * opening pace reads well and it is the one figure the original design docs got right.
  * Only what a Minion costs moved.
  *
- * **Known rough edge, and it is worse again.** The steepest stretch between two adjacent
- * harness checkpoints is 4h→8h, where Evil per second multiplies by about 6.3e4, against
- * 3.0e4 before the rule and 1.3e4 before the retune. §4 asks for no stretch worth more
- * than about 100×. The rule costs some of that directly: flat cost curves mean counts
- * climb rather than prices, and counts are what the milestone ladder pays on. The lever
- * left is still the tail rung below, and it is still a design call rather than a balance
- * one — dropping it to ×1.05 flattens the steepest stretch several-fold, but a rung
- * worth 5% reads as nothing on a rail row that has to name it.
+ * **Known rough edge.** §4 of the retune spec now measures the cliff in decades an hour
+ * rather than in raw jumps between checkpoints, because the checkpoints run from fifteen
+ * minutes to four days apart and a raw jump mostly reports the spacing. On Evil per
+ * second this build clears it: the steepest stretch after the opening quarter hour is
+ * 15m→30m at 4.04 decades an hour against a target of 5, and the 4h→8h stretch that
+ * reads as 6.3e4 raw is the fifth calmest hour of the run at 1.20. On lifetime Evil it
+ * does not: the same stretch measures 7.59. The rule costs some of that directly — flat
+ * cost curves mean counts climb where prices used to, and counts are what the milestone
+ * ladder pays on. The lever left is still the tail rung above, and it is still a design
+ * call rather than a balance one: a rung worth 5% reads as nothing on a rail row that
+ * has to name it.
  */
 export const v1: Content = {
   version: '1',

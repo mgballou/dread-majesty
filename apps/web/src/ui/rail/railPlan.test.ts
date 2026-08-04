@@ -53,10 +53,12 @@ describe('railPlan', () => {
     expect(plan().best?.tierId).toBe('minion');
   });
 
-  it('returns to the Minion once the first Warrens are in hand, so no tier is retired by the first units above it', () => {
-    state.gens.warren.owned = new Decimal(2);
-    state.gens.warren.purchased = new Decimal(2);
-    state.resources.evil = new Decimal(10000);
+  it('keeps the Minion the better buy while the Warrens that will retire it are still arriving', () => {
+    state.gens.warren.owned = new Decimal(20);
+    state.gens.warren.purchased = new Decimal(20);
+    state.gens.minion.owned = new Decimal(100);
+    state.gens.minion.purchased = new Decimal(100);
+    state.resources.evil = new Decimal('1e6');
 
     const bestPurchase = purchases(plan()).reduce<RailPurchase | null>(
       (best, option) => (best === null || option.score.gt(best.score) ? option : best),
