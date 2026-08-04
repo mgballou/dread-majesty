@@ -115,6 +115,22 @@ export interface PrestigeCopy {
   readonly available: string;
   readonly unavailable: string;
   readonly nextAt: (lifetimeEvil: string) => string;
+  /** Term beside how long the current run has lasted. */
+  readonly runLength: string;
+  /** Term beside the estimated wait for one more soul. */
+  readonly nextSoul: string;
+  /**
+   * Said in place of an estimate when the wait cannot be named.
+   *
+   * That covers two different situations and the panel cannot tell them apart: no
+   * tier is turning on its own, or the run is old enough that `soulsEarned` and its
+   * inverse no longer round-trip through `Decimal` at the same value (past roughly
+   * 1e35 lifetime Evil this is the *common* case, not the rare one — see
+   * `msToNextSoul`). The line has to be honest under both readings without claiming a
+   * cause the player cannot act on, so it says only that the wait is not knowable,
+   * never that nothing is happening.
+   */
+  readonly nextSoulUnknown: string;
   readonly confirmTitle: string;
   readonly confirmBody: (souls: string) => string;
   readonly confirmAction: string;

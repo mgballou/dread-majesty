@@ -1,9 +1,9 @@
 import Decimal from 'break_eternity.js';
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { Content, PrestigeCopy } from '@dm/content';
-import { prestigeGain, type GameState } from '@dm/engine';
+import { msToNextSoul, prestigeGain, type GameState } from '@dm/engine';
 import { Panel } from '../Panel.tsx';
-import { formatCount, formatNumber } from '../format.ts';
+import { formatCount, formatDuration, formatNumber } from '../format.ts';
 import '../controls.css';
 import './PrestigePanel.css';
 
@@ -36,10 +36,11 @@ export function PrestigePanel({
   const dialog = useRef<HTMLDialogElement>(null);
   const titleId = useId();
 
-  const { gain, multiplier } = useMemo(
+  const { gain, multiplier, waitMs } = useMemo(
     () => ({
       gain: prestigeGain(state, content),
       multiplier: new Decimal(1).add(state.souls.mul(content.prestige.perSoul)),
+      waitMs: msToNextSoul(state, content),
     }),
     [state, content, version],
   );
@@ -74,6 +75,16 @@ export function PrestigePanel({
         <div className="prestige__figure">
           <dt className="prestige__term">{copy.reckoning}</dt>
           <dd className="prestige__value">{formatCount(gain)}</dd>
+        </div>
+        <div className="prestige__figure">
+          <dt className="prestige__term">{copy.runLength}</dt>
+          <dd className="prestige__value">{formatDuration(state.stats.runMs)}</dd>
+        </div>
+        <div className="prestige__figure">
+          <dt className="prestige__term">{copy.nextSoul}</dt>
+          <dd className="prestige__value">
+            {waitMs === null ? copy.nextSoulUnknown : formatDuration(waitMs)}
+          </dd>
         </div>
       </dl>
 

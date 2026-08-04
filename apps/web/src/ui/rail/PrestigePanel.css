@@ -22,6 +22,16 @@
   font-family: var(--font-numeric);
   font-size: var(--text-lg);
   color: var(--ink);
+  /* These five figures tick every second, and `nextSoulUnknown` runs longer than any
+     duration it stands in for. A row that wraps to a second line when the value
+     changes moves everything beneath it — nowrap plus an ellipsis fallback keeps the
+     row's height fixed regardless of which string lands here. */
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  /* A flex item's default min-width is its content width, which would defeat the
+     ellipsis above by refusing to shrink below it. */
+  min-width: 0;
 }
 
 .prestige__ledger {
