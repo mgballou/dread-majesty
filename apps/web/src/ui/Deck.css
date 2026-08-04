@@ -43,7 +43,6 @@
   flex-wrap: nowrap;
   gap: 0;
   background: var(--surface-raised);
-  border-block-end: 1px solid var(--accent-line);
 }
 
 /*
@@ -96,6 +95,10 @@
    * disappear and the tube reads as one flat bar with a single notch in it.
    */
   filter: drop-shadow(-2px 0 0 var(--accent-line));
+  /* The line that divides the strip from the panel, carried per segment so the open
+     one can drop it. Inset rather than a border: the box is a rectangle and the shape
+     is a chevron, so a border would not follow the clip. */
+  box-shadow: inset 0 -1px 0 var(--accent-line);
 }
 
 /* The ends of the tube are flat. Only the divisions inside it are chevrons. */
@@ -139,11 +142,17 @@
 }
 
 /*
- * The open tab. A structural mark and a lighter ground, never a fill — gold at line
- * weight says "you are here"; gold at full strength would say "press me" (§5, §7).
+ * The open segment.
+ *
+ * It takes the panel's own ground and **drops the line beneath it**, so the tab and the
+ * panel are one surface with no seam between them — that join is what says "you are
+ * here", and a line running under every tab equally was cancelling it. A gold bar along
+ * the top edge marks it, at line weight: gold at full strength would say "press me"
+ * rather than "you are here" (§5, §7).
  */
 .deck__tab[aria-selected='true'] .deck__edge {
   background: var(--surface);
+  box-shadow: inset 0 2px 0 var(--accent-soft);
 }
 
 .deck__tab[aria-selected='true'] .deck__field {

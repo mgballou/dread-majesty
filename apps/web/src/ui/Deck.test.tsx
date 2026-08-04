@@ -176,4 +176,18 @@ describe('Deck', () => {
 
     expect(container.querySelectorAll('.button--primary')).toHaveLength(0);
   });
+
+  it('marks exactly one tab as open', () => {
+    draw();
+
+    expect(screen.getAllByRole('tab', { selected: true })).toHaveLength(1);
+  });
+
+  it('moves the mark when another tab is chosen', async () => {
+    const { user } = draw();
+
+    await user.click(screen.getAllByRole('tab')[2]!);
+
+    expect(screen.getAllByRole('tab')[2]).toHaveAttribute('aria-selected', 'true');
+  });
 });
