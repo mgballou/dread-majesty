@@ -79,7 +79,12 @@ describe('railPlan', () => {
     state.gens.minion.owned = new Decimal(400);
     state.gens.minion.purchased = new Decimal(400);
 
-    expect(plan().best?.tierId).toBe('warren');
+    const bestPurchase = purchases(plan()).reduce<RailPurchase | null>(
+      (best, option) => (best === null || option.score.gt(best.score) ? option : best),
+      null,
+    );
+
+    expect(bestPurchase?.tierId).toBe('warren');
   });
 
   it('scores a buy that crosses a milestone above one that does not', () => {
@@ -126,18 +131,45 @@ describe('railPlan', () => {
     expect(warren?.affordable).toBe(false);
   });
 
-  it('offers an appointment on every tier nobody oversees', () => {
-    const ids = appointments(plan()).map((option) => option.tierId);
+  it('offers all three posts on every tier nobody oversees', () => {
+    const ids = appointments(plan()).map((option) => option.overseerId);
 
-    expect(ids).toEqual(['throne', 'fortress', 'legion', 'warren', 'minion']);
+    expect(ids).toEqual([
+      'throne-hand',
+      'throne-goad',
+      'throne-glut',
+      'fortress-hand',
+      'fortress-goad',
+      'fortress-glut',
+      'legion-hand',
+      'legion-goad',
+      'legion-glut',
+      'warren-hand',
+      'warren-goad',
+      'warren-glut',
+      'minion-hand',
+      'minion-goad',
+      'minion-glut',
+    ]);
   });
 
-  it('offers no appointment on a post already filled', () => {
+  it('offers every unfilled post on a met tier', () => {
+    appointAll();
+    state.overseers.minion = [];
+
+    const ids = appointments(plan())
+      .filter((option) => option.tierId === 'minion')
+      .map((option) => option.overseerId);
+
+    expect(ids).toEqual(['minion-hand', 'minion-goad', 'minion-glut']);
+  });
+
+  it('drops a post once it is filled', () => {
     state.overseers.minion = ['minion-hand'];
 
-    const ids = appointments(plan()).map((option) => option.tierId);
+    const ids = appointments(plan()).map((option) => option.overseerId);
 
-    expect(ids).not.toContain('minion');
+    expect(ids).not.toContain('minion-hand');
   });
 
   it('prices an appointment at the Overseer cost from the content', () => {
@@ -179,6 +211,15 @@ describe('railPlan', () => {
     const minion = appointments(plan()).find((option) => option.tierId === 'minion');
 
     expect(minion?.affordable).toBe(false);
+  });
+
+  it('values a goad on a tier that is already turning', () => {
+    appointAll();
+    state.gens.minion.owned = new Decimal(50);
+
+    const goad = appointments(plan()).find((option) => option.overseerId === 'minion-goad');
+
+    expect(goad?.gain.gt(0)).toBe(true);
   });
 
   it('resolves a max buy against the purse', () => {

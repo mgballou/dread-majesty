@@ -58,9 +58,13 @@ interface PostState {
 export function Miscreants({ content, state, plan, onAppoint, copy }: MiscreantsProps): ReactNode {
   const [asking, setAsking] = useState<TierId | null>(null);
 
+  // Roster-aware from Task 5: a tier now has three posts, but this panel still
+  // shows only the automator, so it reads out only the `-hand` option of the three.
   const offers = new Map<TierId, RailAppointment>();
   for (const option of plan.options) {
-    if (option.kind === 'appoint') offers.set(option.tierId, option);
+    if (option.kind === 'appoint' && option.overseerId === `${option.tierId}-hand`) {
+      offers.set(option.tierId, option);
+    }
   }
 
   // Chain order, climbing, so the muster and the miscreants read down the same list.
@@ -72,7 +76,7 @@ export function Miscreants({ content, state, plan, onAppoint, copy }: Miscreants
       filled: isAppointed(state, content, tier.id),
       offer,
       price: offer?.cost ?? new Decimal(tier.overseers[0]?.cost ?? '0'), // Roster-aware from Task 5.
-      emphasis: spendEmphasis(plan, 'appoint', tier.id),
+      emphasis: spendEmphasis(plan, 'appoint', `${tier.id}-hand`), // Roster-aware from Task 5.
     };
   });
 
