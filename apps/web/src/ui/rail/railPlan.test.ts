@@ -298,4 +298,27 @@ describe('the accent holds still', () => {
 
     expect(plan(1, all, held).best.purchase).toBeNull();
   });
+
+  it('hands over when the held option has left a rail that still has spends on it', () => {
+    state.resources.evil = new Decimal(2600);
+    const held: HeldKeys = { purchase: 'legion', appoint: null };
+
+    expect(plan(1, all, held).best.purchase?.tierId).toBe('warren');
+  });
+});
+
+describe('what a panel names to save toward', () => {
+  it('never names a post on a tier that would produce nothing', () => {
+    state.gens.minion.owned = new Decimal(400);
+    state.overseers.minion = ['minion-hand', 'minion-goad', 'minion-glut'];
+    state.resources.evil = new Decimal(50);
+
+    expect(plan().saving.appoint).toBeNull();
+  });
+
+  it('still names the best purchase to save toward', () => {
+    state.resources.evil = new Decimal(0);
+
+    expect(plan().saving.purchase?.tierId).toBe('warren');
+  });
 });
