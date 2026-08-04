@@ -2,11 +2,13 @@ export {
   TIER_IDS,
   RESOURCE_IDS,
   ACHIEVEMENT_IDS,
+  OVERSEER_IDS,
   isTierId,
   isResourceId,
   isAchievementId,
+  isOverseerId,
 } from './ids.ts';
-export type { TierId, ResourceId, ProducibleId, AchievementId } from './ids.ts';
+export type { TierId, ResourceId, ProducibleId, AchievementId, OverseerId } from './ids.ts';
 
 export type {
   Content,
@@ -16,6 +18,8 @@ export type {
   MilestoneDef,
   AchievementDef,
   AchievementCondition,
+  OverseerDef,
+  OverseerEffect,
 } from './types.ts';
 
 export type {

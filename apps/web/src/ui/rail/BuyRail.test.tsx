@@ -271,7 +271,7 @@ describe('BuyRail', () => {
 
     draw();
 
-    const appoint = CURRENT_COPY.overseer.appoint(CURRENT_COPY.overseer.names.minion);
+    const appoint = CURRENT_COPY.overseer.appoint(CURRENT_COPY.overseer.names['minion-hand']);
 
     expect(screen.queryByRole('button', { name: new RegExp(appoint) })).not.toBeInTheDocument();
   });

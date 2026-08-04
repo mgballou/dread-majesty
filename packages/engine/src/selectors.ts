@@ -109,7 +109,7 @@ export function isRousable(state: GameState, tierId: TierId): boolean {
 export function overseerCost(content: Content, tierId: TierId): Decimal | null {
   const tier = findTier(content, tierId);
   if (!tier) return null;
-  return new Decimal(tier.overseerCost);
+  return new Decimal(tier.overseers[0]?.cost ?? '0'); // Roster-aware from Task 5.
 }
 
 /** Whether the player could appoint this tier's Overseer right now. */

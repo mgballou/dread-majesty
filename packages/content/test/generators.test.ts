@@ -54,7 +54,7 @@ describe('the tiers', () => {
 
   it('prices every Overseer', () => {
     for (const tier of v1.tiers) {
-      expect(Number(tier.overseerCost)).toBeGreaterThan(0);
+      expect(Number(tier.overseers[0]?.cost)).toBeGreaterThan(0);
     }
   });
 
@@ -67,7 +67,7 @@ describe('the tiers', () => {
     };
 
     for (const [below, next] of Object.entries(above)) {
-      const cost = Number(byId.get(below as TierId)?.overseerCost ?? '0');
+      const cost = Number(byId.get(below as TierId)?.overseers[0]?.cost ?? '0');
       const base = Number(byId.get(next)?.baseCost ?? '0');
       expect(cost / base).toBeCloseTo(0.4, 2);
     }
@@ -87,5 +87,36 @@ describe('the tiers', () => {
 
   it('has Thrones produce Fortresses', () => {
     expect(v1.tiers.find((tier) => tier.id === 'throne')?.produces).toBe('fortress');
+  });
+
+  it('gives every tier three posts', () => {
+    for (const tier of v1.tiers) {
+      expect(tier.overseers).toHaveLength(3);
+    }
+  });
+
+  it('leads every roster with the post that automates', () => {
+    for (const tier of v1.tiers) {
+      expect(tier.overseers[0]?.effect.kind).toBe('automate');
+    }
+  });
+
+  it('keeps every quickened cycle a whole number of seconds', () => {
+    for (const tier of v1.tiers) {
+      const factor = tier.overseers
+        .filter((post) => post.effect.kind === 'quicken')
+        .reduce(
+          (total, post) => total * (post.effect.kind === 'quicken' ? post.effect.factor : 1),
+          1,
+        );
+
+      expect((tier.cycleMs / factor) % 1000).toBe(0);
+    }
+  });
+
+  it('names every post exactly once across the whole chain', () => {
+    const ids = v1.tiers.flatMap((tier) => tier.overseers.map((post) => post.id));
+
+    expect(new Set(ids).size).toBe(ids.length);
   });
 });

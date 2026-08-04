@@ -1,4 +1,30 @@
-import type { AchievementId, ProducibleId, ResourceId, TierId } from './ids.ts';
+import type { AchievementId, OverseerId, ProducibleId, ResourceId, TierId } from './ids.ts';
+
+/**
+ * What filling a post does to its tier.
+ *
+ * Declarative, for the same reason `AchievementCondition` is: a function cannot be
+ * validated, cannot be authored by anyone who does not write TypeScript, and cannot
+ * survive the round trip through JSON that the meta-plane will eventually make.
+ * Adding a kind is a change in two places — here, and the engine's `roster.ts`,
+ * which the compiler forces once the union grows.
+ *
+ * `factor` stays at 2 so every effective cycle remains a whole number of seconds.
+ * The harness runs 1s slices and depends on it (spec §5.7); a content test pins it.
+ */
+export type OverseerEffect =
+  | { readonly kind: 'automate' }
+  | { readonly kind: 'quicken'; readonly factor: number }
+  | { readonly kind: 'swell'; readonly factor: number };
+
+export interface OverseerDef {
+  readonly id: OverseerId;
+  /** Display title, e.g. "Taskmaster of the Pits". The engine never reads it. */
+  readonly name: string;
+  /** Evil to fill the post. A string, for the reason at the top of this file. */
+  readonly cost: string;
+  readonly effect: OverseerEffect;
+}
 
 /**
  * One rung of the production chain.
@@ -25,13 +51,13 @@ export interface TierDef {
   /** cost(n) = floor(baseCost * costRate^n). Deliberately varies per tier. */
   readonly costRate: number;
   /**
-   * Evil to appoint this tier's Overseer, after which the tier runs for ever.
+   * The posts that can be filled over this tier. Content order is offer order.
    *
-   * A string for the same reason `baseCost` is one. Set at roughly 0.4× the next
-   * tier's base cost, so appointing competes directly with reaching the tier above —
-   * that trade is the point of the number (spec §5.6).
+   * The first automates the tier; the rest raise what it produces. Three per tier,
+   * and a reset takes all of them — an Overseer is power now, not convenience, so
+   * losing one costs output and re-earning it is the spine of a run (spec §3).
    */
-  readonly overseerCost: string;
+  readonly overseers: readonly OverseerDef[];
   /** Key into the art manifest. Every key has a generated SVG fallback. */
   readonly art: string;
 }

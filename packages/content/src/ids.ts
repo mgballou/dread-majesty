@@ -1,6 +1,32 @@
 export const TIER_IDS = ['minion', 'warren', 'legion', 'fortress', 'throne'] as const;
 export type TierId = (typeof TIER_IDS)[number];
 
+/**
+ * Every post that can ever be filled, three per tier.
+ *
+ * `hand` takes the tier off the player's hands and runs it for ever. `goad` halves
+ * the cycle. `glut` doubles the yield. Ids are permanent — a save records them — so
+ * one may be added but never renamed or reused.
+ */
+export const OVERSEER_IDS = [
+  'minion-hand',
+  'minion-goad',
+  'minion-glut',
+  'warren-hand',
+  'warren-goad',
+  'warren-glut',
+  'legion-hand',
+  'legion-goad',
+  'legion-glut',
+  'fortress-hand',
+  'fortress-goad',
+  'fortress-glut',
+  'throne-hand',
+  'throne-goad',
+  'throne-glut',
+] as const;
+export type OverseerId = (typeof OVERSEER_IDS)[number];
+
 export const RESOURCE_IDS = ['evil'] as const;
 export type ResourceId = (typeof RESOURCE_IDS)[number];
 
@@ -49,6 +75,10 @@ export type AchievementId = (typeof ACHIEVEMENT_IDS)[number];
 
 export function isTierId(id: string): id is TierId {
   return (TIER_IDS as readonly string[]).includes(id);
+}
+
+export function isOverseerId(id: string): id is OverseerId {
+  return (OVERSEER_IDS as readonly string[]).includes(id);
 }
 
 export function isAchievementId(id: string): id is AchievementId {

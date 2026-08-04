@@ -107,7 +107,26 @@ export const v1: Content = {
       costResource: 'evil',
       baseCost: '2e13',
       costRate: 1.26,
-      overseerCost: '8e15',
+      overseers: [
+        {
+          id: 'throne-hand',
+          name: 'Steward of the High Seat',
+          cost: '8e15',
+          effect: { kind: 'automate' },
+        },
+        {
+          id: 'throne-goad',
+          name: 'Keeper of the Long Hour',
+          cost: '3.2e16',
+          effect: { kind: 'quicken', factor: 2 },
+        },
+        {
+          id: 'throne-glut',
+          name: 'Chancellor of Titles',
+          cost: '1.28e17',
+          effect: { kind: 'swell', factor: 2 },
+        },
+      ],
       art: 'tier/throne',
     },
     {
@@ -120,7 +139,26 @@ export const v1: Content = {
       costResource: 'evil',
       baseCost: '5e9',
       costRate: 1.22,
-      overseerCost: '5e12',
+      overseers: [
+        {
+          id: 'fortress-hand',
+          name: 'Castellan of the Black Keep',
+          cost: '5e12',
+          effect: { kind: 'automate' },
+        },
+        {
+          id: 'fortress-goad',
+          name: 'Overseer of the Scaffold',
+          cost: '2e13',
+          effect: { kind: 'quicken', factor: 2 },
+        },
+        {
+          id: 'fortress-glut',
+          name: 'Master of the Quarry',
+          cost: '8e13',
+          effect: { kind: 'swell', factor: 2 },
+        },
+      ],
       art: 'tier/fortress',
     },
     {
@@ -133,7 +171,26 @@ export const v1: Content = {
       costResource: 'evil',
       baseCost: '2000000',
       costRate: 1.18,
-      overseerCost: '2e9',
+      overseers: [
+        {
+          id: 'legion-hand',
+          name: 'Quartermaster of the Host',
+          cost: '2e9',
+          effect: { kind: 'automate' },
+        },
+        {
+          id: 'legion-goad',
+          name: 'Marshal of the Forced March',
+          cost: '8e9',
+          effect: { kind: 'quicken', factor: 2 },
+        },
+        {
+          id: 'legion-glut',
+          name: 'Herald of the Levy',
+          cost: '3.2e10',
+          effect: { kind: 'swell', factor: 2 },
+        },
+      ],
       art: 'tier/legion',
     },
     {
@@ -146,7 +203,26 @@ export const v1: Content = {
       costResource: 'evil',
       baseCost: '2500',
       costRate: 1.12,
-      overseerCost: '800000',
+      overseers: [
+        {
+          id: 'warren-hand',
+          name: 'Warden of the Warrens',
+          cost: '800000',
+          effect: { kind: 'automate' },
+        },
+        {
+          id: 'warren-goad',
+          name: 'Mistress of the Quickening',
+          cost: '3200000',
+          effect: { kind: 'quicken', factor: 2 },
+        },
+        {
+          id: 'warren-glut',
+          name: 'Broodkeeper',
+          cost: '12800000',
+          effect: { kind: 'swell', factor: 2 },
+        },
+      ],
       art: 'tier/warren',
     },
     {
@@ -159,7 +235,26 @@ export const v1: Content = {
       costResource: 'evil',
       baseCost: '90',
       costRate: 1.089,
-      overseerCost: '1000',
+      overseers: [
+        {
+          id: 'minion-hand',
+          name: 'Taskmaster of the Pits',
+          cost: '1000',
+          effect: { kind: 'automate' },
+        },
+        {
+          id: 'minion-goad',
+          name: 'Keeper of the Whip',
+          cost: '4000',
+          effect: { kind: 'quicken', factor: 2 },
+        },
+        {
+          id: 'minion-glut',
+          name: 'Reckoner of the Tally',
+          cost: '16000',
+          effect: { kind: 'swell', factor: 2 },
+        },
+      ],
       art: 'tier/minion',
     },
   ],

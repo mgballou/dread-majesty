@@ -12,7 +12,7 @@ const CYCLE = { progressMs: 12_000, cycleMs: 24_000 };
 const OVERSIGHT = {
   isAppointed: false,
   isRousable: true,
-  overseer: CURRENT_COPY.overseer.names.warren,
+  overseer: CURRENT_COPY.overseer.names['warren-hand'],
   copy: CURRENT_COPY.overseer,
   onRouse: (): void => {},
 };
@@ -179,7 +179,7 @@ describe('TierNode', () => {
   it('names the Overseer who runs an appointed tier', () => {
     render(node({ oversight: { ...OVERSIGHT, isAppointed: true, isRousable: false } }));
 
-    expect(screen.getByText(CURRENT_COPY.overseer.names.warren)).toBeInTheDocument();
+    expect(screen.getByText(CURRENT_COPY.overseer.names['warren-hand'])).toBeInTheDocument();
   });
 
   it('offers no button for a tier the player owns none of', () => {
