@@ -1,7 +1,7 @@
 import Decimal from 'break_eternity.js';
 import type { Content, Copy, TierDef, TierId } from '@dm/content';
 import { TIER_IDS } from '@dm/content';
-import { createState, type GameState } from '@dm/engine';
+import { automatorOf, createState, type GameState } from '@dm/engine';
 
 /**
  * States worth jumping to, built out of the content rather than written down.
@@ -43,12 +43,17 @@ interface Board {
 function board(content: Content, spec: Board): GameState {
   const state = createState(content);
 
-  for (const id of TIER_IDS) {
-    const count = spec.owned?.[id];
-    state.gens[id].owned = new Decimal(count ?? 0);
-    state.overseers[id] = spec.appointed?.includes(id) ?? false;
+  for (const tier of content.tiers) {
+    const count = spec.owned?.[tier.id];
+    state.gens[tier.id].owned = new Decimal(count ?? 0);
+
+    // Jumps only ever ask for the automate post — the same stand-in the rail plan
+    // uses until Task 12 lets a jump name a post directly.
+    const automator = spec.appointed?.includes(tier.id) ? automatorOf(tier) : undefined;
+    state.overseers[tier.id] = automator ? [automator.id] : [];
+
     // A tier you hold is a tier you have met. The rest latch on the next reconcile.
-    state.unlocked[id] = state.gens[id].owned.gt(0);
+    state.unlocked[tier.id] = state.gens[tier.id].owned.gt(0);
   }
 
   const evil = new Decimal(spec.evil ?? 0);

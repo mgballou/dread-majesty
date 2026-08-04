@@ -65,11 +65,11 @@ describe('save round trip', () => {
   it('restores appointed Overseers', () => {
     const original = createState(fixture);
     original.resources.evil = new Decimal(400);
-    apply(original, fixture, { kind: 'appoint', tierId: 'minion' });
+    apply(original, fixture, { kind: 'appoint', overseerId: 'minion-hand' });
 
     const restored = importSave(exportSave(original, 0));
 
-    expect(restored.overseers.minion).toBe(true);
+    expect(restored.overseers.minion).toEqual(['minion-hand']);
   });
 
   it('leaves an unappointed tier unappointed', () => {
@@ -77,7 +77,24 @@ describe('save round trip', () => {
 
     const restored = importSave(exportSave(original, 0));
 
-    expect(restored.overseers.warren).toBe(false);
+    expect(restored.overseers.warren).toEqual([]);
+  });
+
+  it('round-trips a part-filled roster', () => {
+    const state = appointed(fixture);
+    state.overseers.minion = ['minion-hand', 'minion-glut'];
+
+    const restored = deserialize(serialize(state, 0));
+
+    expect(restored.overseers.minion).toEqual(['minion-hand', 'minion-glut']);
+  });
+
+  it('drops a post the running content no longer knows', () => {
+    const state = appointed(fixture);
+    const blob = serialize(state, 0);
+    blob.overseers = { minion: ['minion-hand', 'not-a-post'] };
+
+    expect(deserialize(blob).overseers.minion).toEqual(['minion-hand']);
   });
 
   it('restores a manual cycle that was still turning', () => {
@@ -100,7 +117,7 @@ describe('save round trip', () => {
   it('loses nothing at all', () => {
     const original = appointed(fixture);
     original.gens.minion.owned = new Decimal('1e40');
-    original.overseers.warren = false;
+    original.overseers.warren = [];
     original.gens.warren.running = true;
     step(original, fixture, 300);
 

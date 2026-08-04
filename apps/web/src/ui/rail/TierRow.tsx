@@ -63,7 +63,7 @@ export function TierRow({
             {tier.plural}
           </Banner>
           {mark !== null && <span className="rail__flag">{mark}</span>}
-          {isAppointed(state, tier.id) && (
+          {isAppointed(state, content, tier.id) && (
             <span className="rail__flag rail__flag--overseen">{copy.overseer.filled}</span>
           )}
           <span className="rail__owned">{copy.rail.held(formatCount(gen.owned))}</span>

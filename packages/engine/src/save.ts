@@ -1,6 +1,6 @@
 import Decimal from 'break_eternity.js';
-import type { AchievementId, ResourceId, TierId } from '@dm/content';
-import { isAchievementId, RESOURCE_IDS, TIER_IDS } from '@dm/content';
+import type { AchievementId, OverseerId, ResourceId, TierId } from '@dm/content';
+import { isAchievementId, isOverseerId, RESOURCE_IDS, TIER_IDS } from '@dm/content';
 import { MIN_SUPPORTED_SAVE_VERSION, SAVE_VERSION } from './state.ts';
 import type { GameState, TierState } from './types.ts';
 
@@ -29,8 +29,11 @@ export interface SaveBlob {
   earnedAchievements?: string[];
   /** Added in save version 3. Optional for the same reason. */
   unlocked?: Record<string, boolean>;
-  /** Added in save version 4. Optional for the same reason. */
-  overseers?: Record<string, boolean>;
+  /**
+   * Added in save version 4 as a per-tier flag. Save version 6 turned it into the
+   * posts filled, in content order — see `SAVE_VERSION`'s history in `state.ts`.
+   */
+  overseers?: Record<string, string[]>;
   /** Added in save version 5. Optional for the same reason. */
   smiteActiveMs?: number;
   smiteCooldownMs?: number;
@@ -57,8 +60,8 @@ export function serialize(state: GameState, savedAtMs: number): SaveBlob {
   const unlocked: Record<string, boolean> = {};
   for (const id of TIER_IDS) unlocked[id] = state.unlocked[id];
 
-  const overseers: Record<string, boolean> = {};
-  for (const id of TIER_IDS) overseers[id] = state.overseers[id];
+  const overseers: Record<string, string[]> = {};
+  for (const id of TIER_IDS) overseers[id] = [...state.overseers[id]];
 
   return {
     saveVersion: SAVE_VERSION,
@@ -103,8 +106,14 @@ export function deserialize(blob: SaveBlob): GameState {
   const unlocked = {} as Record<TierId, boolean>;
   for (const id of TIER_IDS) unlocked[id] = migrated.unlocked?.[id] ?? false;
 
-  const overseers = {} as Record<TierId, boolean>;
-  for (const id of TIER_IDS) overseers[id] = migrated.overseers?.[id] ?? false;
+  // Unknown ids are dropped rather than trusted. A save can hold a post a later
+  // build retired — the state type says every entry is a known id.
+  const overseers = {} as Record<TierId, readonly OverseerId[]>;
+  for (const id of TIER_IDS) {
+    overseers[id] = (migrated.overseers?.[id] ?? []).filter((post): post is OverseerId =>
+      isOverseerId(post),
+    );
+  }
 
   return {
     saveVersion: SAVE_VERSION,

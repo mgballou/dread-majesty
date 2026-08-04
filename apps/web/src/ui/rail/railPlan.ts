@@ -1,6 +1,7 @@
 import Decimal from 'break_eternity.js';
 import { isTierId, type Content, type ProducibleId, type TierDef, type TierId } from '@dm/content';
 import {
+  automatorOf,
   bulkCost,
   canAfford,
   canAppoint,
@@ -201,16 +202,26 @@ interface AppointInput {
 }
 
 /**
- * Hiring this tier's Overseer, priced against what the tier would then produce.
+ * Hiring this tier's automator, priced against what the tier would then produce.
+ *
+ * **Ranks only the automate post.** A tier now has three — automate, quicken, swell
+ * — but the ranking still asks one question, "what makes this tier run at all", and
+ * that is the automate post's job alone. Weighing all fifteen posts against the
+ * muster is the wider redesign spec C describes; this keeps today's ranking honest
+ * about the one post it still understands.
  *
  * Nothing for a post already filled — the option has to disappear once it is taken,
  * or the rail keeps offering a thing that cannot be bought and the ranking keeps
- * weighing it.
+ * weighing it. Nothing for a tier the content leaves unautomated, either, though
+ * every shipping tier has one.
  */
 function appointOption({ state, content, tier }: AppointInput): RailAppointment | null {
-  if (isAppointed(state, tier.id)) return null;
+  if (isAppointed(state, content, tier.id)) return null;
 
-  const cost = overseerCost(content, tier.id);
+  const post = automatorOf(tier);
+  if (!post) return null;
+
+  const cost = overseerCost(content, post.id);
   if (cost === null || cost.lte(0)) return null;
 
   const owned = state.gens[tier.id].owned;
@@ -225,7 +236,7 @@ function appointOption({ state, content, tier }: AppointInput): RailAppointment 
     kind: 'appoint',
     tierId: tier.id,
     cost,
-    affordable: canAppoint(state, content, tier.id),
+    affordable: canAppoint(state, content, post.id),
     gain,
     score: gain.div(cost),
   };

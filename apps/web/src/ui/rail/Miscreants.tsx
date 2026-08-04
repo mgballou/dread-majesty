@@ -69,7 +69,7 @@ export function Miscreants({ content, state, plan, onAppoint, copy }: Miscreants
 
     return {
       tier,
-      filled: isAppointed(state, tier.id),
+      filled: isAppointed(state, content, tier.id),
       offer,
       price: offer?.cost ?? new Decimal(tier.overseers[0]?.cost ?? '0'), // Roster-aware from Task 5.
       emphasis: spendEmphasis(plan, 'appoint', tier.id),

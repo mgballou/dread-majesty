@@ -13,7 +13,8 @@ function running(): GameState {
   const state = createState(fixture);
   for (const tier of fixture.tiers) {
     state.gens[tier.id].owned = new Decimal(10);
-    state.overseers[tier.id] = true;
+    const automator = tier.overseers.find((post) => post.effect.kind === 'automate');
+    state.overseers[tier.id] = automator ? [automator.id] : [];
   }
   return state;
 }

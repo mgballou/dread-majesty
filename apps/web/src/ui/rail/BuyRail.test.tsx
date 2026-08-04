@@ -277,7 +277,7 @@ describe('BuyRail', () => {
   });
 
   it('still says in a word that somebody holds a tier', () => {
-    state.overseers.minion = true;
+    state.overseers.minion = ['minion-hand'];
 
     draw();
 

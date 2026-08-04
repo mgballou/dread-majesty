@@ -164,7 +164,7 @@ describe('Miscreants', () => {
   });
 
   it('says outright that a post is filled', () => {
-    state.overseers.minion = true;
+    state.overseers.minion = ['minion-hand'];
 
     draw();
 
@@ -172,7 +172,7 @@ describe('Miscreants', () => {
   });
 
   it('will not reopen a post already filled', () => {
-    state.overseers.minion = true;
+    state.overseers.minion = ['minion-hand'];
 
     draw();
 

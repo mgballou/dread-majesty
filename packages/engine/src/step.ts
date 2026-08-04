@@ -2,6 +2,7 @@ import Decimal from 'break_eternity.js';
 import type { Content, ProducibleId, TierId } from '@dm/content';
 import { isResourceId, isTierId } from '@dm/content';
 import { achievementMultiplier } from './achievements.ts';
+import { hasAutomator } from './roster.ts';
 import type { GameState, StepReport } from './types.ts';
 
 /** The live slice. Every online tick is exactly this long. */
@@ -33,7 +34,7 @@ export function step(state: GameState, content: Content, dtMs: number): StepRepo
 
   for (const tier of content.tiers) {
     const gen = state.gens[tier.id];
-    const appointed = state.overseers[tier.id];
+    const appointed = hasAutomator(state, content, tier.id);
 
     // What gates the timer is who is watching the tier (spec §5.6). An appointed
     // tier's timer is a world clock: it advances and wraps whether or not the tier

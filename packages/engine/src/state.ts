@@ -1,5 +1,5 @@
 import Decimal from 'break_eternity.js';
-import type { Content, ResourceId, TierId } from '@dm/content';
+import type { Content, OverseerId, ResourceId, TierId } from '@dm/content';
 import { RESOURCE_IDS, TIER_IDS } from '@dm/content';
 import type { AchievementId } from '@dm/content';
 import type { GameState, TierState } from './types.ts';
@@ -47,8 +47,8 @@ export function createState(content: Content): GameState {
     };
   }
 
-  const overseers = {} as Record<TierId, boolean>;
-  for (const id of TIER_IDS) overseers[id] = false;
+  const overseers = {} as Record<TierId, readonly OverseerId[]>;
+  for (const id of TIER_IDS) overseers[id] = [];
 
   // A dark lord starts with a shed and a grievance.
   const first = content.tiers.find((tier) => tier.produces === 'evil');
@@ -97,8 +97,8 @@ export function cloneState(state: GameState): GameState {
   const unlocked = {} as Record<TierId, boolean>;
   for (const id of TIER_IDS) unlocked[id] = state.unlocked[id];
 
-  const overseers = {} as Record<TierId, boolean>;
-  for (const id of TIER_IDS) overseers[id] = state.overseers[id];
+  const overseers = {} as Record<TierId, readonly OverseerId[]>;
+  for (const id of TIER_IDS) overseers[id] = [...state.overseers[id]];
 
   return {
     saveVersion: state.saveVersion,

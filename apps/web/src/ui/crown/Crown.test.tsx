@@ -8,7 +8,7 @@ import { Crown } from './Crown.tsx';
 function seeded(souls = 0, appointMinions = false) {
   const state = createState(CURRENT);
   state.souls = new Decimal(souls);
-  state.overseers.minion = appointMinions;
+  state.overseers.minion = appointMinions ? ['minion-hand'] : [];
   return state;
 }
 

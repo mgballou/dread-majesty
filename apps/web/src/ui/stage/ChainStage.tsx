@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { ART, type ArtSlot, type Content, type Copy, type TierDef, type TierId } from '@dm/content';
-import { smitePhase, type GameState } from '@dm/engine';
+import { automatorOf, smitePhase, type GameState } from '@dm/engine';
 import { ChainLink } from './ChainLink.tsx';
 import { EvilNode, EVIL_ART } from './EvilNode.tsx';
 import { TierNode, type Feed } from './TierNode.tsx';
@@ -149,7 +149,7 @@ export function ChainStage({
               oversight={{
                 isAppointed: isAppointed(tier.id),
                 isRousable: isRousable(tier.id),
-                overseer: copy.overseer.names[`${tier.id}-hand`], // Roster-aware from Task 5.
+                overseer: automatorName(tier, copy),
                 copy: copy.overseer,
                 onRouse: () => onRouse(tier.id),
               }}
@@ -296,6 +296,19 @@ function climbed(content: Content, isUnlocked: (tierId: TierId) => boolean): rea
   const met = content.tiers.findIndex((tier) => isUnlocked(tier.id));
   if (met < 0) return content.tiers.slice(-1);
   return content.tiers.slice(Math.max(0, met - 1));
+}
+
+/**
+ * The name of whoever takes this tier off the player's hands, or empty for a tier the
+ * content leaves unautomated.
+ *
+ * Reads the roster rather than building `${tier.id}-hand` — a tier now has three
+ * posts, and asking `roster.ts` which one automates it is the one place that fact
+ * needs to live.
+ */
+function automatorName(tier: TierDef, copy: StageScreenCopy): string {
+  const automator = automatorOf(tier);
+  return automator ? copy.overseer.names[automator.id] : '';
 }
 
 /**

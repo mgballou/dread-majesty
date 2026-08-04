@@ -191,20 +191,20 @@ describe('the rouse intent', () => {
 });
 
 describe('the appoint intent', () => {
-  it('appoints the Overseer', () => {
+  it('appoints the automator', () => {
     const state = fresh();
     state.resources.evil = new Decimal(MINION_OVERSEER_COST);
 
-    apply(state, fixture, { kind: 'appoint', tierId: 'minion' });
+    apply(state, fixture, { kind: 'appoint', overseerId: 'minion-hand' });
 
-    expect(state.overseers.minion).toBe(true);
+    expect(state.overseers.minion).toEqual(['minion-hand']);
   });
 
   it('spends the cost', () => {
     const state = fresh();
     state.resources.evil = new Decimal(MINION_OVERSEER_COST + 10);
 
-    apply(state, fixture, { kind: 'appoint', tierId: 'minion' });
+    apply(state, fixture, { kind: 'appoint', overseerId: 'minion-hand' });
 
     expect(state.resources.evil.toString()).toBe('10');
   });
@@ -213,7 +213,7 @@ describe('the appoint intent', () => {
     const state = fresh();
     state.resources.evil = new Decimal(MINION_OVERSEER_COST - 1);
 
-    const result = apply(state, fixture, { kind: 'appoint', tierId: 'minion' });
+    const result = apply(state, fixture, { kind: 'appoint', overseerId: 'minion-hand' });
 
     expect(result).toMatchObject({ ok: false, reason: 'insufficient-resource' });
   });
@@ -222,17 +222,17 @@ describe('the appoint intent', () => {
     const state = fresh();
     state.resources.evil = new Decimal(MINION_OVERSEER_COST - 1);
 
-    apply(state, fixture, { kind: 'appoint', tierId: 'minion' });
+    apply(state, fixture, { kind: 'appoint', overseerId: 'minion-hand' });
 
-    expect(state.overseers.minion).toBe(false);
+    expect(state.overseers.minion).toEqual([]);
   });
 
   it('refuses a post already filled', () => {
     const state = fresh();
     state.resources.evil = new Decimal(2 * MINION_OVERSEER_COST);
-    apply(state, fixture, { kind: 'appoint', tierId: 'minion' });
+    apply(state, fixture, { kind: 'appoint', overseerId: 'minion-hand' });
 
-    const result = apply(state, fixture, { kind: 'appoint', tierId: 'minion' });
+    const result = apply(state, fixture, { kind: 'appoint', overseerId: 'minion-hand' });
 
     expect(result).toMatchObject({ ok: false, reason: 'already-appointed' });
   });
@@ -240,27 +240,27 @@ describe('the appoint intent', () => {
   it('charges nothing for the refusal', () => {
     const state = fresh();
     state.resources.evil = new Decimal(2 * MINION_OVERSEER_COST);
-    apply(state, fixture, { kind: 'appoint', tierId: 'minion' });
+    apply(state, fixture, { kind: 'appoint', overseerId: 'minion-hand' });
 
-    apply(state, fixture, { kind: 'appoint', tierId: 'minion' });
+    apply(state, fixture, { kind: 'appoint', overseerId: 'minion-hand' });
 
     expect(state.resources.evil.toString()).toBe(String(MINION_OVERSEER_COST));
   });
 
-  it('refuses a tier the content does not name', () => {
+  it('refuses a post the content does not name', () => {
     const state = fresh();
     state.resources.evil = new Decimal('1e12');
 
-    const result = apply(state, fixture, { kind: 'appoint', tierId: 'fortress' });
+    const result = apply(state, fixture, { kind: 'appoint', overseerId: 'fortress-hand' });
 
-    expect(result).toMatchObject({ ok: false, reason: 'unknown-tier' });
+    expect(result).toMatchObject({ ok: false, reason: 'unknown-overseer' });
   });
 
   it('leaves the tier running for ever', () => {
     const state = fresh();
     state.resources.evil = new Decimal(MINION_OVERSEER_COST);
 
-    apply(state, fixture, { kind: 'appoint', tierId: 'minion' });
+    apply(state, fixture, { kind: 'appoint', overseerId: 'minion-hand' });
     state.resources.evil = new Decimal(0);
     run(state, 5 * MINION_CYCLE_MS);
 
@@ -273,7 +273,7 @@ describe('the appoint intent', () => {
     run(state, 12_000);
     state.resources.evil = new Decimal(MINION_OVERSEER_COST);
 
-    apply(state, fixture, { kind: 'appoint', tierId: 'minion' });
+    apply(state, fixture, { kind: 'appoint', overseerId: 'minion-hand' });
 
     expect(state.gens.minion.progressMs).toBe(12_000);
   });
@@ -308,15 +308,15 @@ describe('offline catch-up', () => {
 });
 
 describe('prestige', () => {
-  it('keeps the Overseers already appointed', () => {
+  it('clears an appointed post', () => {
     const state = fresh();
     state.resources.evil = new Decimal(MINION_OVERSEER_COST);
-    apply(state, fixture, { kind: 'appoint', tierId: 'minion' });
+    apply(state, fixture, { kind: 'appoint', overseerId: 'minion-hand' });
     state.lifetimeEvil = new Decimal('1e12');
 
     apply(state, fixture, { kind: 'prestige' });
 
-    expect(state.overseers.minion).toBe(true);
+    expect(state.overseers.minion).toEqual([]);
   });
 
   it('leaves an unfilled post unfilled', () => {
@@ -325,7 +325,7 @@ describe('prestige', () => {
 
     apply(state, fixture, { kind: 'prestige' });
 
-    expect(state.overseers.warren).toBe(false);
+    expect(state.overseers.warren).toEqual([]);
   });
 
   it('stops every manual cycle that was turning', () => {
@@ -338,16 +338,16 @@ describe('prestige', () => {
     expect(state.gens.minion.running).toBe(false);
   });
 
-  it('leaves an overseen tier still producing after the reset', () => {
+  it('stops an overseen tier from producing after the reset', () => {
     const state = fresh();
     state.resources.evil = new Decimal(MINION_OVERSEER_COST);
-    apply(state, fixture, { kind: 'appoint', tierId: 'minion' });
+    apply(state, fixture, { kind: 'appoint', overseerId: 'minion-hand' });
     state.lifetimeEvil = new Decimal('1e12');
     apply(state, fixture, { kind: 'prestige' });
 
     run(state, MINION_CYCLE_MS);
 
-    expect(state.resources.evil.gt(0)).toBe(true);
+    expect(state.resources.evil.eq(0)).toBe(true);
   });
 });
 
@@ -365,58 +365,58 @@ describe('productionPerSecond', () => {
 
 describe('the selectors', () => {
   it('calls an unfilled post unappointed', () => {
-    expect(isAppointed(fresh(), 'minion')).toBe(false);
+    expect(isAppointed(fresh(), fixture, 'minion')).toBe(false);
   });
 
   it('calls a filled post appointed', () => {
-    expect(isAppointed(appointed(fixture), 'minion')).toBe(true);
+    expect(isAppointed(appointed(fixture), fixture, 'minion')).toBe(true);
   });
 
   it('calls a stopped tier the player owns rousable', () => {
-    expect(isRousable(fresh(), 'minion')).toBe(true);
+    expect(isRousable(fresh(), fixture, 'minion')).toBe(true);
   });
 
   it('calls a tier the player owns none of unrousable', () => {
-    expect(isRousable(fresh(0), 'minion')).toBe(false);
+    expect(isRousable(fresh(0), fixture, 'minion')).toBe(false);
   });
 
   it('calls a turning tier unrousable', () => {
     const state = fresh();
     apply(state, fixture, { kind: 'rouse', tierId: 'minion' });
 
-    expect(isRousable(state, 'minion')).toBe(false);
+    expect(isRousable(state, fixture, 'minion')).toBe(false);
   });
 
   it('calls an overseen tier unrousable', () => {
-    expect(isRousable(appointed(fixture), 'minion')).toBe(false);
+    expect(isRousable(appointed(fixture), fixture, 'minion')).toBe(false);
   });
 
   it('reports the cost the content set', () => {
-    expect(overseerCost(fixture, 'minion')?.toString()).toBe(String(MINION_OVERSEER_COST));
+    expect(overseerCost(fixture, 'minion-hand')?.toString()).toBe(String(MINION_OVERSEER_COST));
   });
 
-  it('reports nothing for a tier the content does not name', () => {
-    expect(overseerCost(fixture, 'legion')).toBe(null);
+  it('reports nothing for a post the content does not name', () => {
+    expect(overseerCost(fixture, 'legion-hand')).toBe(null);
   });
 
   it('refuses the appointment one Evil short', () => {
     const state = fresh();
     state.resources.evil = new Decimal(MINION_OVERSEER_COST - 1);
 
-    expect(canAppoint(state, fixture, 'minion')).toBe(false);
+    expect(canAppoint(state, fixture, 'minion-hand')).toBe(false);
   });
 
   it('allows the appointment at exactly the cost', () => {
     const state = fresh();
     state.resources.evil = new Decimal(MINION_OVERSEER_COST);
 
-    expect(canAppoint(state, fixture, 'minion')).toBe(true);
+    expect(canAppoint(state, fixture, 'minion-hand')).toBe(true);
   });
 
   it('refuses a second appointment however rich the player is', () => {
     const state = appointed(fixture);
     state.resources.evil = new Decimal('1e12');
 
-    expect(canAppoint(state, fixture, 'minion')).toBe(false);
+    expect(canAppoint(state, fixture, 'minion-hand')).toBe(false);
   });
 });
