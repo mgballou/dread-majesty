@@ -2,7 +2,7 @@ import Decimal from 'break_eternity.js';
 import type { Content, ProducibleId, TierId } from '@dm/content';
 import { isResourceId, isTierId } from '@dm/content';
 import { achievementMultiplier } from './achievements.ts';
-import { hasAutomator } from './roster.ts';
+import { effectiveCycleMs, effectiveYield, hasAutomator } from './roster.ts';
 import type { GameState, StepReport } from './types.ts';
 
 /** The live slice. Every online tick is exactly this long. */
@@ -43,11 +43,14 @@ export function step(state: GameState, content: Content, dtMs: number): StepRepo
     // all until the `rouse` intent starts it.
     if (!appointed && !gen.running) continue;
 
+    // Once per tier per slice, not once per branch below — this is the hot path.
+    const cycleMs = effectiveCycleMs(state, tier);
+
     gen.progressMs += dtMs;
-    let cycles = Math.floor(gen.progressMs / tier.cycleMs);
+    let cycles = Math.floor(gen.progressMs / cycleMs);
 
     if (appointed) {
-      if (cycles > 0) gen.progressMs -= cycles * tier.cycleMs;
+      if (cycles > 0) gen.progressMs -= cycles * cycleMs;
     } else if (cycles > 0) {
       // A roused tier pays exactly one cycle and stops. Progress goes to zero rather
       // than carrying the remainder, so leaving a rouse unclaimed banks nothing and
@@ -61,7 +64,7 @@ export function step(state: GameState, content: Content, dtMs: number): StepRepo
     if (cycles <= 0 || count === undefined || count.lte(0)) continue;
 
     const amount = count
-      .mul(new Decimal(tier.yield))
+      .mul(effectiveYield(state, tier))
       .mul(cycles)
       .mul(tierMultiplier(state, content, count));
 
