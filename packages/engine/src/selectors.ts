@@ -75,20 +75,30 @@ export function overseenProductionPerSecond(
 }
 
 /**
+ * How close a pre-floor souls figure must sit to a whole number to be treated as
+ * that whole number rather than floored past it.
+ *
+ * Exists for one reason: `break_eternity.js`'s own division loses precision on
+ * Decimals of similar magnitude — `new Decimal('1e11').div(new Decimal('1e11'))`
+ * returns `0.9999999999999999`, not `1`. At `lifetimeEvil` landing on an exact
+ * multiple of `scale`, that noise lands the pre-floor value a hair under the next
+ * integer, so a plain `floor` shorts the player one soul they earned. This value
+ * matches the library's own `eq_tolerance` default (its documented answer to this
+ * exact class of noise) and only ever changes the result when the gap to the
+ * nearest integer is that small — do not delete this as superstition, and do not
+ * widen it into a general "round to nearest" without re-reading why it exists.
+ */
+const SOUL_EPSILON = 1e-7;
+
+/**
  * What the prestige formula pays for the lifetime Evil on hand, before subtracting
  * held souls.
- *
- * Written as `sqrt(lifetimeEvil) / sqrt(scale)`, not `sqrt(lifetimeEvil / scale)`.
- * They are the same formula; they are not the same computation. `break_eternity.js`
- * loses a bit of precision dividing two large Decimals of similar magnitude, and at
- * an exact round boundary — lifetime Evil landing on a whole multiple of `scale` —
- * that loss can land the result a hair under the next integer, so `floor` pays one
- * soul short of what the player earned. Square-rooting first sidesteps that division
- * rather than papering over its output.
  */
 export function soulsEarned(state: GameState, content: Content): Decimal {
   const { k, scale } = content.prestige;
-  return state.lifetimeEvil.sqrt().div(new Decimal(scale).sqrt()).mul(k).floor();
+  const raw = state.lifetimeEvil.div(new Decimal(scale)).sqrt().mul(k);
+  const nearest = raw.round();
+  return raw.sub(nearest).abs().lte(SOUL_EPSILON) ? nearest : raw.floor();
 }
 
 /** Souls this run would yield if cashed in now, above what the player already holds. */
@@ -113,7 +123,15 @@ export function msToNextSoul(state: GameState, content: Content): number | null 
   const { k, scale } = content.prestige;
   const target = new Decimal(scale).mul(soulsEarned(state, content).add(1).div(k).pow(2));
   const remaining = target.sub(state.lifetimeEvil);
-  if (remaining.lte(0)) return 0;
+  // `soulsEarned` takes a square root; `target` squares back up. They are inverse
+  // operations, not the same computation, and a double mantissa cannot always carry
+  // one back through the other exactly — well past 1e30 the two paths routinely
+  // disagree about which side of an integer `lifetimeEvil` actually sits on.
+  // `remaining <= 0` there means precision has run out, not that a soul is due.
+  // Null, the existing "cannot say" contract, is the honest answer — never a false
+  // "any moment now" that would sit on the panel forever because the soul count
+  // never moves to clear it.
+  if (remaining.lte(0)) return null;
 
   const rate = overseenProductionPerSecond(state, content, 'evil');
   if (rate.lte(0)) return null;
