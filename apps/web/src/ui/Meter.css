@@ -8,6 +8,8 @@
 
 .meter {
   --meter-gap: 2px;
+  --meter-cells: 5;
+  --meter-pitch: calc(100% / var(--meter-cells));
   --meter-point: var(--space-2);
   --meter-swept: 0%;
 
@@ -40,16 +42,22 @@
 /*
  * The divisions. Five cells cut by four gaps in the ground colour, drawn over the
  * fill, so a part-run bar reads as a count of lit cells rather than as a distance
- * along a line. The gap is a raw 2px on purpose: it is a hairline, the one measure
- * the space scale has no rung for, and it is declared once here as a component token.
+ * along a line.
+ *
+ * The cell count is a token rather than a bare 20% in the gradient: it has to agree
+ * with `CYCLE_SEGMENTS` in segments.ts, which the ring reads too, and a magic number
+ * buried in a gradient stop is the one place that agreement would break unnoticed.
+ *
+ * The gap is a raw 2px on purpose: it is a hairline, the one measure the space scale
+ * has no rung for, and it is declared once above as a component token.
  */
 .meter__teeth {
   position: absolute;
   inset: 0;
   background-image: repeating-linear-gradient(
     to right,
-    transparent 0 calc(20% - var(--meter-gap)),
-    var(--ground) calc(20% - var(--meter-gap)) 20%
+    transparent 0 calc(var(--meter-pitch) - var(--meter-gap)),
+    var(--ground) calc(var(--meter-pitch) - var(--meter-gap)) var(--meter-pitch)
   );
 }
 

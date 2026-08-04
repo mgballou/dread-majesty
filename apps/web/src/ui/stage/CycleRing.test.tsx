@@ -37,6 +37,16 @@ describe('CycleRing', () => {
     expect(Number(lit)).toBeCloseTo(2 * Math.PI * 21, 3);
   });
 
+  it('masks the unswept arc with a run of its own', () => {
+    const { container } = render(
+      <CycleRing progressMs={24_000} cycleMs={24_000} label="Minions" copy={CURRENT_COPY.stage} />,
+    );
+
+    const sweep = container.querySelector('.stage-ring__sweep');
+    const [, unlit] = (sweep?.getAttribute('stroke-dasharray') ?? '').split(' ');
+    expect(Number(unlit)).toBeCloseTo(2 * Math.PI * 21, 3);
+  });
+
   it('carries a text alternative naming what is cycling', () => {
     render(
       <CycleRing progressMs={12_000} cycleMs={24_000} label="Minions" copy={CURRENT_COPY.stage} />,
