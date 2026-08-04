@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import type { ReactNode } from 'react';
 import { CURRENT, CURRENT_COPY, type TierId } from '@dm/content';
-import { isAppointed, isRousable, isTierUnlocked } from '@dm/engine';
+import { automatorOf, isAppointed, isRousable, isTierUnlocked } from '@dm/engine';
 import { useSound } from './audio/useSound.ts';
 import { DevBar } from './dev/DevBar.tsx';
 import { isPrestigeWorthShowing } from './game/reveals.ts';
@@ -58,11 +58,11 @@ export function App(): ReactNode {
   // below memoise against the version counter rather than against every render.
   const unlocked = useCallback((tierId: TierId): boolean => isTierUnlocked(state, tierId), [state]);
 
-  const appointed = (tierId: TierId): boolean => isAppointed(state, tierId);
-  const rousable = (tierId: TierId): boolean => isRousable(state, tierId);
+  const appointed = (tierId: TierId): boolean => isAppointed(state, content, tierId);
+  const rousable = (tierId: TierId): boolean => isRousable(state, content, tierId);
   // Standing work, not this instant's: owned and unappointed. See ChainStage.
   const needsHand = (tierId: TierId): boolean =>
-    !isAppointed(state, tierId) && state.gens[tierId].owned.gt(0);
+    !isAppointed(state, content, tierId) && state.gens[tierId].owned.gt(0);
 
   const plan = useMemo(
     () => railPlan({ state, content, quantity, isUnlocked: unlocked }),
@@ -120,7 +120,13 @@ export function App(): ReactNode {
           state={state}
           plan={plan}
           onAppoint={(tierId) => {
-            const result = dispatch({ kind: 'appoint', tierId });
+            // Miscreants still asks for a tier, not a post — it offers only the
+            // automate post today. Task 12 lets it name the post directly.
+            const tier = content.tiers.find((candidate) => candidate.id === tierId);
+            const post = tier ? automatorOf(tier) : undefined;
+            if (!post) return;
+
+            const result = dispatch({ kind: 'appoint', overseerId: post.id });
             if (result.ok) sound.play('unlock');
           }}
         />

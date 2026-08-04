@@ -21,7 +21,7 @@ afterEach(() => {
 
 function appointed() {
   const state = createState(CURRENT);
-  state.overseers.minion = true;
+  state.overseers.minion = ['minion-hand'];
   return state;
 }
 

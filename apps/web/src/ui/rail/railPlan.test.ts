@@ -35,7 +35,10 @@ function appointments(from: RailPlan): RailAppointment[] {
 }
 
 function appointAll(): void {
-  for (const tier of CURRENT.tiers) state.overseers[tier.id] = true;
+  for (const tier of CURRENT.tiers) {
+    const automator = tier.overseers.find((post) => post.effect.kind === 'automate');
+    if (automator) state.overseers[tier.id] = [automator.id];
+  }
 }
 
 describe('railPlan', () => {
@@ -116,7 +119,7 @@ describe('railPlan', () => {
   });
 
   it('offers no appointment on a post already filled', () => {
-    state.overseers.minion = true;
+    state.overseers.minion = ['minion-hand'];
 
     const ids = appointments(plan()).map((option) => option.tierId);
 

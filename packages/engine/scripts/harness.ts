@@ -22,6 +22,7 @@
 import type Decimal from 'break_eternity.js';
 import { CURRENT, type Content } from '@dm/content';
 import { apply } from '../src/intents.ts';
+import { automatorOf } from '../src/roster.ts';
 import { createState } from '../src/state.ts';
 import { step } from '../src/step.ts';
 import { maxAffordable } from '../src/cost.ts';
@@ -70,6 +71,11 @@ const CHECKPOINTS = [
  *
  * Rousing comes last because a tier bought or freed this second is then already
  * turning when the next slice runs. That is the perfect tapping the header explains.
+ *
+ * **Appoints only the automate post.** A tier now has three, and weighing all
+ * fifteen against the buying pass is a retune of the simulated player, not of the
+ * harness plumbing — out of scope here. The automate post is still the one that
+ * decides whether a tier runs at all, so it is the one this measures.
  */
 function decide(state: GameState, content: Content): void {
   for (const tier of content.tiers) {
@@ -79,13 +85,14 @@ function decide(state: GameState, content: Content): void {
   }
 
   for (const tier of [...content.tiers].reverse()) {
-    if (canAppoint(state, content, tier.id)) {
-      apply(state, content, { kind: 'appoint', tierId: tier.id });
+    const post = automatorOf(tier);
+    if (post && canAppoint(state, content, post.id)) {
+      apply(state, content, { kind: 'appoint', overseerId: post.id });
     }
   }
 
   for (const tier of content.tiers) {
-    if (isRousable(state, tier.id)) {
+    if (isRousable(state, content, tier.id)) {
       apply(state, content, { kind: 'rouse', tierId: tier.id });
     }
   }
@@ -117,7 +124,8 @@ function run(content: Content): void {
     // Read before the buying pass spends anything, so this answers "could the player
     // have appointed at this moment", not "was there change left afterwards".
     for (const tier of content.tiers) {
-      if (!overseerAffordableAt.has(tier.id) && canAppoint(state, content, tier.id)) {
+      const post = automatorOf(tier);
+      if (!overseerAffordableAt.has(tier.id) && post && canAppoint(state, content, post.id)) {
         overseerAffordableAt.set(tier.id, elapsed);
       }
     }
@@ -128,7 +136,7 @@ function run(content: Content): void {
       if (!firstOwned.has(tier.id) && state.gens[tier.id].owned.gte(1)) {
         firstOwned.set(tier.id, elapsed);
       }
-      if (!overseerAppointedAt.has(tier.id) && isAppointed(state, tier.id)) {
+      if (!overseerAppointedAt.has(tier.id) && isAppointed(state, content, tier.id)) {
         overseerAppointedAt.set(tier.id, elapsed);
       }
     }

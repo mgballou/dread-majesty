@@ -82,17 +82,17 @@ describe('DevBar', () => {
 
     await user.click(screen.getByRole('button', { name: /appoint every overseer/i }));
 
-    expect(onReplace.mock.calls[0]?.[0].overseers.fortress).toBe(true);
+    expect(onReplace.mock.calls[0]?.[0].overseers.fortress).toEqual(['fortress-hand']);
   });
 
   it('dismisses every Overseer at once', async () => {
     const state = createState(CURRENT);
-    state.overseers.minion = true;
+    state.overseers.minion = ['minion-hand'];
     const { onReplace, user } = mount({ state });
 
     await user.click(screen.getByRole('button', { name: /dismiss every overseer/i }));
 
-    expect(onReplace.mock.calls[0]?.[0].overseers.minion).toBe(false);
+    expect(onReplace.mock.calls[0]?.[0].overseers.minion).toEqual([]);
   });
 
   it('simulates an absence in whole hours', async () => {

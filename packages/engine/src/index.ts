@@ -28,6 +28,16 @@ export {
 } from './selectors.ts';
 export type { MilestoneProgress } from './selectors.ts';
 
+export {
+  findOverseer,
+  hasPost,
+  hasAutomator,
+  automatorOf,
+  effectiveCycleMs,
+  effectiveYield,
+} from './roster.ts';
+export type { OverseerId } from '@dm/content';
+
 export { isConditionMet, newlyEarnedAchievements, achievementMultiplier } from './achievements.ts';
 
 export {

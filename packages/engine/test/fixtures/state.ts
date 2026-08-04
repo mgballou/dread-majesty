@@ -1,18 +1,20 @@
 import type { Content } from '@dm/content';
-import { TIER_IDS } from '@dm/content';
 import { createState } from '../../src/state.ts';
 import type { GameState } from '../../src/types.ts';
 
 /**
- * A fresh state with every Overseer already appointed.
+ * A fresh state with every tier automated and nothing else filled.
  *
- * Every tier now begins manual and accrues no progress until somebody rouses it, so
- * a state straight out of `createState` produces nothing at all. The appointment
- * belongs here in the setup rather than in `createState`: the opening the game ships
- * is manual by design, and what these tests measure is the cascade, not the tapping.
+ * Only the `automate` post, deliberately. A quickened or swollen tier would move
+ * every number in the worked example, and the example is the anchor test.
  */
 export function appointed(content: Content): GameState {
   const state = createState(content);
-  for (const id of TIER_IDS) state.overseers[id] = true;
+
+  for (const tier of content.tiers) {
+    const automator = tier.overseers.find((post) => post.effect.kind === 'automate');
+    state.overseers[tier.id] = automator ? [automator.id] : [];
+  }
+
   return state;
 }

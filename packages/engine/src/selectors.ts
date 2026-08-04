@@ -1,6 +1,7 @@
 import Decimal from 'break_eternity.js';
-import type { Content, ProducibleId, TierId } from '@dm/content';
-import { findTier, nextCost } from './cost.ts';
+import type { Content, OverseerId, ProducibleId, TierId } from '@dm/content';
+import { nextCost } from './cost.ts';
+import { effectiveCycleMs, effectiveYield, findOverseer, hasAutomator, hasPost } from './roster.ts';
 import { globalMultiplier, tierMultiplier } from './step.ts';
 import type { GameState } from './types.ts';
 
@@ -30,8 +31,10 @@ export function productionPerSecond(
     const owned = state.gens[tier.id].owned;
     if (owned.lte(0)) continue;
 
-    const perCycle = owned.mul(new Decimal(tier.yield)).mul(tierMultiplier(state, content, owned));
-    total = total.add(perCycle.div(tier.cycleMs / 1000));
+    const perCycle = owned
+      .mul(effectiveYield(state, content, tier))
+      .mul(tierMultiplier(state, content, owned));
+    total = total.add(perCycle.div(effectiveCycleMs(state, content, tier) / 1000));
   }
 
   return total;
@@ -58,12 +61,14 @@ export function overseenProductionPerSecond(
   let total = new Decimal(0);
 
   for (const tier of content.tiers) {
-    if (tier.produces !== producible || !state.overseers[tier.id]) continue;
+    if (tier.produces !== producible || !hasAutomator(state, content, tier.id)) continue;
     const owned = state.gens[tier.id].owned;
     if (owned.lte(0)) continue;
 
-    const perCycle = owned.mul(new Decimal(tier.yield)).mul(tierMultiplier(state, content, owned));
-    total = total.add(perCycle.div(tier.cycleMs / 1000));
+    const perCycle = owned
+      .mul(effectiveYield(state, content, tier))
+      .mul(tierMultiplier(state, content, owned));
+    total = total.add(perCycle.div(effectiveCycleMs(state, content, tier) / 1000));
   }
 
   return total;
@@ -87,39 +92,38 @@ export function canAfford(
   return state.resources[tier.costResource].gte(cost);
 }
 
-/** Whether this tier has an Overseer, and so runs without being told. */
-export function isAppointed(state: GameState, tierId: TierId): boolean {
-  return state.overseers[tierId];
+/** Whether this tier has somebody automating it, and so runs without being told. */
+export function isAppointed(state: GameState, content: Content, tierId: TierId): boolean {
+  return hasAutomator(state, content, tierId);
 }
 
 /**
  * Whether rousing this tier now would do anything.
  *
- * False for a tier already turning, a tier the player owns none of, and a tier with
- * an Overseer — that last one never stopped, so there is nothing to rouse.
+ * False for a tier already turning, a tier the player owns none of, and a tier
+ * somebody automates — that last one never stopped, so there is nothing to rouse.
  */
-export function isRousable(state: GameState, tierId: TierId): boolean {
-  if (state.overseers[tierId]) return false;
+export function isRousable(state: GameState, content: Content, tierId: TierId): boolean {
+  if (hasAutomator(state, content, tierId)) return false;
 
   const gen = state.gens[tierId];
   return gen.owned.gt(0) && !gen.running;
 }
 
-/** What appointing this tier's Overseer costs. Null for a tier not in the content. */
-export function overseerCost(content: Content, tierId: TierId): Decimal | null {
-  const tier = findTier(content, tierId);
-  if (!tier) return null;
-  return new Decimal(tier.overseers[0]?.cost ?? '0'); // Roster-aware from Task 5.
+/** What filling this post costs. Null for a post not in the content. */
+export function overseerCost(content: Content, overseerId: OverseerId): Decimal | null {
+  const found = findOverseer(content, overseerId);
+  return found ? new Decimal(found.post.cost) : null;
 }
 
-/** Whether the player could appoint this tier's Overseer right now. */
-export function canAppoint(state: GameState, content: Content, tierId: TierId): boolean {
-  if (state.overseers[tierId]) return false;
+/** Whether the player could fill this post right now. */
+export function canAppoint(state: GameState, content: Content, overseerId: OverseerId): boolean {
+  const found = findOverseer(content, overseerId);
+  if (!found) return false;
+  if (hasPost(state, found.tier.id, found.post.id)) return false;
+  if (!state.unlocked[found.tier.id]) return false;
 
-  const cost = overseerCost(content, tierId);
-  if (!cost) return false;
-
-  return canAfford(state, content, tierId, cost);
+  return state.resources[found.tier.costResource].gte(new Decimal(found.post.cost));
 }
 
 export interface MilestoneProgress {

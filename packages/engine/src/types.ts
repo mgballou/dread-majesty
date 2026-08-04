@@ -1,5 +1,5 @@
 import type Decimal from 'break_eternity.js';
-import type { AchievementId, ProducibleId, ResourceId, TierId } from '@dm/content';
+import type { AchievementId, OverseerId, ProducibleId, ResourceId, TierId } from '@dm/content';
 
 export interface TierState {
   owned: Decimal;
@@ -70,13 +70,17 @@ export interface GameState {
   smiteActiveMs: number;
   smiteCooldownMs: number;
   /**
-   * Which tiers have an Overseer appointed.
+   * The posts filled over each tier, in content order.
    *
-   * An appointed tier runs for ever and never needs rousing again. Survives prestige,
-   * exactly as achievements and unlock flags do: the tapping phase is an opening, not
-   * a tax to pay again every few hours. Written only by the `appoint` intent.
+   * Ids rather than flags, because a tier now has three posts and each does a
+   * different thing. A tier is automated when its `automate` post is in this list —
+   * `hasAutomator` is the only thing that should ever ask.
+   *
+   * **A reset clears every one of them.** Unlike achievements and unlock flags, an
+   * appointment is power rather than a record of having seen something, so losing it
+   * is what makes a run a run (spec §3.4). Written only by the `appoint` intent.
    */
-  overseers: Record<TierId, boolean>;
+  overseers: Record<TierId, readonly OverseerId[]>;
   stats: {
     playTimeMs: number;
     smites: number;
@@ -114,7 +118,7 @@ export type Intent =
   | { kind: 'purchase'; tierId: TierId; quantity: number | 'max' }
   | { kind: 'smite' }
   | { kind: 'rouse'; tierId: TierId }
-  | { kind: 'appoint'; tierId: TierId }
+  | { kind: 'appoint'; overseerId: OverseerId }
   | { kind: 'prestige' }
   | { kind: 'record-achievements' }
   | { kind: 'record-unlocks' };
@@ -131,4 +135,6 @@ export type IntentFailure =
   | 'unknown-tier'
   | 'tier-not-owned'
   | 'already-running'
-  | 'already-appointed';
+  | 'already-appointed'
+  | 'unknown-overseer'
+  | 'tier-not-met';

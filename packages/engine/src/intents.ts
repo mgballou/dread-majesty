@@ -2,6 +2,7 @@ import Decimal from 'break_eternity.js';
 import type { Content, TierId } from '@dm/content';
 import { newlyEarnedAchievements } from './achievements.ts';
 import { bulkCost, findTier, maxAffordable } from './cost.ts';
+import { findOverseer, hasAutomator, hasPost } from './roster.ts';
 import { isUnlockReached, prestigeGain } from './selectors.ts';
 import { createState } from './state.ts';
 import type { GameState, Intent, IntentResult } from './types.ts';
@@ -87,7 +88,9 @@ function rouse(
 ): IntentResult {
   const tier = findTier(content, intent.tierId);
   if (!tier) return { ok: false, intent, reason: 'unknown-tier' };
-  if (state.overseers[tier.id]) return { ok: false, intent, reason: 'already-appointed' };
+  if (hasAutomator(state, content, tier.id)) {
+    return { ok: false, intent, reason: 'already-appointed' };
+  }
 
   const gen = state.gens[tier.id];
   if (gen.owned.lte(0)) return { ok: false, intent, reason: 'tier-not-owned' };
@@ -98,30 +101,40 @@ function rouse(
 }
 
 /**
- * Hire a tier's Overseer, after which it runs for ever.
+ * Fill one post over one tier.
  *
- * Clears `running` on the way through. Not a reset — an appointed tier's timer keeps
- * whatever progress it had. It only means `running` never has to be read again for a
- * tier somebody oversees, so the two flags cannot drift into disagreeing.
+ * Rebuilds `state.overseers[tier.id]` in content order rather than pushing, the same
+ * reason `record-achievements` rebuilds rather than appends: two states that filled
+ * the same posts then hold them in the same order, and there is no tie-break rule to
+ * get wrong.
+ *
+ * Only the automator clears `running`. A tier nobody automates still has a manual
+ * cycle in flight — filling its `quicken` or `swell` post must not cancel that.
  */
 function appoint(
   state: GameState,
   content: Content,
   intent: Extract<Intent, { kind: 'appoint' }>,
 ): IntentResult {
-  const tier = findTier(content, intent.tierId);
-  if (!tier) return { ok: false, intent, reason: 'unknown-tier' };
-  if (state.overseers[tier.id]) return { ok: false, intent, reason: 'already-appointed' };
+  const found = findOverseer(content, intent.overseerId);
+  if (!found) return { ok: false, intent, reason: 'unknown-overseer' };
 
-  const cost = new Decimal(tier.overseers[0]?.cost ?? '0'); // Roster-aware from Task 5.
+  const { tier, post } = found;
+  if (hasPost(state, tier.id, post.id)) return { ok: false, intent, reason: 'already-appointed' };
+  if (!state.unlocked[tier.id]) return { ok: false, intent, reason: 'tier-not-met' };
+
+  const cost = new Decimal(post.cost);
   const budget = state.resources[tier.costResource];
   if (cost.gt(budget)) return { ok: false, intent, reason: 'insufficient-resource' };
 
   state.resources[tier.costResource] = budget.sub(cost);
-  state.overseers[tier.id] = true;
-  state.gens[tier.id].running = false;
+  state.overseers[tier.id] = tier.overseers
+    .filter((candidate) => candidate.id === post.id || hasPost(state, tier.id, candidate.id))
+    .map((candidate) => candidate.id);
 
-  return { ok: true, intent, detail: `Appointed an Overseer over the ${tier.plural}` };
+  if (post.effect.kind === 'automate') state.gens[tier.id].running = false;
+
+  return { ok: true, intent, detail: `Appointed the ${post.name}` };
 }
 
 function prestige(
@@ -137,12 +150,13 @@ function prestige(
     lifetimeEvil: state.lifetimeEvil,
     stats: { ...state.stats, prestiges: state.stats.prestiges + 1 },
     // Spec §5.4: a reset keeps achievements and unlock flags. A player who has seen
-    // the Fortress row does not lose it for starting over. Spec §5.6 adds Overseers
-    // to that list: the tapping phase is an opening, not a tax to pay every reset.
+    // the Fortress row does not lose it for starting over. Overseers are pointedly
+    // not on this list — spec §3.4 reverses the old rule that kept them, because a
+    // roster is power rather than a record of having seen something: losing one
+    // costs output, and re-earning it is the spine of a run.
     // Every `running` flag does go, and `createState` supplies the false ones.
     earnedAchievements: state.earnedAchievements,
     unlocked: state.unlocked,
-    overseers: state.overseers,
   };
 
   const fresh = createState(content);
@@ -152,7 +166,7 @@ function prestige(
   state.lifetimeEvil = carried.lifetimeEvil;
   state.earnedAchievements = carried.earnedAchievements;
   state.unlocked = carried.unlocked;
-  state.overseers = carried.overseers;
+  state.overseers = fresh.overseers;
   // The run is over, so the buff goes with it. The cooldown does not: it is a limit on
   // how often a player may strike, and resetting would hand out a free blow per reset.
   state.smiteActiveMs = 0;

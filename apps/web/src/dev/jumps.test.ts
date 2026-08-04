@@ -37,7 +37,7 @@ describe('jumps', () => {
   });
 
   it('leaves the tier being appointed unappointed', () => {
-    expect(find('appoint:minion').build().overseers.minion).toBe(false);
+    expect(find('appoint:minion').build().overseers.minion).toEqual([]);
   });
 
   it('puts a tier on its first milestone', () => {
@@ -61,7 +61,7 @@ describe('jumps', () => {
 
   it('appoints everybody on the deep run', () => {
     const state = find('deep').build();
-    expect(TIER_IDS.every((id) => state.overseers[id])).toBe(true);
+    expect(TIER_IDS.every((id) => state.overseers[id].length > 0)).toBe(true);
   });
 
   it('names every jump', () => {
