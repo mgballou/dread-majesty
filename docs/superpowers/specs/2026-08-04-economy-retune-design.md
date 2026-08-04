@@ -179,11 +179,17 @@ section that the harness contradicts is wrong, and the harness wins.
 
 ### 5.3 Souls arrive in bulk
 
-`prestige.k` and `prestige.scale` retune so a first reset pays 40–50 souls.
-`perSoul` stays at 0.02, so 45 souls reads as ×1.9.
+`prestige.scale` retunes so the first reset worth taking pays 40–50 souls, which the
+harness puts at about 1h 30m. `perSoul` stays at 0.02, so 45 souls reads as ×1.9.
 
 Ten of something reads small whatever it multiplies by. Forty-five reads like a haul,
 and it is the same multiplier.
+
+**`k` and `scale` are one lever, not two.** Souls are `k·√(lifetime/scale)`, which is
+`√(lifetime / (scale/k²))` — only the ratio has any effect, and `k` alone changes nothing
+a player can see. Fixing when the first soul lands therefore fixes how many souls every
+later moment pays. §5.2's first-prestige row and this one are the same setting read at two
+moments: one soul at 45m, forty-five at 1h 30m.
 
 ### 5.4 The harness
 

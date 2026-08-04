@@ -53,6 +53,12 @@ describe('railPlan', () => {
     expect(plan().best?.tierId).toBe('minion');
   });
 
+  it('prefers the Warren the moment one is affordable, because the cascade pays better', () => {
+    state.resources.evil = new Decimal(1000);
+
+    expect(plan().best?.tierId).toBe('warren');
+  });
+
   it('says which kind of spend it lifted, not only which tier', () => {
     state.resources.evil = new Decimal(2600);
 

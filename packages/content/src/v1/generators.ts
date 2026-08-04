@@ -84,13 +84,14 @@ const TAIL_MILESTONES: readonly MilestoneDef[] = (() => {
  * two Legions and a Throne two Fortresses. That is §5.1, and on its own it made the
  * game roughly four times too fast — the costs below are what took it back.
  *
- * *Cost curves.* Every `costRate` rose sharply: 1.089→1.07 at the Minion, but
- * 1.12→1.25, 1.18→1.5, 1.22→1.8 and 1.26→2.2 above it. That looks brutal beside the old
- * numbers and is not: §2 moved cost off `owned` and onto `purchased`, so a curve no
- * longer compounds against the units the cascade hands out free. The same nominal rate
- * is a far weaker brake than it was, and these restore the braking the old numbers had
- * in play. The Minion goes the other way — flatter, so the bottom rail row stays worth
- * pressing, which is the whole of §1.1.
+ * *Cost curves.* Every `costRate` above the Minion rose steeply — 1.12→1.25, 1.18→1.5,
+ * 1.22→1.8 and 1.26→2.2 — while the Minion's fell, 1.089→1.07. They go opposite ways
+ * because they do opposite jobs. Above the Minion the curve is the brake on the raised
+ * yields, and it had to be reset: §2 moved cost off `owned` and onto `purchased`, so a
+ * curve no longer compounds against the units the cascade hands out free, and the same
+ * nominal rate is a far weaker brake than it used to be. The Minion is not braking
+ * anything — it is the row a player presses for the whole run, so flattening it keeps
+ * the bottom of the rail worth pressing, which is the whole of §1.1.
  *
  * *Cycles, at the two tiers a player watches.* The Warren drops 90s→60s and the Legion
  * 10m→5m. The Fortress keeps 30m and the Throne 90m: at the top the cycle is a rate
@@ -313,7 +314,7 @@ export const v1: Content = {
    * seconds, once a minute.
    *
    * Fifteen seconds is longer than a Minion cycle (4s) and well short of a Warren's
-   * (90s), which is the window that makes a blow feel like it covered something
+   * (60s), which is the window that makes a blow feel like it covered something
    * without letting one press carry a whole tier. At ×2 for 15s in every 60s a player
    * who never misses a cooldown runs about 25% ahead of the idle economy — enough
    * that pressing it is always right, not enough to make §5.2's table a fiction.
