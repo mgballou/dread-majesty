@@ -10,13 +10,6 @@ export interface DeckTab {
   glyph?: DeckGlyphKind;
   /** Count or state, set to the trailing edge. */
   trailing?: ReactNode;
-  /**
-   * Says there is something to act on behind this tab.
-   *
-   * A word, never a tone, and shown only while the tab is shut — once it is open the
-   * panel itself says which row it means, in the same word.
-   */
-  mark?: string;
   panel: ReactNode;
 }
 
@@ -32,8 +25,8 @@ interface DeckProps {
  * plaque of its own beneath the one that named it.
  *
  * **Tabs are navigation, so no tab ever wears the accent.** The accent is spent on
- * doing, never on going (§3). A tab with something to act on behind it says so in a
- * word instead, and the accented control is on screen the moment it is opened.
+ * doing, never on going (§3). Every panel carries its own accent now, so a shut tab has
+ * nothing to announce: opening one always puts an accented control on screen.
  *
  * Every panel stays mounted and the shut ones are `hidden`, which takes them out of
  * the traversal order and out of the accessibility tree without unmounting anything.
@@ -92,16 +85,10 @@ export function Deck({ tabs }: DeckProps): ReactNode {
                     <DeckGlyph kind={tab.glyph} />
                   </span>
                 )}
-                {/* Every tab is named to assistive technology and none of them is named
-                    on screen. The mark is a dot beside the glyph and its word rides
-                    here, so a shut tab with something to say still says it. */}
-                <span className="deck__name">
-                  {tab.title}
-                  {tab.mark !== undefined && index !== open && ` — ${tab.mark}`}
-                </span>
-                {tab.mark !== undefined && index !== open && (
-                  <span className="deck__dot" aria-hidden="true" />
-                )}
+                {/* Every tab is named to assistive technology and none of them is
+                    named on screen. The tube carries icons; the name of the open one
+                    sits on its own line beneath it. */}
+                <span className="deck__name">{tab.title}</span>
               </span>
             </span>
           </button>

@@ -1,4 +1,4 @@
-import type { KeyboardEvent, ReactNode } from 'react';
+import { useId, type KeyboardEvent, type ReactNode } from 'react';
 import type { RailCopy } from '@dm/content';
 import {
   BUY_QUANTITIES,
@@ -13,6 +13,14 @@ import './QuantityChip.css';
 interface QuantityChipProps {
   quantity: BuyQuantity;
   onChange: (quantity: BuyQuantity) => void;
+  /**
+   * The element naming what this control sets, so the chip can point at it.
+   *
+   * The strip already prints "Buy quantity" beside the chip. Repeating it in the chip's
+   * own label made a screen reader say the word three times in eight words, and left the
+   * printed one associated with nothing.
+   */
+  labelledBy: string;
   /** The rail's writing. `copy.rail` at the call site. */
   copy: RailCopy;
 }
@@ -36,8 +44,14 @@ interface QuantityChipProps {
  * on press has to name its state, or a screen reader user hears the future instead of
  * the present.
  */
-export function QuantityChip({ quantity, onChange, copy }: QuantityChipProps): ReactNode {
+export function QuantityChip({
+  quantity,
+  onChange,
+  labelledBy,
+  copy,
+}: QuantityChipProps): ReactNode {
   const step = BUY_QUANTITIES.indexOf(quantity) + 1;
+  const said = useId();
 
   const onKeyDown = (event: KeyboardEvent<HTMLButtonElement>): void => {
     const back = event.key === 'ArrowLeft' || event.key === 'ArrowDown';
@@ -53,11 +67,18 @@ export function QuantityChip({ quantity, onChange, copy }: QuantityChipProps): R
       type="button"
       className="quantity-chip"
       data-step={step}
-      aria-label={`${copy.quantity}: ${quantityName(quantity, copy)}`}
+      /* The strip's own label, then this chip's state — "Buy quantity, Buy 10 at a
+         time". Naming the printed label rather than repeating its words is what ties
+         the two together, and the state comes from a span inside the control, so the
+         accessible name contains what the control is currently set to. */
+      aria-labelledby={`${labelledBy} ${said}`}
       onClick={() => onChange(nextQuantity(quantity))}
       onKeyDown={onKeyDown}
     >
       <span aria-hidden="true">{quantityLabel(quantity)}</span>
+      <span className="quantity-chip__said" id={said}>
+        {quantityName(quantity, copy)}
+      </span>
     </button>
   );
 }

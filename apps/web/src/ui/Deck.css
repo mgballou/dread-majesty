@@ -151,8 +151,10 @@
  * It takes the panel's own ground and **drops the line beneath it**, so the tab and the
  * panel are one surface with no seam between them — that join is what says "you are
  * here", and a line running under every tab equally was cancelling it. A gold bar along
- * the top edge marks it, at line weight: gold at full strength would say "press me"
- * rather than "you are here" (§5, §7).
+ * the top edge marks it. `--accent-soft`, not `--accent`: full-strength gold says
+ * "press me" and a tab is navigation (§5, §7). Not `--accent-line` either — that rung is
+ * the seam colour this same element already draws with, and a mark in the seam's own
+ * colour is not a mark.
  */
 .deck__tab[aria-selected='true'] .deck__edge {
   background: var(--surface);
@@ -205,21 +207,6 @@
   font-size: var(--text-xs);
   letter-spacing: normal;
   color: var(--ink-muted);
-}
-
-/*
- * Something to act on, behind a shut tab.
- *
- * A dot, because the tube has no room for a word and no business carrying one. Its
- * meaning is spoken by `.deck__name`, so nothing is lost to anyone who cannot see it,
- * and the accented control is on screen a press later. Never gold: this is navigation.
- */
-.deck__dot {
-  inline-size: 5px;
-  block-size: 5px;
-  margin-inline-start: calc(var(--space-2) * -1);
-  background: var(--ink);
-  border-radius: 50%;
 }
 
 /*

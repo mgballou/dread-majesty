@@ -1,5 +1,5 @@
 import Decimal from 'break_eternity.js';
-import type { ReactNode } from 'react';
+import { useId, type ReactNode } from 'react';
 import type { Content, TierDef, TierId } from '@dm/content';
 import { nextCost, type GameState } from '@dm/engine';
 import { Banner } from '../Banner.tsx';
@@ -41,11 +41,12 @@ interface BuyRailProps {
  * elsewhere is one press away — and the accent goes to whichever single spend returns
  * the most Evil per Evil spent.
  *
- * **That spend may not be here.** `railPlan` still ranks purchases and appointments
- * against each other, because they are the same question, but appointments are drawn
- * in the miscreants panel now. When the plan lifts one of those, this panel lifts
- * nothing at all and the shut tab beside it says so in a word. One thing is advised on
- * the screen, always, and it is never two.
+ * **This panel lifts its own.** `railPlan` still ranks purchases and appointments by
+ * one measure, because they are the same question, but each panel now accents the best
+ * of its own kind. The deck shows one panel at a time, so a single winner across both
+ * left whichever panel you were looking at with no accent at all — which is how the
+ * gold came to look like it was vanishing and jumping about. One accent per region, and
+ * the region is the open panel.
  *
  * The quantity chip is a setting, not the action, so it never wears the accent. It
  * sits on its own strip at the head of the list rather than beside the title: it acts
@@ -70,6 +71,8 @@ export function BuyRail({
   onPurchase,
   copy,
 }: BuyRailProps): ReactNode {
+  const quantityLabelId = useId();
+
   const purchases = new Map<TierId, RailPurchase>();
   for (const option of plan.options) {
     if (option.kind === 'purchase') purchases.set(option.tierId, option);
@@ -84,8 +87,15 @@ export function BuyRail({
   return (
     <div className="muster">
       <div className="muster__setting">
-        <span className="muster__setting-name">{copy.rail.quantity}</span>
-        <QuantityChip quantity={quantity} onChange={onQuantity} copy={copy.rail} />
+        <span className="muster__setting-name" id={quantityLabelId}>
+          {copy.rail.quantity}
+        </span>
+        <QuantityChip
+          quantity={quantity}
+          onChange={onQuantity}
+          labelledBy={quantityLabelId}
+          copy={copy.rail}
+        />
       </div>
 
       <ul className="rail" aria-label={copy.rail.list}>

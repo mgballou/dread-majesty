@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { CYCLE_SEGMENTS } from './segments.ts';
 
 /**
  * Walks up from the working directory rather than reading `import.meta.url`, which
@@ -276,5 +277,14 @@ describe('no raw values outside the token definitions', () => {
         primitives: [...readFileSync(path, 'utf8').matchAll(/var\(--raw-/g)],
       }).toHaveProperty('primitives', []);
     }
+  });
+});
+
+describe('the cycle is cut into the same number of parts everywhere', () => {
+  it('gives the meter the segment count the ring imports', () => {
+    const meter = readFileSync(join(srcDir, 'ui', 'Meter.css'), 'utf8');
+    const cells = /--meter-cells:\s*(\d+)/.exec(meter)?.[1];
+
+    expect(Number(cells)).toBe(CYCLE_SEGMENTS);
   });
 });

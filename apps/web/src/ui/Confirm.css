@@ -21,7 +21,8 @@
   margin: 0;
 }
 
-/* The one action, and while this is up it is the only one on the screen. */
+/* The one action. The sheet is its own region, and the scrim puts every other one out
+   of reach while it is up. */
 .confirm__act {
   justify-self: stretch;
 }

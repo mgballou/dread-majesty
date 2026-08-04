@@ -61,6 +61,15 @@ interface TierNodeProps {
   /** The rung above. Null for the head of the chain, which nothing feeds. */
   feed: Feed | null;
   /**
+   * Bumps whenever the state moved. Both pulses on this node hang on it.
+   *
+   * The completion pulse used to borrow `feed.version`, which is null at the head of the
+   * chain — so the top rung's own flash was keyed to a constant. It worked only because
+   * `step` hands back a fresh `Decimal` each slice and the identity change was enough.
+   * That is a property of the engine, not a contract this component may rest on.
+   */
+  version: number;
+  /**
    * This rung's own `lifetimeProduced`. Growth in it is this tier's cycle closing.
    *
    * Distinct from `feed`, which is the rung above delivering into this one. A node
@@ -114,11 +123,12 @@ export function TierNode({
   oversight,
   feed,
   produced,
+  version,
   surgeIndex,
 }: TierNodeProps): ReactNode {
   const reduced = useReducedMotion();
-  const landing = usePulse(feed === null ? null : feed.produced, feed?.version ?? 0);
-  const fired = usePulse(isUnlocked ? produced : null, feed?.version ?? 0);
+  const landing = usePulse(feed === null ? null : feed.produced, version);
+  const fired = usePulse(isUnlocked ? produced : null, version);
   const stateId = useId();
 
   // Set as a custom property, not as `color`. The chain takes every rung's colour over

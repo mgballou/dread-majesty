@@ -185,7 +185,9 @@ function Post({ post, onAsk, copy }: PostProps): ReactNode {
           {emphasis === 'saving' && <span className="miscreant__flag">{copy.rail.saving}</span>}
         </span>
 
-        {emphasis === 'best' && <span className="miscreant__lifted">{copy.rail.lifted}</span>}
+        {emphasis === 'best' && (
+          <span className="miscreant__lifted">{` — ${copy.rail.lifted}`}</span>
+        )}
       </button>
     </li>
   );

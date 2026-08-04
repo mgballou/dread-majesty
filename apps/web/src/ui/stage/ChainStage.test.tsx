@@ -293,4 +293,24 @@ describe('ChainStage', () => {
       '95',
     );
   });
+
+  it('flashes the rung whose own output grew, not a neighbour of it', () => {
+    const state = tapped(1);
+    const { container, rerender } = render(stage({ state, version: 1 }));
+
+    state.gens.minion.lifetimeProduced = state.gens.minion.lifetimeProduced.add(50);
+    rerender(stage({ state, version: 2 }));
+
+    expect(container.querySelector('[data-tier="minion"] .stage-node__fired')).not.toBeNull();
+  });
+
+  it('leaves a rung whose output stood still unflashed', () => {
+    const state = tapped(1);
+    const { container, rerender } = render(stage({ state, version: 1 }));
+
+    state.gens.minion.lifetimeProduced = state.gens.minion.lifetimeProduced.add(50);
+    rerender(stage({ state, version: 2 }));
+
+    expect(container.querySelector('[data-tier="warren"] .stage-node__fired')).toBeNull();
+  });
 });

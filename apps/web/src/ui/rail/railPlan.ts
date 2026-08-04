@@ -283,10 +283,10 @@ function worthwhile<T extends RailOption>(options: T[]): T[] {
  * `options`, so it simply loses its hold and the top scorer takes over. Nothing has to
  * notice it disappeared.
  */
-function sticky<T extends RailOption>(
+function sticky<T extends RailOption, K extends string>(
   options: T[],
-  held: string | null,
-  keyOf: (option: T) => string,
+  held: K | null,
+  keyOf: (option: T) => K,
 ): T | null {
   const top = pick(options);
   if (top === null || held === null) return top;
@@ -334,7 +334,7 @@ interface AppointInput {
  * One measure for all three kinds. The automator is worth the tier's *whole* output,
  * because an unappointed tier stops dead after every cycle (spec §5.6); a quicken or
  * a swell is worth the difference its factor makes to a tier that is running. That
- * puts the three on one axis, which is what lets §3's single accent land on the
+ * puts the three on one axis, which is what lets this panel's one accent land on the
  * right one.
  *
  * A quicken or a swell over a tier nobody automates is scored as though the tier ran
