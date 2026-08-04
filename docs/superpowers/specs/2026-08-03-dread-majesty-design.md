@@ -450,9 +450,50 @@ fresh guess.
 **It is not yet measured, and it must be.** §5.7's harness reports when each tier first
 *arrives*; it says nothing about when each tier stops being worth buying. Until it
 reports the obsolescence point per tier, this section is a principle without an
-instrument and the numbers under it are educated guesses. Extending the harness to walk
-the opening and record, per tier, the moment the tier above overtakes it, is the work
-that makes the rest of this section tunable.
+instrument and the numbers under it are educated guesses.
+
+#### 5.8.1 The operational definition
+
+A principle you cannot measure is a preference. This is the definition the harness
+implements, chosen because it is computable from engine selectors alone and because it
+falls out in exactly the two units §5.8 asks for — a count and a rate.
+
+For a tier `N` and the tier above it `N+1`, at any instant:
+
+```
+delivered(N)    = owned(N+1) × effectiveYield(N+1) × tierMultiplier(N+1)
+                  ÷ (effectiveCycleMs(N+1) / 1000)          units of N per second
+
+purchasable(N)  = overseenProductionPerSecond(evil) ÷ nextCost(N)
+                                                            units of N per second
+```
+
+**The obsolescence point of tier `N` is the first moment `delivered(N) ≥ purchasable(N)`
+and stays so.** Read plainly: the tier above is handing you units faster than your whole
+income could buy them, so spending Evil on that tier by hand has stopped being the
+better use of it.
+
+The harness records three things at that moment, and they are what tuning aims at:
+
+| | |
+| --- | --- |
+| **When** | elapsed time |
+| **How many** | `owned(N+1)` — the count of the tier above that retired this one |
+| **How fast** | `delivered(N)` — the rate that did it |
+
+`nextCost(N)` keys off `purchased`, not `owned` (§2 of the 2026-08-04 spec), so a player
+who stops buying a tier stops raising its price and the crossing does not drift back and
+forth. The point is a crossing, not a flicker.
+
+**Why not measure it off the rail's own ranking.** `railPlan` already scores every
+spend, and "the moment the rail stops lifting tier N" is the more direct question. It is
+the wrong instrument: `railPlan` lives in `apps/web` and the harness may not import it
+without breaking the one-way dependency `web → engine → content-types`, and its score
+carries a 600-second horizon assumption that would silently become part of the balance.
+The definition above depends on nothing but the simulation.
+
+**The top tier has no obsolescence point** — nothing produces it — and Evil is not a
+tier. So a five-tier chain yields four points.
 
 ---
 
