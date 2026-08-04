@@ -220,8 +220,17 @@ describe('Miscreants', () => {
     draw();
 
     expect(
-      screen.getByRole('button', { name: new RegExp(OVERSEER.names['minion-hand']) }),
-    ).toHaveTextContent(CURRENT_COPY.rail.lifted);
+      screen.getByRole('button', { name: new RegExp(CURRENT_COPY.rail.lifted) }),
+    ).toBeInTheDocument();
+  });
+
+  it('leaves the lifted marker in the accessibility tree rather than hiding it from it', () => {
+    state.gens.minion.owned = new Decimal(400);
+    state.resources.evil = new Decimal(1000);
+
+    const { container } = draw();
+
+    expect(container.querySelector('.miscreant__lifted')).not.toHaveAttribute('aria-hidden');
   });
 
   it('still lifts its own best post even while a purchase scores higher', () => {

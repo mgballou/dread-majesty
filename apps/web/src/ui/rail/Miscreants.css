@@ -71,16 +71,30 @@
 }
 
 /*
- * The one spend to make, when it is one of these.
+ * The one spend to make in this panel.
  *
  * The accent runs on the edge and in the mark rather than filling the whole entry —
  * an entry is four lines tall and a gold slab that size stops being a control and
- * starts being a banner. It is still the only accent on the screen.
+ * starts being a banner. This panel's accent, not the screen's: the muster carries its
+ * own and the two are never on screen together.
+ *
+ * **The edge doubles and the name goes bold, and both are load-bearing.** The muster
+ * says "lifted" by filling a button that is otherwise outlined, which is a weight
+ * difference and survives greyscale. Nothing here fills, and `--accent-well` against
+ * `--surface-panel` is the same lightness — in greyscale that ground is invisible. So
+ * the state would have been three shades of one hairline and nothing else, which is
+ * colour carrying it alone. The thicker edge and the heavier name are what a viewer
+ * who cannot see the gold reads instead.
  */
 .miscreant__post--best {
   background: var(--accent-well);
   border-color: var(--accent);
   border-inline-start-color: var(--accent);
+  border-inline-start-width: 6px;
+}
+
+.miscreant__post--best .miscreant__name {
+  font-weight: 600;
 }
 
 /* Nothing is affordable, so nothing acts. A structural mark and no gold at all. */

@@ -161,7 +161,7 @@ export interface RailCopy {
   readonly title: string;
   /** Names the run of generators to anyone who cannot see it laid out. */
   readonly list: string;
-  /** Sits on every other affordable-or-not row. */
+  /** Sits on the one row a panel names as a goal, and only when nothing there is affordable. */
   readonly saving: string;
   readonly locked: string;
   readonly lockedHint: string;

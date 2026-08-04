@@ -307,6 +307,23 @@ describe('the accent holds still', () => {
   });
 });
 
+describe('the premise the per-panel tests rest on', () => {
+  it('has the appointment outscoring every purchase once Minions are stacked', () => {
+    state.gens.minion.owned = new Decimal(400);
+    state.resources.evil = new Decimal(1000);
+    const drawn = plan();
+
+    expect(drawn.best.appoint?.score.gt(drawn.best.purchase?.score ?? new Decimal(0))).toBe(true);
+  });
+
+  it('has a purchase outscoring every appointment from a standing start', () => {
+    state.resources.evil = new Decimal(2600);
+    const drawn = plan();
+
+    expect(drawn.best.purchase?.score.gt(drawn.best.appoint?.score ?? new Decimal(0))).toBe(true);
+  });
+});
+
 describe('what a panel names to save toward', () => {
   it('never names a post on a tier that would produce nothing', () => {
     state.gens.minion.owned = new Decimal(400);
