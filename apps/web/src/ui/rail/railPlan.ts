@@ -254,10 +254,26 @@ export function railPlan({ state, content, quantity, isUnlocked, held }: RailPla
     options,
     best: { purchase: bestPurchase, appoint: bestAppoint },
     saving: {
-      purchase: bestPurchase ? null : pick(purchases),
-      appoint: bestAppoint ? null : pick(appointments),
+      purchase: bestPurchase ? null : pick(worthwhile(purchases)),
+      appoint: bestAppoint ? null : pick(worthwhile(appointments)),
     },
   };
+}
+
+/**
+ * The options worth naming as a goal. A score of zero is not a recommendation.
+ *
+ * Needed once `saving` became one pick per panel. Every post on a tier the player owns
+ * none of returns nothing, so it scores exactly zero — and with the appointments picked
+ * on their own, a field of zeroes goes to whichever the content lists first, which is
+ * the Throne. The miscreants panel would have advised saving toward an 800-trillion
+ * post while the Warden of the Warrens sat at twelve million.
+ *
+ * Where every option in a panel scores zero the answer is null, and null is honest:
+ * there is nothing in that panel worth saving toward yet.
+ */
+function worthwhile<T extends RailOption>(options: T[]): T[] {
+  return options.filter((option) => option.score.gt(0));
 }
 
 /**
