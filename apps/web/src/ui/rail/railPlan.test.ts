@@ -53,10 +53,17 @@ describe('railPlan', () => {
     expect(plan().best?.tierId).toBe('minion');
   });
 
-  it('prefers the Warren the moment one is affordable, because the cascade pays better', () => {
-    state.resources.evil = new Decimal(1000);
+  it('returns to the Minion once the first Warrens are in hand, so no tier is retired by the first units above it', () => {
+    state.gens.warren.owned = new Decimal(2);
+    state.gens.warren.purchased = new Decimal(2);
+    state.resources.evil = new Decimal(10000);
 
-    expect(plan().best?.tierId).toBe('warren');
+    const bestPurchase = purchases(plan()).reduce<RailPurchase | null>(
+      (best, option) => (best === null || option.score.gt(best.score) ? option : best),
+      null,
+    );
+
+    expect(bestPurchase?.tierId).toBe('minion');
   });
 
   it('says which kind of spend it lifted, not only which tier', () => {
