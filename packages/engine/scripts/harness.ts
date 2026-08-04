@@ -20,13 +20,19 @@
  * against those times.
  */
 import Decimal from 'break_eternity.js';
-import { CURRENT, type Content, type OverseerId } from '@dm/content';
+import { CURRENT, type Content, type OverseerId, type TierDef, type TierId } from '@dm/content';
 import { apply } from '../src/intents.ts';
-import { hasPost } from '../src/roster.ts';
+import { effectiveCycleMs, effectiveYield, hasPost } from '../src/roster.ts';
 import { createState } from '../src/state.ts';
-import { step } from '../src/step.ts';
-import { maxAffordable } from '../src/cost.ts';
-import { canAppoint, isRousable, prestigeGain, productionPerSecond } from '../src/selectors.ts';
+import { step, tierMultiplier } from '../src/step.ts';
+import { costOfNth, maxAffordable } from '../src/cost.ts';
+import {
+  canAppoint,
+  isRousable,
+  overseenProductionPerSecond,
+  prestigeGain,
+  productionPerSecond,
+} from '../src/selectors.ts';
 import type { GameState } from '../src/types.ts';
 
 const DT_MS = 1000;
@@ -35,6 +41,15 @@ const SIMULATED_DAYS = 7;
 const MINUTE = 60 * 1000;
 const HOUR = 60 * MINUTE;
 const DAY = 24 * HOUR;
+
+/**
+ * How long `delivered(N) >= purchasable(N)` (spec §5.8.1) must hold without
+ * interruption before the crossing counts as the obsolescence point, rather than a
+ * flicker while counts are still churning near the boundary. Chosen in the spec, not
+ * derived — it only has to be long enough that a single second of noise cannot pass
+ * for a trend.
+ */
+const OBSOLESCENCE_HOLD_MS = 60 * 1000;
 
 const CHECKPOINTS = [
   ['15m', 15 * MINUTE],
@@ -109,6 +124,19 @@ function decide(state: GameState, content: Content): void {
   apply(state, content, { kind: 'record-unlocks' });
 }
 
+/**
+ * The moment tier `N` stopped being worth buying by hand, per spec §5.8.1 — snapshot
+ * of the crossing the instant it first held, not the instant the 60-second hold
+ * confirmed it (see `OBSOLESCENCE_HOLD_MS`).
+ */
+interface ObsolescencePoint {
+  ms: number;
+  /** `owned(N+1)` at the crossing — the count of the tier above that retired this one. */
+  owned: Decimal;
+  /** `delivered(N)` at the crossing — the rate that did it. */
+  delivered: Decimal;
+}
+
 function run(content: Content): void {
   const state = createState(content);
   // Lowest tier first, matching every other table in this report; the three posts
@@ -116,9 +144,24 @@ function run(content: Content): void {
   const posts = [...content.tiers]
     .reverse()
     .flatMap((tier) => tier.overseers.map((post) => ({ tier, post })));
+
+  // Every tier paired with the one tier above it that produces it — built once, not
+  // per slice, since neither side of the pairing changes during the run. The top
+  // tier (nothing produces it) drops out here, which is why a five-tier chain yields
+  // four pairs rather than five (spec §5.8.1). Lowest tier first, matching `posts`.
+  const obsolescencePairs: Array<{ tier: TierDef; producer: TierDef }> = [];
+  for (const tier of [...content.tiers].reverse()) {
+    const producer = content.tiers.find((candidate) => candidate.produces === tier.id);
+    if (producer) obsolescencePairs.push({ tier, producer });
+  }
+
   const firstOwned = new Map<string, number>();
   const overseerAffordableAt = new Map<OverseerId, number>();
   const overseerAppointedAt = new Map<OverseerId, number>();
+  // In-progress crossing per tier: the moment `delivered >= purchasable` first held,
+  // held onto in case the next second breaks it and the candidate must be discarded.
+  const obsolescenceCandidate = new Map<TierId, ObsolescencePoint>();
+  const obsolescenceAt = new Map<TierId, ObsolescencePoint>();
   const rows: string[] = [];
   let firstPrestigeMs: number | null = null;
 
@@ -145,6 +188,55 @@ function run(content: Content): void {
         firstOwned.set(tier.id, elapsed);
       }
     }
+
+    // The obsolescence point (spec §5.8.1). `overseenProductionPerSecond` is the same
+    // for every tier this second — it does not depend on which tier N is being
+    // checked — so it is computed once here rather than once per pair.
+    //
+    // Degenerate cases, both handled by the single `purchasable.gt(0)` guard below:
+    //
+    //   - No Evil income is automated yet (`income` is 0, so `purchasable` is 0 for
+    //     every tier). Without the guard, any tier already owning its producer would
+    //     read as "obsolete" the instant the simulation starts, since 0 >= 0 and
+    //     anything positive >= 0. A tier the player cannot yet buy at all is not
+    //     obsolete — there is no purchase to compare the delivery rate against — so
+    //     this is treated as "not yet met" rather than a crossing.
+    //   - The producer tier does not exist yet (`owned(producer)` is 0, so
+    //     `delivered` is 0). This needs no special case: with `purchasable` guarded
+    //     to be strictly positive by the point above, `delivered` at 0 can only ever
+    //     read as "not met", which is the right answer — a tier cannot be retired by
+    //     a producer that has not arrived.
+    //
+    // `nextCost` (here inlined as `costOfNth`, since the pairing already holds the
+    // `TierDef` and skips a second lookup) is never zero, so `purchasable` is never
+    // divided by zero.
+    const income = overseenProductionPerSecond(state, content, 'evil');
+    for (const { tier, producer } of obsolescencePairs) {
+      if (obsolescenceAt.has(tier.id)) continue;
+
+      const ownedProducer = state.gens[producer.id].owned;
+      const delivered = ownedProducer
+        .mul(effectiveYield(state, producer))
+        .mul(tierMultiplier(state, content, ownedProducer))
+        .div(effectiveCycleMs(state, producer) / 1000);
+      const cost = costOfNth(tier, state.gens[tier.id].purchased);
+      const purchasable = income.div(cost);
+
+      const met = purchasable.gt(0) && delivered.gte(purchasable);
+      const candidate = obsolescenceCandidate.get(tier.id);
+
+      if (!met) {
+        if (candidate) obsolescenceCandidate.delete(tier.id);
+        continue;
+      }
+
+      if (!candidate) {
+        obsolescenceCandidate.set(tier.id, { ms: elapsed, owned: ownedProducer, delivered });
+      } else if (elapsed - candidate.ms >= OBSOLESCENCE_HOLD_MS) {
+        obsolescenceAt.set(tier.id, candidate);
+      }
+    }
+
     for (const { tier, post } of posts) {
       if (!overseerAppointedAt.has(post.id) && hasPost(state, tier.id, post.id)) {
         overseerAppointedAt.set(post.id, elapsed);
@@ -180,6 +272,23 @@ function run(content: Content): void {
       `    ${post.name.padEnd(29)}` +
         `within reach ${(affordable === undefined ? 'never' : duration(affordable)).padEnd(14)}` +
         `appointed ${hired === undefined ? 'never' : duration(hired)}`,
+    );
+  }
+
+  console.log(
+    '\n  obsolescence (spec §5.8.1: when the tier above delivers faster than income buys)',
+  );
+  for (const { tier, producer } of obsolescencePairs) {
+    const point = obsolescenceAt.get(tier.id);
+    if (!point) {
+      console.log(`    ${tier.plural.padEnd(14)} never`);
+      continue;
+    }
+    console.log(
+      `    ${tier.plural.padEnd(14)}` +
+        `when ${duration(point.ms).padEnd(14)}` +
+        `how many ${`${short(point.owned)} ${producer.plural}`.padEnd(18)}` +
+        `how fast ${short(point.delivered)}/s`,
     );
   }
 
