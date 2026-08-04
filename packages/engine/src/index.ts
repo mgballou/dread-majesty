@@ -15,6 +15,8 @@ export {
   productionPerSecond,
   overseenProductionPerSecond,
   prestigeGain,
+  soulsEarned,
+  msToNextSoul,
   canAfford,
   milestoneProgress,
   isUnlockReached,
