@@ -177,6 +177,7 @@ export function useGameSession(content: Content): Session {
         banked -= slices * BASE_DT_MS;
         for (let i = 0; i < slices; i += 1) step(state, content, BASE_DT_MS);
         state.stats.playTimeMs += slices * BASE_DT_MS;
+        state.stats.runMs += slices * BASE_DT_MS;
         setVersion((previous) => previous + 1);
       }
 

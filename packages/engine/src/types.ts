@@ -85,6 +85,14 @@ export interface GameState {
     playTimeMs: number;
     smites: number;
     prestiges: number;
+    /**
+     * Play time since the last reset.
+     *
+     * Beside `playTimeMs` rather than derived from it, because a run's length is what
+     * the prestige panel has to report and nothing else in the state records when the
+     * run began. Advanced at the boundary alongside `playTimeMs`; zeroed by `prestige`.
+     */
+    runMs: number;
   };
 }
 

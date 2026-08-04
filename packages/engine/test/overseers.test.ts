@@ -349,6 +349,45 @@ describe('prestige', () => {
 
     expect(state.resources.evil.eq(0)).toBe(true);
   });
+
+  it('clears every post on a reset', () => {
+    const state = appointed(fixture);
+    state.lifetimeEvil = new Decimal('1e14');
+
+    apply(state, fixture, { kind: 'prestige' });
+
+    expect(state.overseers.minion).toEqual([]);
+  });
+
+  it('keeps souls, trophies and unlock flags on a reset', () => {
+    const state = appointed(fixture);
+    state.lifetimeEvil = new Decimal('1e14');
+    state.unlocked.warren = true;
+
+    apply(state, fixture, { kind: 'prestige' });
+
+    expect(state.unlocked.warren).toBe(true);
+  });
+
+  it('zeroes the run clock on a reset', () => {
+    const state = appointed(fixture);
+    state.lifetimeEvil = new Decimal('1e14');
+    state.stats.runMs = 900_000;
+
+    apply(state, fixture, { kind: 'prestige' });
+
+    expect(state.stats.runMs).toBe(0);
+  });
+
+  it('leaves total play time alone on a reset', () => {
+    const state = appointed(fixture);
+    state.lifetimeEvil = new Decimal('1e14');
+    state.stats.playTimeMs = 900_000;
+
+    apply(state, fixture, { kind: 'prestige' });
+
+    expect(state.stats.playTimeMs).toBe(900_000);
+  });
 });
 
 describe('productionPerSecond', () => {
