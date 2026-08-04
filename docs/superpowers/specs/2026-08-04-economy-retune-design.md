@@ -138,9 +138,12 @@ first asked for no single stretch between adjacent harness checkpoints worth mor
 about 100×, and it has twice been read as decades per hour without the section being
 amended — a target everyone privately agreed to ignore, carried in §5.2 with a ✗ against
 it. The raw ratio is not a measure of the game. The checkpoints are spaced from fifteen
-minutes to four days apart, so a raw ratio mostly reports **the spacing**: 1h→2h shows
-9.1e3 across one hour and 3d→7d shows 110× across ninety-six, and the calmer-looking
-number is the faster-growing hour by a factor of sixty.
+minutes to four days apart, so a raw ratio mostly reports **the spacing**. Take the two
+ends of that: 4h→8h carries the largest raw jump in the whole table, 6.3e4, and 15m→30m
+one of the smallest, 10.2×. The raw numbers are six thousand-fold apart. Per hour the
+small one grows **three and a third times faster** — 4.04 decades against 1.20 — which
+makes 4h→8h the fifth calmest hour of the run and 15m→30m one of the steepest. The raw
+ratio does not merely understate the difference; it points the wrong way.
 
 **The metric is growth normalised by interval length — decades per hour.** Take
 `log10(end ÷ start)` and divide by the hours between the two readings. That is
