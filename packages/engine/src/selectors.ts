@@ -74,11 +74,52 @@ export function overseenProductionPerSecond(
   return total;
 }
 
+/**
+ * What the prestige formula pays for the lifetime Evil on hand, before subtracting
+ * held souls.
+ *
+ * Written as `sqrt(lifetimeEvil) / sqrt(scale)`, not `sqrt(lifetimeEvil / scale)`.
+ * They are the same formula; they are not the same computation. `break_eternity.js`
+ * loses a bit of precision dividing two large Decimals of similar magnitude, and at
+ * an exact round boundary — lifetime Evil landing on a whole multiple of `scale` —
+ * that loss can land the result a hair under the next integer, so `floor` pays one
+ * soul short of what the player earned. Square-rooting first sidesteps that division
+ * rather than papering over its output.
+ */
+export function soulsEarned(state: GameState, content: Content): Decimal {
+  const { k, scale } = content.prestige;
+  return state.lifetimeEvil.sqrt().div(new Decimal(scale).sqrt()).mul(k).floor();
+}
+
 /** Souls this run would yield if cashed in now, above what the player already holds. */
 export function prestigeGain(state: GameState, content: Content): Decimal {
+  return Decimal.max(0, soulsEarned(state, content).sub(state.souls));
+}
+
+/**
+ * Milliseconds to the next soul, at the rate the automated tiers are turning now.
+ *
+ * A straight-line estimate and honestly one: it holds every generator count still,
+ * and in play the counts climb, so the real wait is always shorter. That is the
+ * right way for it to be wrong — a figure that flattered the player would be worse
+ * than one that undersells.
+ *
+ * Reads the automated rate rather than the potential one, because this answers "how
+ * long if I walk away", and a tier nobody oversees produces nothing while you are
+ * gone (spec §5.6). Null when nothing is turning, and null rather than `Infinity`
+ * when the gap is too large for a JS number to carry.
+ */
+export function msToNextSoul(state: GameState, content: Content): number | null {
   const { k, scale } = content.prestige;
-  const earned = state.lifetimeEvil.div(new Decimal(scale)).sqrt().mul(k).floor();
-  return Decimal.max(0, earned.sub(state.souls));
+  const target = new Decimal(scale).mul(soulsEarned(state, content).add(1).div(k).pow(2));
+  const remaining = target.sub(state.lifetimeEvil);
+  if (remaining.lte(0)) return 0;
+
+  const rate = overseenProductionPerSecond(state, content, 'evil');
+  if (rate.lte(0)) return null;
+
+  const ms = remaining.div(rate).mul(1000).toNumber();
+  return Number.isFinite(ms) ? ms : null;
 }
 
 export function canAfford(
