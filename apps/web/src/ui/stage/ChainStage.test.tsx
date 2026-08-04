@@ -199,7 +199,7 @@ describe('ChainStage', () => {
   it('names the Overseer over a tier somebody runs', () => {
     render(stage({ state: tapped(1), isAppointed: everything(), isRousable: nothing() }));
 
-    expect(screen.getByText(CURRENT_COPY.overseer.names.minion)).toBeInTheDocument();
+    expect(screen.getByText(CURRENT_COPY.overseer.names['minion-hand'])).toBeInTheDocument();
   });
 
   it('makes Evil itself the verb', async () => {

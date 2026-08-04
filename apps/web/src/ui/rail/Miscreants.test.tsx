@@ -45,13 +45,13 @@ describe('Miscreants', () => {
   it('names the Overseer of each post', () => {
     draw();
 
-    expect(screen.getByText(OVERSEER.names.minion)).toBeInTheDocument();
+    expect(screen.getByText(OVERSEER.names['minion-hand'])).toBeInTheDocument();
   });
 
   it('finally says who the holder is', () => {
     draw();
 
-    expect(screen.getByText(OVERSEER.notes.minion)).toBeInTheDocument();
+    expect(screen.getByText(OVERSEER.notes['minion-hand'])).toBeInTheDocument();
   });
 
   it('marks a post with a diamond, never a circle', () => {
@@ -75,7 +75,9 @@ describe('Miscreants', () => {
   it('will not open a post the purse cannot reach', () => {
     draw();
 
-    expect(screen.getByRole('button', { name: new RegExp(OVERSEER.names.minion) })).toBeDisabled();
+    expect(
+      screen.getByRole('button', { name: new RegExp(OVERSEER.names['minion-hand']) }),
+    ).toBeDisabled();
   });
 
   it('says what a post costs before it is opened', () => {
@@ -90,7 +92,9 @@ describe('Miscreants', () => {
     state.resources.evil = new Decimal(1000);
 
     const { user } = draw();
-    await user.click(screen.getByRole('button', { name: new RegExp(OVERSEER.names.minion) }));
+    await user.click(
+      screen.getByRole('button', { name: new RegExp(OVERSEER.names['minion-hand']) }),
+    );
 
     expect(screen.getByRole('dialog')).toBeInTheDocument();
   });
@@ -100,7 +104,9 @@ describe('Miscreants', () => {
 
     const { onAppoint, user } = draw();
 
-    await user.click(screen.getByRole('button', { name: new RegExp(OVERSEER.names.minion) }));
+    await user.click(
+      screen.getByRole('button', { name: new RegExp(OVERSEER.names['minion-hand']) }),
+    );
 
     expect(onAppoint).not.toHaveBeenCalled();
   });
@@ -109,16 +115,22 @@ describe('Miscreants', () => {
     state.resources.evil = new Decimal(1000);
 
     const { user } = draw();
-    await user.click(screen.getByRole('button', { name: new RegExp(OVERSEER.names.minion) }));
+    await user.click(
+      screen.getByRole('button', { name: new RegExp(OVERSEER.names['minion-hand']) }),
+    );
 
-    expect(screen.getByText(OVERSEER.confirmTitle(OVERSEER.names.minion))).toBeInTheDocument();
+    expect(
+      screen.getByText(OVERSEER.confirmTitle(OVERSEER.names['minion-hand'])),
+    ).toBeInTheDocument();
   });
 
   it('appoints when the question is answered', async () => {
     state.resources.evil = new Decimal(1000);
 
     const { onAppoint, user } = draw();
-    await user.click(screen.getByRole('button', { name: new RegExp(OVERSEER.names.minion) }));
+    await user.click(
+      screen.getByRole('button', { name: new RegExp(OVERSEER.names['minion-hand']) }),
+    );
 
     await user.click(screen.getByRole('button', { name: OVERSEER.confirmAction }));
 
@@ -129,7 +141,9 @@ describe('Miscreants', () => {
     state.resources.evil = new Decimal(1000);
 
     const { onAppoint, user } = draw();
-    await user.click(screen.getByRole('button', { name: new RegExp(OVERSEER.names.minion) }));
+    await user.click(
+      screen.getByRole('button', { name: new RegExp(OVERSEER.names['minion-hand']) }),
+    );
 
     await user.click(screen.getByRole('button', { name: OVERSEER.cancel }));
 
@@ -140,7 +154,9 @@ describe('Miscreants', () => {
     state.resources.evil = new Decimal(1000);
 
     const { user } = draw();
-    await user.click(screen.getByRole('button', { name: new RegExp(OVERSEER.names.minion) }));
+    await user.click(
+      screen.getByRole('button', { name: new RegExp(OVERSEER.names['minion-hand']) }),
+    );
 
     await user.click(screen.getByRole('button', { name: OVERSEER.cancel }));
 
@@ -160,13 +176,15 @@ describe('Miscreants', () => {
 
     draw();
 
-    expect(screen.getByRole('button', { name: new RegExp(OVERSEER.names.minion) })).toBeDisabled();
+    expect(
+      screen.getByRole('button', { name: new RegExp(OVERSEER.names['minion-hand']) }),
+    ).toBeDisabled();
   });
 
   it('still shows a post for a rung the player has not reached', () => {
     draw((id) => id === 'minion');
 
-    expect(screen.getByText(OVERSEER.names.fortress)).toBeInTheDocument();
+    expect(screen.getByText(OVERSEER.names['fortress-hand'])).toBeInTheDocument();
   });
 
   it('lifts the appointment when it is the best spend going', () => {

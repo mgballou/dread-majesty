@@ -23,7 +23,21 @@ export const fixture: Content = {
       costResource: 'evil',
       baseCost: '1500',
       costRate: 1.089,
-      overseerCost: '600',
+      overseers: [
+        { id: 'warren-hand', name: 'Fixture Warden', cost: '600', effect: { kind: 'automate' } },
+        {
+          id: 'warren-goad',
+          name: 'Fixture Goad',
+          cost: '2400',
+          effect: { kind: 'quicken', factor: 2 },
+        },
+        {
+          id: 'warren-glut',
+          name: 'Fixture Glut',
+          cost: '9600',
+          effect: { kind: 'swell', factor: 2 },
+        },
+      ],
       art: 'tier/warren',
     },
     {
@@ -36,7 +50,26 @@ export const fixture: Content = {
       costResource: 'evil',
       baseCost: '90',
       costRate: 1.089,
-      overseerCost: '400',
+      overseers: [
+        {
+          id: 'minion-hand',
+          name: 'Fixture Taskmaster',
+          cost: '400',
+          effect: { kind: 'automate' },
+        },
+        {
+          id: 'minion-goad',
+          name: 'Fixture Goad',
+          cost: '1600',
+          effect: { kind: 'quicken', factor: 2 },
+        },
+        {
+          id: 'minion-glut',
+          name: 'Fixture Glut',
+          cost: '6400',
+          effect: { kind: 'swell', factor: 2 },
+        },
+      ],
       art: 'tier/minion',
     },
   ],

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ACHIEVEMENT_IDS, TIER_IDS } from '../src/ids.ts';
+import { ACHIEVEMENT_IDS, OVERSEER_IDS, TIER_IDS } from '../src/ids.ts';
 import { v1Achievements } from '../src/v1/achievements.ts';
 import { v1Copy } from '../src/v1/copy.ts';
 
@@ -33,32 +33,34 @@ describe.each(TIER_IDS)('tier %s', (id) => {
   it('has a line of flavour', () => {
     expect(v1Copy.tiers[id].flavour.length).toBeGreaterThan(0);
   });
+});
 
-  it('names an Overseer', () => {
+describe.each(OVERSEER_IDS)('overseer %s', (id) => {
+  it('has a name', () => {
     expect(v1Copy.overseer.names[id].length).toBeGreaterThan(0);
   });
 
-  it('says what that Overseer does', () => {
+  it('has a note', () => {
     expect(v1Copy.overseer.notes[id].length).toBeGreaterThan(0);
   });
 });
 
 describe('the Overseers', () => {
   it('gives every one of them a different title', () => {
-    const names = TIER_IDS.map((id) => v1Copy.overseer.names[id]);
-    expect(new Set(names).size).toBe(TIER_IDS.length);
+    const names = OVERSEER_IDS.map((id) => v1Copy.overseer.names[id]);
+    expect(new Set(names).size).toBe(OVERSEER_IDS.length);
   });
 
   it('gives every one of them a different note', () => {
-    const notes = TIER_IDS.map((id) => v1Copy.overseer.notes[id]);
-    expect(new Set(notes).size).toBe(TIER_IDS.length);
+    const notes = OVERSEER_IDS.map((id) => v1Copy.overseer.notes[id]);
+    expect(new Set(notes).size).toBe(OVERSEER_IDS.length);
   });
 
   it('keeps the titles the spec fixed', () => {
-    expect(v1Copy.overseer.names.minion).toBe('Taskmaster of the Pits');
-    expect(v1Copy.overseer.names.warren).toBe('Warden of the Warrens');
-    expect(v1Copy.overseer.names.legion).toBe('Quartermaster of the Host');
-    expect(v1Copy.overseer.names.fortress).toBe('Castellan of the Black Keep');
+    expect(v1Copy.overseer.names['minion-hand']).toBe('Taskmaster of the Pits');
+    expect(v1Copy.overseer.names['warren-hand']).toBe('Warden of the Warrens');
+    expect(v1Copy.overseer.names['legion-hand']).toBe('Quartermaster of the Host');
+    expect(v1Copy.overseer.names['fortress-hand']).toBe('Castellan of the Black Keep');
   });
 
   it('says different things about an overseen tier and a manual one', () => {

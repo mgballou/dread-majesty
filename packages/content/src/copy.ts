@@ -1,4 +1,4 @@
-import type { AchievementId, TierId } from './ids.ts';
+import type { AchievementId, OverseerId, TierId } from './ids.ts';
 
 /**
  * Every player-facing string that is not a tier name.
@@ -200,8 +200,8 @@ export interface OverseerCopy {
   readonly automatic: string;
   /** What appointing costs. `amount` arrives formatted. */
   readonly cost: (amount: string) => string;
-  readonly names: Readonly<Record<TierId, string>>;
-  readonly notes: Readonly<Record<TierId, string>>;
+  readonly names: Readonly<Record<OverseerId, string>>;
+  readonly notes: Readonly<Record<OverseerId, string>>;
   /** The panel these appointments live in, beside the muster. */
   readonly panelTitle: string;
   /** One line saying what the panel is for. */

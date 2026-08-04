@@ -149,7 +149,7 @@ export function ChainStage({
               oversight={{
                 isAppointed: isAppointed(tier.id),
                 isRousable: isRousable(tier.id),
-                overseer: copy.overseer.names[tier.id],
+                overseer: copy.overseer.names[`${tier.id}-hand`], // Roster-aware from Task 5.
                 copy: copy.overseer,
                 onRouse: () => onRouse(tier.id),
               }}

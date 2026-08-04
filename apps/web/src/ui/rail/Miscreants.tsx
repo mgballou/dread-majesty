@@ -71,7 +71,7 @@ export function Miscreants({ content, state, plan, onAppoint, copy }: Miscreants
       tier,
       filled: isAppointed(state, tier.id),
       offer,
-      price: offer?.cost ?? new Decimal(tier.overseerCost),
+      price: offer?.cost ?? new Decimal(tier.overseers[0]?.cost ?? '0'), // Roster-aware from Task 5.
       emphasis: spendEmphasis(plan, 'appoint', tier.id),
     };
   });
@@ -89,7 +89,7 @@ export function Miscreants({ content, state, plan, onAppoint, copy }: Miscreants
       {asked !== null && (
         <Confirm
           open
-          title={copy.overseer.confirmTitle(copy.overseer.names[asked.tier.id])}
+          title={copy.overseer.confirmTitle(copy.overseer.names[`${asked.tier.id}-hand`])} // Roster-aware from Task 5.
           confirmLabel={copy.overseer.confirmAction}
           cancelLabel={copy.overseer.cancel}
           onChoose={(choice) => {
@@ -97,7 +97,7 @@ export function Miscreants({ content, state, plan, onAppoint, copy }: Miscreants
             setAsking(null);
           }}
         >
-          <p>{copy.overseer.notes[asked.tier.id]}</p>
+          <p>{copy.overseer.notes[`${asked.tier.id}-hand`]}</p> {/* Roster-aware from Task 5. */}
           <p>{copy.overseer.cost(formatNumber(asked.price))}</p>
         </Confirm>
       )}
@@ -134,8 +134,9 @@ function Post({ post, onAsk, copy }: PostProps): ReactNode {
         <Diamond filled={filled} />
 
         <span className="miscreant__body">
-          <span className="miscreant__name">{copy.overseer.names[tier.id]}</span>
-          <span className="miscreant__note">{copy.overseer.notes[tier.id]}</span>
+          {/* Roster-aware from Task 5. */}
+          <span className="miscreant__name">{copy.overseer.names[`${tier.id}-hand`]}</span>
+          <span className="miscreant__note">{copy.overseer.notes[`${tier.id}-hand`]}</span>
         </span>
 
         <span className="miscreant__standing">

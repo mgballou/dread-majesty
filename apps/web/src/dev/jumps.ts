@@ -103,11 +103,12 @@ export function jumps(content: Content, copy: Copy): readonly Jump[] {
     list.push({
       id: `appoint:${tier.id}`,
       group: 'Appointing an Overseer',
-      label: `Afford the ${copy.overseer.names[tier.id]} — ${tier.overseerCost} Evil banked`,
+      // Roster-aware from Task 5.
+      label: `Afford the ${copy.overseer.names[`${tier.id}-hand`]} — ${tier.overseers[0]?.cost ?? '0'} Evil banked`,
       build: () =>
         board(content, {
           owned: { ...stocked, [tier.id]: STOCK },
-          evil: tier.overseerCost,
+          evil: tier.overseers[0]?.cost ?? '0',
           appointed: ids,
         }),
     });

@@ -113,7 +113,7 @@ function appoint(
   if (!tier) return { ok: false, intent, reason: 'unknown-tier' };
   if (state.overseers[tier.id]) return { ok: false, intent, reason: 'already-appointed' };
 
-  const cost = new Decimal(tier.overseerCost);
+  const cost = new Decimal(tier.overseers[0]?.cost ?? '0'); // Roster-aware from Task 5.
   const budget = state.resources[tier.costResource];
   if (cost.gt(budget)) return { ok: false, intent, reason: 'insufficient-resource' };
 

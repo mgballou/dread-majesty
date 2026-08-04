@@ -31,7 +31,9 @@ describe('jumps', () => {
 
   it('banks exactly what an Overseer costs', () => {
     const minion = CURRENT.tiers.find((tier) => tier.id === 'minion');
-    expect(find('appoint:minion').build().resources.evil.toString()).toBe(minion?.overseerCost);
+    expect(find('appoint:minion').build().resources.evil.toString()).toBe(
+      minion?.overseers[0]?.cost,
+    );
   });
 
   it('leaves the tier being appointed unappointed', () => {
