@@ -191,6 +191,13 @@ export interface RailCopy {
   readonly upcomingTitle: string;
   /** That row's line. Both parts arrive formatted; `tier` is the plural. */
   readonly upcoming: (args: { readonly tier: string; readonly cost: string }) => string;
+  /**
+   * Said beside the owned count when the two differ. `count` arrives formatted.
+   *
+   * Only when they differ. A row where every unit was bought would be saying the
+   * same number twice, and the line is there to explain a price, not to decorate.
+   */
+  readonly bought: (count: string) => string;
 }
 
 /**

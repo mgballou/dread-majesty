@@ -268,6 +268,7 @@ export const v1Copy = {
     upcomingTitle: 'Next in the chain',
     upcoming: ({ tier, cost }: { tier: string; cost: string }): string =>
       `${tier} cost ${cost}. Further than you have come.`,
+    bought: (count: string): string => `${count} bought`,
   },
 
   overseer: {
