@@ -3,3 +3,6 @@ dist
 pnpm-lock.yaml
 # Hand-authored prose. A code formatter has nothing to offer it.
 docs
+
+# Machine-local harness config. Not project source.
+.claude/settings.local.json
