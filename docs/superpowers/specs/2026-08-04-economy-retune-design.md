@@ -189,9 +189,11 @@ migrate to, the roster has no equivalent, and the numbers underneath have all mo
 development build and no longer loads* — rather than starting fresh in silence, which
 is what `useGameSession` does today.
 
-The migration chain stays for versions at or above the floor, and so do its tests. The
-floor moves only when a change genuinely cannot be migrated, and moving it is a
-decision somebody writes down.
+The migration machinery stays, and so does the test that a save passes through it. The
+table itself is empty for now — the floor equals the current version, so every save
+this build accepts is already current, and the version 1 to 4 migrations go with the
+saves they served. The floor moves only when a change genuinely cannot be migrated, and
+moving it is a decision somebody writes down.
 
 This amends §4.7's "a save two versions old must load". That rule was written for a
 shipped game. This one has two players on four devices, and pretending otherwise costs
