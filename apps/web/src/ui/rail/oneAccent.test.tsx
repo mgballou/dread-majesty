@@ -89,7 +89,7 @@ describe('exactly one control wears the accent, across both panels', () => {
     state.overseers.minion = ['minion-hand'];
     state.gens.minion.owned = new Decimal(2000);
     state.gens.minion.purchased = new Decimal(2000);
-    state.resources.evil = new Decimal(2000);
+    state.resources.evil = new Decimal(3000);
     const plan = draw();
 
     const best = plan.best;

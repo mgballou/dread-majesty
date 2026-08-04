@@ -146,33 +146,44 @@ curve, and with §2 in place the cost curve finally works.
 
 ### 5.2 Targets
 
-Tuned and measured. The last column is what `pnpm harness` reports for the shipping
-content; "Before" is the same harness against the placeholder numbers at `37f645b`.
+Tuned and measured. "Measured" is what `pnpm harness` reports for the shipping content;
+"Before" is the same harness against the placeholder numbers at `37f645b`; "First fit"
+is the retune as it stood before §5.8's obsolescence rule was measured and the numbers
+were refitted around it.
 
-| | Target | Before | Measured |
-| --- | ---: | ---: | ---: |
-| First Warren | ~12m | 26m 33s | **11m 53s** |
-| First Dark Legion | ~35m | 54m 21s | **33m 53s** |
-| First Fortress | ~1h 10m | 1h 54m 29s | **1h 08m 55s** |
-| First Throne | ~2h | 3h 55m 29s | **2h 00m 05s** |
-| First prestige | ~45m | 1h 36m 49s | **45m 03s** |
-| Souls at first reset | 40–50 | ~10 | **40–50 at 1h 30m** |
-| Largest jump between checkpoints | under ~100× | 1.3e4 | **3.0e4** ✗ |
+| | Target | Before | First fit | Measured |
+| --- | ---: | ---: | ---: | ---: |
+| First Warren | ~12m | 26m 33s | 11m 53s | **10m 53s** |
+| First Dark Legion | ~35m | 54m 21s | 33m 53s | **39m 35s** |
+| First Fortress | ~1h 10m | 1h 54m 29s | 1h 08m 55s | **1h 14m 37s** |
+| First Throne | ~2h | 3h 55m 29s | 2h 00m 05s | **2h 03m 09s** |
+| First prestige | ~45m | 1h 36m 49s | 45m 03s | **41m 11s** |
+| Souls at first reset | 40–50 | ~10 | 40–50 at 1h 30m | **40–50 at 1h 47m** |
+| Largest jump between checkpoints | under ~100× | 1.3e4 | 3.0e4 | **6.3e4** ✗ |
 
-Six of seven land. The souls row needs its reading stated: at the moment a reset first
-becomes possible the gain is one soul by construction, and nobody would take it. The
-40–50 the row asks for arrives at about 1h 30m, and that is the first reset worth
-taking. The two cannot be set apart — `k` and `scale` enter the formula only as
+All five arrival times land, none further than a seventh from its target and all well
+inside the fifth §5.2 allows. The souls row needs its reading stated: at the moment a
+reset first becomes possible the gain is one soul by construction, and nobody would take
+it. The 40–50 the row asks for arrives at about 1h 47m, and that is the first reset
+worth taking. The two cannot be set apart — `k` and `scale` enter the formula only as
 `scale/k²`, so fixing when the first soul lands fixes how many every later moment pays.
 
-**The cliff is missed and is worse than the build it replaces.** §4 asks for no stretch
-between adjacent checkpoints worth more than about 100×; the steepest here is 4h→8h at
-3.0e4 on Evil per second, against 1.3e4 before. It is the arithmetic of the rest of this
-table: the run has to climb from a hundred Minions at 15m to a five-tier cascade by 2h,
-and the checkpoints are a doubling apart, so halving every arrival time squares the
-ratio across them. The flattest shape found that still hits the five times measures
-3.0e4. See the note on `v1` in `packages/content/src/v1/generators.ts` for the one lever
-left — the milestone tail rung — and why it was not pulled.
+The five times moved by a few per cent between the first fit and the measured column,
+and that is the price of §5.8. The obsolescence rule is fitted to counts of the tier
+above, which meant flattening every cost curve and cutting what one unit of each
+producer hands over; the base costs were then refitted to bring the arrival times back
+inside their bands. The obsolescence points themselves are in §5.8 and in the note on
+`v1` in `packages/content/src/v1/generators.ts`.
+
+**The cliff is missed and is worse again.** §4 asks for no stretch between adjacent
+checkpoints worth more than about 100×; the steepest here is 4h→8h at 6.3e4 on Evil per
+second, against 3.0e4 at the first fit and 1.3e4 before. Part of that is the arithmetic
+of the rest of this table — the run has to climb from a thousand Minions at 15m to a
+five-tier cascade by 2h, and the checkpoints are a doubling apart, so halving every
+arrival time squares the ratio across them. The rest is §5.8 charged directly: flat cost
+curves mean counts climb where prices used to, and counts are what the milestone ladder
+pays on. See the note on `v1` for the one lever left — the milestone tail rung — and why
+it was not pulled.
 
 **These were targets, not numbers.** `pnpm harness` set the numbers. Any figure in this
 section that the harness contradicts is wrong, and the harness wins.
