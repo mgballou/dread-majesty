@@ -36,6 +36,12 @@ import type { BuyQuantity } from './quantity.ts';
  * Push it up and the rail will favour the top of the chain; pull it down and it will
  * never recommend anything but Minions. Both are correct answers to different
  * questions.
+ *
+ * **The payback-period claim above is retracted.** It cited a target for tiers above
+ * Minions that lived in `packages/content/src/v1/generators.ts`; the retune's rewrite
+ * of that file's note dropped it and left nothing to re-derive the ten minutes from.
+ * The number stands only because nothing has shown it wrong, not because the reasoning
+ * above still holds.
  */
 export const HORIZON_SECONDS = 600;
 
@@ -138,9 +144,9 @@ export function spendEmphasis(
  * that tier's *whole* contribution over the horizon, not a marginal slice of it —
  * the same sum as a purchase with every owned unit counted as newly arrived. That
  * puts the two on one axis, which is the point: the harness has the Minion Overseer
- * affordable at 8m 25s and the first Warren at 11m 53s, and for those three and a half
- * minutes the appointment really is the best thing to spend on. A rail that could not
- * lift it would be lifting the wrong thing, and §3 gives it only one chance to be right.
+ * affordable at 9m 57s and the first Warren at 10m 53s, and for that under a minute
+ * the appointment really is the best thing to spend on. A rail that could not lift it
+ * would be lifting the wrong thing, and §3 gives it only one chance to be right.
  *
  * **What it gets wrong, plainly:**
  *

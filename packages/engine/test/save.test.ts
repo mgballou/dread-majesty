@@ -14,9 +14,69 @@ import {
   step,
   migrate,
 } from '../src/index.ts';
+import type { SaveBlob } from '../src/index.ts';
 import { fixture } from './fixtures/content.ts';
 import { appointed } from './fixtures/state.ts';
 import type { GameState } from '../src/types.ts';
+
+/**
+ * A real save version 6 blob, hand-frozen rather than built from `serialize`.
+ *
+ * Migration tests must never be generated from current code: a blob built by
+ * today's `serialize` carries today's fields, so migrating it proves nothing about
+ * whether the chain can still read what a version 6 build actually wrote — it only
+ * proves the current code accepts its own output. This is the shape a version 6
+ * build actually wrote: every field that version carried (`purchased` and the
+ * roster-as-posts-filled `overseers`, both added at 6), none that version 7 added
+ * (`stats.runMs`). It must never be regenerated from `serialize`, or it stops being
+ * anything but a second copy of the tests it exists to check.
+ */
+const FROZEN_V6_BLOB: SaveBlob = {
+  saveVersion: 6,
+  resources: { evil: '4200' },
+  gens: {
+    throne: { owned: '0', progressMs: 0, lifetimeProduced: '0', running: false, purchased: '0' },
+    fortress: {
+      owned: '0',
+      progressMs: 0,
+      lifetimeProduced: '0',
+      running: false,
+      purchased: '0',
+    },
+    legion: { owned: '0', progressMs: 0, lifetimeProduced: '0', running: false, purchased: '0' },
+    warren: {
+      owned: '7',
+      progressMs: 12_000,
+      lifetimeProduced: '350',
+      running: false,
+      purchased: '7',
+    },
+    minion: {
+      owned: '205',
+      progressMs: 4_000,
+      lifetimeProduced: '4875',
+      running: true,
+      purchased: '200',
+    },
+  },
+  souls: '0',
+  lifetimeEvil: '4875',
+  // A version 6 blob predates `runMs`; `SaveBlob['stats']` reuses `GameState['stats']`
+  // wholesale, so the type has no way to describe the missing field on its own.
+  stats: { playTimeMs: 120_000, smites: 1, prestiges: 0 } as GameState['stats'],
+  earnedAchievements: ['smite-1'],
+  unlocked: { throne: false, fortress: false, legion: false, warren: true, minion: true },
+  overseers: {
+    throne: [],
+    fortress: [],
+    legion: [],
+    warren: ['warren-hand'],
+    minion: ['minion-hand'],
+  },
+  smiteActiveMs: 0,
+  smiteCooldownMs: 45_000,
+  savedAtMs: 0,
+};
 
 describe('save round trip', () => {
   it('restores state exactly', () => {
@@ -151,10 +211,7 @@ describe('the version floor', () => {
   });
 
   it('loads a save at the supported floor', () => {
-    const state = appointed(fixture);
-    const blob = { ...serialize(state, 0), saveVersion: MIN_SUPPORTED_SAVE_VERSION };
-
-    expect(deserialize(blob).saveVersion).toBe(SAVE_VERSION);
+    expect(deserialize(FROZEN_V6_BLOB).saveVersion).toBe(SAVE_VERSION);
   });
 
   it('names the version it refused', () => {
@@ -171,21 +228,20 @@ describe('the version floor', () => {
   });
 
   it('migrates a version 6 save without a run clock to 0', () => {
-    const blob = serialize(appointed(fixture), 0);
-    // A real version 6 blob predates `runMs` entirely. `SaveBlob['stats']` reuses
-    // `GameState['stats']` wholesale, so the type has no way to describe that missing
-    // field — this cast recreates the pre-version-7 shape for the one test that needs it.
-    const legacyStats = { playTimeMs: 0, smites: 0, prestiges: 0 } as GameState['stats'];
-    const legacy = { ...blob, saveVersion: 6, stats: legacyStats };
-
-    const migrated = migrate(legacy);
+    const migrated = migrate(FROZEN_V6_BLOB);
 
     expect(migrated.stats.runMs).toBe(0);
   });
 
   it('keeps a version 6 save that already carries a run clock', () => {
-    const blob = serialize(appointed(fixture), 0);
-    const legacy = { ...blob, saveVersion: 6, stats: { ...blob.stats, runMs: 900_000 } };
+    // `runMs` did not exist at version 6; a build that had already migrated a save
+    // forward once and re-saved it before version 7 shipped is not a real case, but
+    // the migration step still has to leave a present value alone rather than
+    // clobber it, so this constructs the one shape that checks that.
+    const legacy = {
+      ...FROZEN_V6_BLOB,
+      stats: { ...FROZEN_V6_BLOB.stats, runMs: 900_000 } as GameState['stats'],
+    };
 
     const migrated = migrate(legacy);
 

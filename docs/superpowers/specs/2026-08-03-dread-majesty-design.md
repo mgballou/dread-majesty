@@ -447,10 +447,11 @@ that product is what `baseCost`, `costRate`, cycle, yield, Overseer prices and O
 factors are all fitted to. Add a sixth tier and it inherits the same rule rather than a
 fresh guess.
 
-**It is not yet measured, and it must be.** §5.7's harness reports when each tier first
-*arrives*; it says nothing about when each tier stops being worth buying. Until it
-reports the obsolescence point per tier, this section is a principle without an
-instrument and the numbers under it are educated guesses.
+**It is measured.** The harness now reports the obsolescence point per tier — when,
+how many of the tier above, how fast, and whether the tier above was boosted first —
+in the table headed "obsolescence" in `pnpm harness`'s output. See the note on `v1` in
+`packages/content/src/v1/generators.ts` for the crossings the shipping economy is
+fitted to and the verdict on each.
 
 #### 5.8.1 The operational definition
 
@@ -495,14 +496,23 @@ The definition above depends on nothing but the simulation.
 **The top tier has no obsolescence point** — nothing produces it — and Evil is not a
 tier. So a five-tier chain yields four points.
 
----
+**The rule the harness prints a verdict on:** a tier must not be retired as a purchase
+until the tier above it has been boosted. Obsolescence alone is not enough — a tier
+that stops being worth buying by hand has to be handing that role to a tier that has
+itself gotten better at the job, or the cascade has produced a dead spot rather than a
+climb.
 
-## 6. Interface
+**"Boosted" means:** the producer crossed its first milestone threshold, or had a
+`quicken` or a `swell` post filled — `automate` is deliberately excluded. The
+harness's simulated player taps every manual tier the instant its cycle frees (§5.7),
+so appointing an automator changes that tier's output by nothing at all; it only
+removes the tap. `quicken` and `swell` are the only posts that change what the tier
+above actually delivers, which is the only kind of "boosted" this rule cares about.
 
 `ui-sensibility.md` is normative. Three things it forces that the genre normally gets
 wrong:
 
-**Stage — the chain, alive.** Five nodes: Fortresses, Legions, Warrens, Minions, Evil.
+**Stage — the chain, alive.** Six nodes: Thrones, Fortresses, Legions, Warrens, Minions, Evil.
 Each carries a count and a ring sweeping its cycle. On completion the ring snaps and
 motes travel down the link to the next node. When a Warren fires you *see* minions
 pour into the Minion node and the Minion ring quicken. No game in the genre shows its
