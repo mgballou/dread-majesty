@@ -120,6 +120,16 @@ const TAIL_MILESTONES: readonly MilestoneDef[] = (() => {
  * crossing came at 9 Dark Legions, at yield 2 at 15, at yield 1 on a ten-minute cycle
  * at 37.
  *
+ * **The Warren keeps its yield of 5** — it is the only tier above the Minion that
+ * still hands over more than one unit a cycle, and on purpose: it sits directly over
+ * the tier whose curve is already the brake at this end of the chain (see the Minion
+ * paragraph above), so cutting what a Warren breeds would only have widened the
+ * Minion's own dead spot at forty-two Warrens rather than pushed the crossing back.
+ * Its cycle moved anyway, 90s→60s, for a reason that has nothing to do with the
+ * obsolescence rule: it is the lowest tier still worth a tap rather than a rate a
+ * player merely owns, and 60s reads as a livelier row without moving a single number
+ * anywhere else in this file.
+ *
  * What holds the throughput back up differs by tier, and the Dark Legion is the odd one
  * out. The Fortress and the Throne got it back from their base costs, 6e9→3e8 and
  * 5e12→8e11. The Dark Legion's base did not move at all — its curve did, 1.5→1.1, which

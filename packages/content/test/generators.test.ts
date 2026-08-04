@@ -64,12 +64,24 @@ describe('the tiers', () => {
       minion: 'warren',
       warren: 'legion',
       legion: 'fortress',
+      fortress: 'throne',
     };
 
     for (const [below, next] of Object.entries(above)) {
       const cost = Number(byId.get(below as TierId)?.overseers[0]?.cost ?? '0');
       const base = Number(byId.get(next)?.baseCost ?? '0');
       expect(cost / base).toBeCloseTo(0.4, 2);
+    }
+  });
+
+  it('prices the quicken and swell posts at four and sixteen times the automator', () => {
+    for (const tier of v1.tiers) {
+      const automate = Number(tier.overseers[0]?.cost ?? '0');
+      const quicken = Number(tier.overseers[1]?.cost ?? '0');
+      const swell = Number(tier.overseers[2]?.cost ?? '0');
+
+      expect(quicken / automate).toBeCloseTo(4, 2);
+      expect(swell / automate).toBeCloseTo(16, 2);
     }
   });
 
