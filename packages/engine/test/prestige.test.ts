@@ -16,6 +16,13 @@ describe('soulsEarned', () => {
 
     expect(soulsEarned(state, fixture).toString()).toBe(String(fixture.prestige.k));
   });
+
+  it('floors normally when nowhere near an integer boundary', () => {
+    const state = createState(fixture);
+    state.lifetimeEvil = new Decimal(fixture.prestige.scale).mul(0.0049);
+
+    expect(soulsEarned(state, fixture).toString()).toBe('10');
+  });
 });
 
 describe('msToNextSoul', () => {
