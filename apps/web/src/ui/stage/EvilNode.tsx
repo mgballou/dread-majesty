@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import type Decimal from 'break_eternity.js';
 import type { Content, SmiteCopy } from '@dm/content';
-import { nextBlowMultiplier, smiteDurationMs, smiteWeight } from '@dm/engine';
+import { nextBlowMultiplier, smiteDurationMs } from '@dm/engine';
 import type { GameState } from '@dm/engine';
 import { TierArt } from '../art/TierArt.tsx';
 import { formatNumber } from '../format.ts';
@@ -133,7 +133,7 @@ function verb(phase: SmitePhase, copy: SmiteCopy): string {
 
 function worth(copy: SmiteCopy, state: GameState, content: Content): string {
   return copy.worth({
-    multiplier: `×${smiteWeight(state, content)}`,
+    multiplier: `×${nextBlowMultiplier(state, content).toFixed(2)}`,
     seconds: `${Math.round(smiteDurationMs(state, content) / 1000)}s`,
   });
 }
