@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { v1 } from '../src/v1/generators.ts';
-import { TIER_IDS } from '../src/ids.ts';
+import { TIER_IDS, SMITE_UPGRADE_IDS, isSmiteUpgradeId } from '../src/ids.ts';
 import type { TierId } from '../src/ids.ts';
 
 describe('the milestone ladder', () => {
@@ -130,5 +130,23 @@ describe('the tiers', () => {
     const ids = v1.tiers.flatMap((tier) => tier.overseers.map((post) => post.id));
 
     expect(new Set(ids).size).toBe(ids.length);
+  });
+});
+
+describe('the smite upgrade ids', () => {
+  it('names four ladders', () => {
+    expect(SMITE_UPGRADE_IDS).toHaveLength(4);
+  });
+
+  it('repeats none of them', () => {
+    expect(new Set(SMITE_UPGRADE_IDS).size).toBe(SMITE_UPGRADE_IDS.length);
+  });
+
+  it('accepts an id it ships', () => {
+    expect(isSmiteUpgradeId('weight')).toBe(true);
+  });
+
+  it('rejects an id it does not', () => {
+    expect(isSmiteUpgradeId('patience')).toBe(false);
   });
 });
