@@ -2,6 +2,7 @@ import Decimal from 'break_eternity.js';
 import type { Content, OverseerId, ProducibleId, TierId } from '@dm/content';
 import { nextCost } from './cost.ts';
 import { effectiveCycleMs, effectiveYield, findOverseer, hasAutomator, hasPost } from './roster.ts';
+import { smiteDurationMs } from './smite.ts';
 import { globalMultiplier, tierMultiplier } from './step.ts';
 import type { GameState } from './types.ts';
 
@@ -266,7 +267,11 @@ export function smitePhase(
   content: Content,
 ): { readonly kind: 'active' | 'cooling' | 'ready'; readonly share: number } {
   if (state.smiteActiveMs > 0) {
-    return { kind: 'active', share: state.smiteActiveMs / content.smite.durationMs };
+    // Clamped, because Reach can be bought while a blow is running and the blow keeps
+    // the length it was struck at. A stored duration would be a field that matters for
+    // one frame a run; a clamp is a line.
+    const duration = smiteDurationMs(state, content);
+    return { kind: 'active', share: Math.min(1, state.smiteActiveMs / duration) };
   }
   if (state.smiteCooldownMs > 0) {
     return { kind: 'cooling', share: state.smiteCooldownMs / content.smite.cooldownMs };

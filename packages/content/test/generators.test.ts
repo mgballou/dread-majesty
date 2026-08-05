@@ -1,7 +1,9 @@
+import Decimal from 'break_eternity.js';
 import { describe, expect, it } from 'vitest';
 import { v1 } from '../src/v1/generators.ts';
 import { TIER_IDS, SMITE_UPGRADE_IDS, isSmiteUpgradeId } from '../src/ids.ts';
 import type { TierId } from '../src/ids.ts';
+import type { SmiteUpgradeId, SmiteUpgradeDef } from '../src/index.ts';
 
 describe('the milestone ladder', () => {
   it('is strictly ascending', () => {
@@ -130,6 +132,76 @@ describe('the tiers', () => {
     const ids = v1.tiers.flatMap((tier) => tier.overseers.map((post) => post.id));
 
     expect(new Set(ids).size).toBe(ids.length);
+  });
+});
+
+function ladder(id: SmiteUpgradeId): SmiteUpgradeDef {
+  const found = v1.smite.upgrades.find((upgrade) => upgrade.id === id);
+  if (!found) throw new Error(`no ladder ${id}`);
+  return found;
+}
+
+describe('the smite ladders', () => {
+  it('ships one ladder per id', () => {
+    expect(v1.smite.upgrades.map((upgrade) => upgrade.id).sort()).toEqual(
+      [...SMITE_UPGRADE_IDS].sort(),
+    );
+  });
+
+  it('gives every ladder four rungs', () => {
+    for (const upgrade of v1.smite.upgrades) {
+      expect(upgrade.rungs).toHaveLength(4);
+    }
+  });
+
+  it('raises Weight up its ladder', () => {
+    const values = ladder('weight').rungs.map((rung) => rung.value);
+
+    expect(values).toEqual([...values].sort((a, b) => a - b));
+  });
+
+  it('raises Reach up its ladder', () => {
+    const values = ladder('reach').rungs.map((rung) => rung.value);
+
+    expect(values).toEqual([...values].sort((a, b) => a - b));
+  });
+
+  it('lowers Forgetting down its ladder', () => {
+    const values = ladder('forgetting').rungs.map((rung) => rung.value);
+
+    expect(values).toEqual([...values].sort((a, b) => b - a));
+  });
+
+  it('lowers Restraint down its ladder', () => {
+    const values = ladder('restraint').rungs.map((rung) => rung.value);
+
+    expect(values).toEqual([...values].sort((a, b) => b - a));
+  });
+
+  it('starts Weight where the flat multiplier used to sit', () => {
+    expect(ladder('weight').base).toBe(2);
+  });
+
+  it('starts Reach where the flat duration used to sit', () => {
+    expect(ladder('reach').base).toBe(15_000);
+  });
+
+  it('raises the Evil price at every rung of every ladder', () => {
+    for (const upgrade of v1.smite.upgrades) {
+      const prices = upgrade.rungs.map((rung) => new Decimal(rung.evil).toNumber());
+      expect(prices).toEqual([...prices].sort((a, b) => a - b));
+    }
+  });
+
+  it('raises the soul price at every rung of every ladder', () => {
+    for (const upgrade of v1.smite.upgrades) {
+      const prices = upgrade.rungs.map((rung) => new Decimal(rung.souls).toNumber());
+      expect(prices).toEqual([...prices].sort((a, b) => a - b));
+    }
+  });
+
+  it('never lets the cooldown fall under the shortest blow', () => {
+    expect(v1.smite.cooldownMs).toBeGreaterThanOrEqual(ladder('reach').base);
   });
 });
 
