@@ -102,9 +102,15 @@ export function soulsEarned(state: GameState, content: Content): Decimal {
   return raw.sub(nearest).abs().lte(SOUL_EPSILON) ? nearest : raw.floor();
 }
 
-/** Souls this run would yield if cashed in now, above what the player already holds. */
+/**
+ * Souls this run would yield if cashed in now, above what the player already holds.
+ *
+ * Souls already spent count as held. `soulsEarned` reads `lifetimeEvil`, which a spend
+ * does not touch, so without this term a soul spent on a Keep would come straight back
+ * at the next reset and permanence would cost nothing at all.
+ */
 export function prestigeGain(state: GameState, content: Content): Decimal {
-  return Decimal.max(0, soulsEarned(state, content).sub(state.souls));
+  return Decimal.max(0, soulsEarned(state, content).sub(state.souls).sub(state.soulsSpent));
 }
 
 /**

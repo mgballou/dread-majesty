@@ -1,3 +1,4 @@
+import Decimal from 'break_eternity.js';
 import type { Content, SmiteUpgradeDef, SmiteUpgradeId } from '@dm/content';
 import type { GameState } from './types.ts';
 
@@ -69,4 +70,75 @@ export function smiteStep(state: GameState, content: Content): number {
 export function nextBlowMultiplier(state: GameState, content: Content): number {
   const raw = smiteWeight(state, content) - smiteStep(state, content) * state.smiteApathy;
   return Math.max(1, raw);
+}
+
+/** The rung a ladder would climb to next, or undefined at the top of it. */
+function nextRung(state: GameState, content: Content, id: SmiteUpgradeId) {
+  return ladder(content, id)?.rungs[state.smiteRungs[id]];
+}
+
+/** The rung a ladder's floor would rise to next, or undefined at the top of it. */
+function nextFloor(state: GameState, content: Content, id: SmiteUpgradeId) {
+  return ladder(content, id)?.rungs[state.smiteKept[id]];
+}
+
+/** Evil to climb one rung. Null at the top of the ladder. */
+export function climbCost(state: GameState, content: Content, id: SmiteUpgradeId): Decimal | null {
+  const rung = nextRung(state, content, id);
+  return rung ? new Decimal(rung.evil) : null;
+}
+
+/** Souls to raise the floor one rung. Null at the top of the ladder. */
+export function keepCost(state: GameState, content: Content, id: SmiteUpgradeId): Decimal | null {
+  const rung = nextFloor(state, content, id);
+  return rung ? new Decimal(rung.souls) : null;
+}
+
+export function canClimb(state: GameState, content: Content, id: SmiteUpgradeId): boolean {
+  const cost = climbCost(state, content, id);
+  return cost !== null && state.resources.evil.gte(cost);
+}
+
+/**
+ * Whether the floor can rise.
+ *
+ * Souls can never advance a ladder: the rung has to have been climbed with Evil in this
+ * run first. That is the whole of the "climb with Evil, keep with souls" rule, and it
+ * lives here so no caller has to remember it.
+ */
+export function canKeep(state: GameState, content: Content, id: SmiteUpgradeId): boolean {
+  if (state.smiteKept[id] >= state.smiteRungs[id]) return false;
+
+  const cost = keepCost(state, content, id);
+  return cost !== null && state.souls.gte(cost);
+}
+
+/**
+ * The average production multiplier a player striking on every cooldown would hold.
+ *
+ * The shop ranks by the gain in this per Evil spent (spec §5.2). The cooldown's rhythm
+ * is an assumption, and a stated one — a player who paces their blows instead gets a
+ * different answer, and the panel does not know which they are. It is the assumption a
+ * majority will match, and a defined number beats a hand-waved "best".
+ *
+ * Pass `bump` to ask what the figure would read with one more rung of that ladder. At
+ * the top of a ladder `smiteValueAt` clamps, so a bump there reports no gain at all,
+ * which is the honest answer.
+ */
+export function smiteAverageMultiplier(
+  state: GameState,
+  content: Content,
+  bump: SmiteUpgradeId | null,
+): number {
+  const at = (id: SmiteUpgradeId): number =>
+    smiteValueAt(content, id, state.smiteRungs[id] + (bump === id ? 1 : 0));
+
+  const cooldownMs = content.smite.cooldownMs;
+  const uptime = Math.min(1, at('reach') / cooldownMs);
+  // Where Apathy settles for somebody striking on every cooldown: a point arrives with
+  // each blow and `cooldownMs / bleedMs` of a point bleeds away between them.
+  const settled = Math.max(0, content.smite.apathy.cap - cooldownMs / at('forgetting'));
+  const blow = Math.max(1, at('weight') - at('restraint') * settled);
+
+  return uptime * blow + (1 - uptime);
 }

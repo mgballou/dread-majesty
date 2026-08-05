@@ -173,6 +173,8 @@ export interface OfflineReport {
 export type Intent =
   | { kind: 'purchase'; tierId: TierId; quantity: number | 'max' }
   | { kind: 'smite' }
+  | { kind: 'climb'; upgradeId: SmiteUpgradeId }
+  | { kind: 'keep'; upgradeId: SmiteUpgradeId }
   | { kind: 'rouse'; tierId: TierId }
   | { kind: 'appoint'; overseerId: OverseerId }
   | { kind: 'prestige' }
@@ -186,9 +188,13 @@ export type IntentResult =
 export type IntentFailure =
   | 'smite-cooling'
   | 'insufficient-resource'
+  | 'insufficient-souls'
   | 'nothing-affordable'
   | 'no-souls-earned'
   | 'unknown-tier'
+  | 'unknown-upgrade'
+  | 'rung-maxed'
+  | 'nothing-to-keep'
   | 'tier-not-owned'
   | 'already-running'
   | 'already-appointed'

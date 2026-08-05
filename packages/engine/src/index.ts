@@ -9,6 +9,11 @@ export {
   smiteBleedMs,
   smiteStep,
   nextBlowMultiplier,
+  smiteAverageMultiplier,
+  climbCost,
+  keepCost,
+  canClimb,
+  canKeep,
 } from './smite.ts';
 
 export {
