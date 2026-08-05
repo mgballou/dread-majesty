@@ -46,7 +46,7 @@ function draw(isUnlocked: (id: TierId) => boolean = () => true, quantity: BuyQua
     content: CURRENT,
     quantity,
     isUnlocked,
-    held: { purchase: null, appoint: null },
+    held: { purchase: null, appoint: null, climb: null },
   });
   const onPurchase = vi.fn();
   const onQuantity = vi.fn();

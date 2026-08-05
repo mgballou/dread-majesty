@@ -16,7 +16,7 @@ import { railPlan, type HeldKeys, type RailPlan, type RailPlanInput } from './ra
  * afresh.
  */
 export function useRailPlan(input: Omit<RailPlanInput, 'held'>, version: number): RailPlan {
-  const held = useRef<HeldKeys>({ purchase: null, appoint: null });
+  const held = useRef<HeldKeys>({ purchase: null, appoint: null, climb: null });
   const { state, content, quantity, isUnlocked } = input;
 
   return useMemo(() => {
@@ -25,6 +25,7 @@ export function useRailPlan(input: Omit<RailPlanInput, 'held'>, version: number)
     held.current = {
       purchase: plan.best.purchase?.tierId ?? held.current.purchase,
       appoint: plan.best.appoint?.overseerId ?? held.current.appoint,
+      climb: plan.best.climb?.upgradeId ?? held.current.climb,
     };
 
     return plan;
