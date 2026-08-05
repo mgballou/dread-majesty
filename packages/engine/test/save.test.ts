@@ -79,6 +79,64 @@ const FROZEN_V6_BLOB: SaveBlob = {
   savedAtMs: 0,
 };
 
+/**
+ * A real save version 7 blob, hand-frozen rather than built from `serialize`.
+ *
+ * The four "starts a migrated save with…" tests below exist to prove the version 8
+ * defaults in `deserialize`'s `??` fallbacks actually fire on a save that predates
+ * them. A blob built as `{ ...serialize(createState(fixture), 0), saveVersion: 7 }`
+ * cannot do that: `serialize` always writes every version 8 field, so a "version 7"
+ * blob built that way already carries `smiteApathy`, `smiteBlow`, `smiteRungs`,
+ * `smiteKept` and `soulsSpent` from `createState`'s own defaults — the tests would
+ * pass even if every fallback were deleted. This is the shape a version 7 build
+ * actually wrote: every field up through the per-run clock (added at 7), none of the
+ * five version 8 added. It must never be regenerated from `serialize`.
+ */
+const FROZEN_V7_BLOB: SaveBlob = {
+  saveVersion: 7,
+  resources: { evil: '4200' },
+  gens: {
+    throne: { owned: '0', progressMs: 0, lifetimeProduced: '0', running: false, purchased: '0' },
+    fortress: {
+      owned: '0',
+      progressMs: 0,
+      lifetimeProduced: '0',
+      running: false,
+      purchased: '0',
+    },
+    legion: { owned: '0', progressMs: 0, lifetimeProduced: '0', running: false, purchased: '0' },
+    warren: {
+      owned: '7',
+      progressMs: 12_000,
+      lifetimeProduced: '350',
+      running: false,
+      purchased: '7',
+    },
+    minion: {
+      owned: '205',
+      progressMs: 4_000,
+      lifetimeProduced: '4875',
+      running: true,
+      purchased: '200',
+    },
+  },
+  souls: '0',
+  lifetimeEvil: '4875',
+  stats: { playTimeMs: 120_000, smites: 1, prestiges: 0, runMs: 60_000 },
+  earnedAchievements: ['smite-1'],
+  unlocked: { throne: false, fortress: false, legion: false, warren: true, minion: true },
+  overseers: {
+    throne: [],
+    fortress: [],
+    legion: [],
+    warren: ['warren-hand'],
+    minion: ['minion-hand'],
+  },
+  smiteActiveMs: 0,
+  smiteCooldownMs: 45_000,
+  savedAtMs: 0,
+};
+
 describe('save round trip', () => {
   it('restores state exactly', () => {
     const original = appointed(fixture);
@@ -267,28 +325,21 @@ describe('save version 8', () => {
   });
 
   it('starts a migrated save with no apathy', () => {
-    const blob = { ...serialize(createState(fixture), 0), saveVersion: 7 };
-
-    expect(deserialize(blob).smiteApathy).toBe(0);
+    expect(deserialize(FROZEN_V7_BLOB).smiteApathy).toBe(0);
   });
 
   it('starts a migrated save with a blow worth nothing extra', () => {
-    const blob = { ...serialize(createState(fixture), 0), saveVersion: 7 };
-
-    expect(deserialize(blob).smiteBlow).toBe(1);
+    expect(deserialize(FROZEN_V7_BLOB).smiteBlow).toBe(1);
   });
 
   it('starts a migrated save at the bottom of every ladder', () => {
-    const blob = { ...serialize(createState(fixture), 0), saveVersion: 7 };
-    const state = deserialize(blob);
+    const state = deserialize(FROZEN_V7_BLOB);
 
     expect(SMITE_UPGRADE_IDS.map((id) => state.smiteRungs[id])).toEqual([0, 0, 0, 0]);
   });
 
   it('starts a migrated save having spent no souls', () => {
-    const blob = { ...serialize(createState(fixture), 0), saveVersion: 7 };
-
-    expect(deserialize(blob).soulsSpent.eq(0)).toBe(true);
+    expect(deserialize(FROZEN_V7_BLOB).soulsSpent.eq(0)).toBe(true);
   });
 
   it('round-trips the rungs it was given', () => {
