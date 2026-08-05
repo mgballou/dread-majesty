@@ -202,6 +202,15 @@ describe('the smite ladders', () => {
   it('never lets the cooldown fall under the shortest blow', () => {
     expect(v1.smite.cooldownMs).toBeGreaterThanOrEqual(ladder('reach').base);
   });
+
+  it('keeps the cooldown inside the regime the ranking assumes', () => {
+    const forgetting = ladder('forgetting');
+    const values = [forgetting.base, ...forgetting.rungs.map((rung) => rung.value)];
+
+    for (const value of values) {
+      expect(v1.smite.cooldownMs / value).toBeLessThanOrEqual(v1.smite.apathy.perBlow);
+    }
+  });
 });
 
 describe('the smite upgrade ids', () => {
