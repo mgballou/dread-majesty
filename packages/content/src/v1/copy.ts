@@ -181,6 +181,38 @@ export const v1Copy = {
       'An orchard, salted.',
       'Struck. The report will follow.',
     ],
+    apathy: 'Apathy',
+    bands: [
+      'The realm flinches.',
+      'The realm has seen worse.',
+      'The realm has stopped looking.',
+    ] as const,
+    blow: (multiplier) => `Next ${multiplier}`,
+  },
+
+  wrath: {
+    title: 'Wrath',
+    names: {
+      reach: 'Reach',
+      weight: 'Weight',
+      forgetting: 'Forgetting',
+      restraint: 'Restraint',
+    },
+    notes: {
+      reach: 'A blow that holds longer. The realm has more time to regret it.',
+      weight: 'A heavier blow. Nothing subtle, and nothing that needs to be.',
+      forgetting: 'The realm forgets your last blow sooner, and fears the next one more.',
+      restraint: 'Each measure of Apathy takes less off a blow. Discipline, of a sort.',
+    },
+    rung: ({ at, of }) => `Rung ${at} of ${of}`,
+    step: ({ now, next }) => `${now} → ${next}`,
+    climb: 'Climb',
+    climbCost: (cost) => `${cost} Evil`,
+    keep: 'Keep',
+    keepCost: (cost) => `${cost} souls`,
+    maxed: 'Mastered',
+    held: 'Held',
+    lifted: 'best available',
   },
 
   milestone: {

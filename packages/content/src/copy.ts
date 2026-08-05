@@ -1,4 +1,4 @@
-import type { AchievementId, OverseerId, TierId } from './ids.ts';
+import type { AchievementId, OverseerId, SmiteUpgradeId, TierId } from './ids.ts';
 
 /**
  * Every player-facing string that is not a tier name.
@@ -64,6 +64,53 @@ export interface SmiteCopy {
   readonly worth: (args: { readonly multiplier: string; readonly seconds: string }) => string;
   /** Shown one at a time after a smite. Never empty. */
   readonly results: readonly string[];
+  /**
+   * What the gauge under the button is called.
+   *
+   * **Apathy**, and the word is the joke played straight: the realm does not fear you
+   * less, it simply cannot be bothered any more. The Dark Lord's real enemy turns out
+   * to be being ignored.
+   */
+  readonly apathy: string;
+  /**
+   * Where the realm stands, in thirds of the cap. Empty, middling, full.
+   *
+   * Three, and the length is pinned by the type, so a fourth band cannot be added
+   * without the code that picks one being made to say what it means.
+   */
+  readonly bands: readonly [string, string, string];
+  /** What the next blow is worth, printed at the gauge's end. `multiplier` is formatted. */
+  readonly blow: (multiplier: string) => string;
+}
+
+/**
+ * The shop. Four ladders, climbed with Evil and locked with souls.
+ *
+ * `names` and `notes` are keyed by id, so a ladder without copy fails typecheck rather
+ * than shipping blank. Numbers arrive formatted — the web owns `formatNumber` and this
+ * file owns the words around it.
+ */
+export interface WrathCopy {
+  readonly title: string;
+  readonly names: Readonly<Record<SmiteUpgradeId, string>>;
+  /** One line saying what the ladder does, in voice. */
+  readonly notes: Readonly<Record<SmiteUpgradeId, string>>;
+  /** "Rung 2 of 4". Both arrive formatted. */
+  readonly rung: (args: { readonly at: string; readonly of: string }) => string;
+  /** What the ladder reads now and what the next rung would read. Both formatted. */
+  readonly step: (args: { readonly now: string; readonly next: string }) => string;
+  /** The Evil action. */
+  readonly climb: string;
+  readonly climbCost: (cost: string) => string;
+  /** The souls action, beside it at secondary weight. */
+  readonly keep: string;
+  readonly keepCost: (cost: string) => string;
+  /** Standing for a ladder at the top of itself. */
+  readonly maxed: string;
+  /** Standing for a ladder whose rung is already permanent. */
+  readonly held: string;
+  /** Said, never shown, on the row the panel lifted. */
+  readonly lifted: string;
 }
 
 export interface MilestoneCopy {
@@ -335,6 +382,7 @@ export interface Copy {
   readonly tiers: Readonly<Record<TierId, TierCopy>>;
   readonly achievements: Readonly<Record<AchievementId, AchievementCopy>>;
   readonly smite: SmiteCopy;
+  readonly wrath: WrathCopy;
   readonly milestone: MilestoneCopy;
   readonly prestige: PrestigeCopy;
   readonly offline: OfflineCopy;
