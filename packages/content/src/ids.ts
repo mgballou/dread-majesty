@@ -73,6 +73,16 @@ export const ACHIEVEMENT_IDS = [
 ] as const;
 export type AchievementId = (typeof ACHIEVEMENT_IDS)[number];
 
+/**
+ * The four ladders a player climbs to make a blow worth more.
+ *
+ * Ids are permanent — a save records the rung each one stands on — so one may be
+ * added but never renamed or reused. Content order is offer order, and the content
+ * lists Reach first because it is the cheapest and the one that teaches the system.
+ */
+export const SMITE_UPGRADE_IDS = ['weight', 'reach', 'forgetting', 'restraint'] as const;
+export type SmiteUpgradeId = (typeof SMITE_UPGRADE_IDS)[number];
+
 export function isTierId(id: string): id is TierId {
   return (TIER_IDS as readonly string[]).includes(id);
 }
@@ -87,4 +97,8 @@ export function isAchievementId(id: string): id is AchievementId {
 
 export function isResourceId(id: string): id is ResourceId {
   return (RESOURCE_IDS as readonly string[]).includes(id);
+}
+
+export function isSmiteUpgradeId(id: string): id is SmiteUpgradeId {
+  return (SMITE_UPGRADE_IDS as readonly string[]).includes(id);
 }
