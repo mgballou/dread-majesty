@@ -1,5 +1,5 @@
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { existsSync, readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { CURRENT_COPY } from '@dm/content';
@@ -112,9 +112,18 @@ describe('the chip', () => {
 });
 
 describe('the chip stylesheet', () => {
-  // jsdom computes no layout — getBoundingClientRect returns zero — so a rendered
-  // assertion about width would pass against any value whatsoever. Reading the file is the only way.
-  const styles = readFileSync(join(process.cwd(), 'apps/web/src/ui/rail/QuantityChip.css'), 'utf8');
+  // jsdom computes no layout, so getBoundingClientRect returns zero and a rendered assertion would pass against any width.
+  function locate(relative: string): string {
+    let dir = process.cwd();
+    while (!existsSync(join(dir, relative))) {
+      const parent = dirname(dir);
+      if (parent === dir) throw new Error(`Could not find ${relative} above ${process.cwd()}`);
+      dir = parent;
+    }
+    return join(dir, relative);
+  }
+  const cssPath = locate(join('apps', 'web', 'src', 'ui', 'rail', 'QuantityChip.css'));
+  const styles = readFileSync(cssPath, 'utf8');
 
   it('holds the text box at four characters', () => {
     expect(styles).toContain('calc(4ch + 2 * var(--space-2))');
