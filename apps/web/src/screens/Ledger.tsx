@@ -1,7 +1,7 @@
 import { useRef, useState, type ReactNode } from 'react';
 import type { Content, Copy } from '@dm/content';
 import type { GameState } from '@dm/engine';
-import { formatNumber } from '../ui/format.ts';
+import { formatWhole } from '../ui/format.ts';
 import './Ledger.css';
 
 interface LedgerProps {
@@ -54,7 +54,7 @@ export function Ledger({
       <dl className="ledger__stats">
         <div className="ledger__stat">
           <dt>{copy.lifetimeEvil}</dt>
-          <dd>{formatNumber(state.lifetimeEvil)}</dd>
+          <dd>{formatWhole(state.lifetimeEvil)}</dd>
         </div>
         <div className="ledger__stat">
           <dt>{copy.smites}</dt>

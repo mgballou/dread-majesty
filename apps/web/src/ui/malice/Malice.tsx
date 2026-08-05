@@ -1,7 +1,7 @@
 import { useId, type ReactNode } from 'react';
 import type { Content, SmiteUnit, SmiteUpgradeDef, SmiteUpgradeId, MaliceCopy } from '@dm/content';
 import { canClimb, canKeep, climbCost, keepCost, smiteValueAt, type GameState } from '@dm/engine';
-import { formatNumber } from '../format.ts';
+import { formatWhole } from '../format.ts';
 import { spendEmphasis, type RailPlan, type SpendEmphasis } from '../rail/railPlan.ts';
 import '../controls.css';
 import './Malice.css';
@@ -106,7 +106,7 @@ function Rung({ upgrade, state, content, emphasis, onClimb, onKeep, copy }: Rung
         >
           {copy.climb}
           <span className="malice__price">
-            {climb === null ? null : copy.climbCost(formatNumber(climb))}
+            {climb === null ? null : copy.climbCost(formatWhole(climb))}
           </span>
         </button>
 
@@ -120,7 +120,7 @@ function Rung({ upgrade, state, content, emphasis, onClimb, onKeep, copy }: Rung
         >
           {copy.keep}
           <span className="malice__price">
-            {keep === null ? null : copy.keepCost(formatNumber(keep))}
+            {keep === null ? null : copy.keepCost(formatWhole(keep))}
           </span>
         </button>
       </span>

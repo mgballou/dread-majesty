@@ -40,8 +40,19 @@ export function formatNumber(value: Decimal, places = 2): string {
   return value.toExponential(places).replace('e+', 'e');
 }
 
-/** For counts, which never want a decimal tail. */
-export function formatCount(value: Decimal): string {
+/**
+ * For anything that never wants a decimal tail: generator counts, and Evil.
+ *
+ * **Evil belongs here and not in `formatNumber`.** A Minion's row promises 5 Evil every
+ * four seconds and the player counts it out — so a total reading `34.72` breaks the one
+ * contract the chain makes. The engine keeps every fraction a multiplier produces; this
+ * only declines to print them. It floors rather than rounds, because a currency you
+ * cannot quite afford must not read as one you can.
+ *
+ * Rates are not this. "1.25 Evil per second" is a true thing to say and the decimal is
+ * the information, so the crown's rate line stays on `formatNumber`.
+ */
+export function formatWhole(value: Decimal): string {
   return value.lt(1000) ? value.floor().toString() : formatNumber(value, 2);
 }
 

@@ -4,7 +4,7 @@ import type { Content, SmiteCopy } from '@dm/content';
 import { nextBlowMultiplier, smiteDurationMs } from '@dm/engine';
 import type { GameState } from '@dm/engine';
 import { TierArt } from '../art/TierArt.tsx';
-import { formatNumber } from '../format.ts';
+import { formatWhole } from '../format.ts';
 import { useReducedMotion } from '../useReducedMotion.ts';
 import { ApathyTicks } from './ApathyTicks.tsx';
 import { usePulse } from './usePulse.ts';
@@ -72,7 +72,7 @@ export function EvilNode({
 }: EvilNodeProps): ReactNode {
   const reduced = useReducedMotion();
   const landing = usePulse(feed === null ? null : feed.produced, feed?.version ?? 0);
-  const shown = formatNumber(total);
+  const shown = formatWhole(total);
   const ready = phase.kind === 'ready';
 
   return (

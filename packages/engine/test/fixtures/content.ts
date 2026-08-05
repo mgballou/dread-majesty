@@ -130,6 +130,7 @@ export const fixture: Content = {
   smite: {
     cooldownMs: 120_000,
     apathy: { perBlow: 1, cap: 3 },
+    climbGrowth: 2,
     upgrades: [
       {
         id: 'weight',

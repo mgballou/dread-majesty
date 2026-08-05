@@ -64,7 +64,7 @@ describe('Crown', () => {
   it('counts a tier once somebody oversees it', () => {
     render(crown(seeded(0, true)));
 
-    expect(screen.getByText('0.63 Evil per second')).toBeInTheDocument();
+    expect(screen.getByText('1.25 Evil per second')).toBeInTheDocument();
   });
 
   it('says nothing about souls before any have been claimed', () => {

@@ -4,7 +4,7 @@ import type { Content, Copy, OverseerCopy, OverseerDef, OverseerId, TierDef } fr
 import { hasPost, type GameState } from '@dm/engine';
 import { Banner } from '../Banner.tsx';
 import { Confirm } from '../Confirm.tsx';
-import { formatNumber } from '../format.ts';
+import { formatNumber, formatWhole } from '../format.ts';
 import {
   spendEmphasis,
   type RailAppointment,
@@ -136,7 +136,7 @@ export function Miscreants({ content, state, plan, onAppoint, copy }: Miscreants
         >
           <p>{copy.overseer.notes[asked.post.id]}</p>
           <p>{effectLine(asked.post, copy.overseer)}</p>
-          <p>{copy.overseer.cost(formatNumber(asked.price))}</p>
+          <p>{copy.overseer.cost(formatWhole(asked.price))}</p>
         </Confirm>
       )}
     </div>
@@ -180,7 +180,7 @@ function Post({ post, onAsk, copy }: PostProps): ReactNode {
         <span className="miscreant__standing">
           <span className="miscreant__state">{standing(post, copy)}</span>
           {!filled && (
-            <span className="miscreant__cost">{copy.overseer.cost(formatNumber(price))}</span>
+            <span className="miscreant__cost">{copy.overseer.cost(formatWhole(price))}</span>
           )}
           {emphasis === 'saving' && <span className="miscreant__flag">{copy.rail.saving}</span>}
         </span>

@@ -3,7 +3,7 @@ import { useId, type ReactNode } from 'react';
 import type { Content, TierDef, TierId } from '@dm/content';
 import { nextCost, type GameState } from '@dm/engine';
 import { Banner } from '../Banner.tsx';
-import { formatNumber } from '../format.ts';
+import { formatWhole } from '../format.ts';
 import { TierRow, type RailScreenCopy } from './TierRow.tsx';
 import { QuantityChip } from './QuantityChip.tsx';
 import { spendEmphasis, type RailPlan, type RailPurchase } from './railPlan.ts';
@@ -155,7 +155,7 @@ function UpcomingRow({ tier, state, content, copy }: UpcomingRowProps): ReactNod
         <p className="rail__line">
           {copy.rail.upcoming({
             tier: tier.plural,
-            cost: copy.rail.cost(formatNumber(cost)),
+            cost: copy.rail.cost(formatWhole(cost)),
           })}
         </p>
       </div>

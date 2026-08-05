@@ -1,6 +1,6 @@
 import Decimal from 'break_eternity.js';
 import { describe, expect, it } from 'vitest';
-import { formatCount, formatDuration, formatNumber } from './format.ts';
+import { formatNumber, formatWhole, formatDuration } from './format.ts';
 
 describe('formatNumber', () => {
   it('shows plain digits below a thousand', () => {
@@ -21,8 +21,8 @@ describe('formatNumber', () => {
   });
 
   it('formats counts without a decimal tail below a thousand', () => {
-    expect(formatCount(new Decimal(205))).toBe('205');
-    expect(formatCount(new Decimal(1))).toBe('1');
+    expect(formatWhole(new Decimal(205))).toBe('205');
+    expect(formatWhole(new Decimal(1))).toBe('1');
   });
 });
 

@@ -10,7 +10,7 @@ import {
 } from '@dm/engine';
 import { TierArt } from '../art/TierArt.tsx';
 import { Banner } from '../Banner.tsx';
-import { formatCount, formatDuration, formatNumber } from '../format.ts';
+import { formatNumber, formatWhole, formatDuration } from '../format.ts';
 import { Meter } from '../Meter.tsx';
 import { EVIL_ART } from '../stage/EvilNode.tsx';
 import { quantityLabel, type BuyQuantity } from './quantity.ts';
@@ -75,14 +75,14 @@ export function TierRow({
           {isAppointed(state, content, tier.id) && (
             <span className="rail__flag rail__flag--overseen">{copy.overseer.filled}</span>
           )}
-          <span className="rail__owned">{copy.rail.held(formatCount(gen.owned))}</span>
+          <span className="rail__owned">{copy.rail.held(formatWhole(gen.owned))}</span>
         </div>
 
         {/* Always mounted, even with nothing to say. The cascade crosses the
             purchased count without warning, and a line that mounts on that
             crossing would move the price and the milestone line under it. */}
         <p className="rail__bought">
-          {gen.purchased.lt(gen.owned) && copy.rail.bought(formatCount(gen.purchased))}
+          {gen.purchased.lt(gen.owned) && copy.rail.bought(formatWhole(gen.purchased))}
         </p>
 
         <p className="rail__line">
@@ -110,11 +110,11 @@ export function TierRow({
           onClick={() => onPurchase(tier.id, quantity)}
         >
           <span aria-hidden="true">{quantityLabel(quantity)}</span>
-          <span aria-hidden="true">{formatNumber(purchase.cost)}</span>
+          <span aria-hidden="true">{formatWhole(purchase.cost)}</span>
         </button>
 
         <span className="rail__shortfall">
-          {purchase.affordable ? '' : copy.rail.shortfall(formatNumber(shortfall))}
+          {purchase.affordable ? '' : copy.rail.shortfall(formatWhole(shortfall))}
         </span>
       </div>
     </li>
@@ -139,7 +139,7 @@ function buyLabel({ tier, purchase, emphasis, copy }: BuyLabelInput): string {
   const said = copy.rail.buy({
     count: String(purchase.count),
     tier: plural(tier, purchase.count),
-    cost: copy.rail.cost(formatNumber(purchase.cost)),
+    cost: copy.rail.cost(formatWhole(purchase.cost)),
   });
 
   return emphasis === 'best' ? `${said} — ${copy.rail.lifted}` : said;
@@ -168,7 +168,7 @@ function ProduceLine({ state, tier, content }: ProduceLineProps): ReactNode {
 
   return (
     <>
-      {formatCount(amount)}{' '}
+      {formatWhole(amount)}{' '}
       <TierArt slot={made ? made.art : EVIL_ART} size={LINE_MARK_SIZE} decorative />
       <span className="rail__made">{noun}</span> every{' '}
       {formatDuration(effectiveCycleMs(state, tier))}, each
@@ -189,10 +189,10 @@ function milestoneLine(
   }
 
   return copy.next({
-    remaining: formatCount(remaining),
+    remaining: formatWhole(remaining),
     plural: tier.plural,
     multiplier: `×${formatNumber(new Decimal(multiplier))}`,
-    threshold: formatCount(new Decimal(next)),
+    threshold: formatWhole(new Decimal(next)),
   });
 }
 
