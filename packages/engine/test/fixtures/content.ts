@@ -123,9 +123,47 @@ export const fixture: Content = {
 
   prestige: { k: 150, scale: '1e11', perSoul: 0.02 },
   offlineCapMs: 4 * 60 * 60 * SECOND,
-  // Long enough that a whole Minion cycle (24s) fits inside the buff, which is what
-  // makes "produced exactly twice as much" a thing a test can assert at all.
-  smite: { seconds: 3, durationMs: 48_000, cooldownMs: 120_000, multiplier: 2 },
+  // Round numbers, chosen so a whole Minion cycle (24s) fits inside a blow — which is
+  // what makes "produced exactly twice as much" a thing a test can assert at all. The
+  // ladders are deliberately of unequal length, so a test that walks one off its top
+  // proves the code assumes no particular number of rungs.
+  smite: {
+    cooldownMs: 120_000,
+    apathy: { perBlow: 1, cap: 3 },
+    upgrades: [
+      {
+        id: 'weight',
+        name: 'Fixture Weight',
+        base: 2,
+        unit: 'multiplier',
+        rungs: [
+          { evil: '1000', souls: '5', value: 3 },
+          { evil: '4000', souls: '10', value: 4 },
+        ],
+      },
+      {
+        id: 'reach',
+        name: 'Fixture Reach',
+        base: 48_000,
+        unit: 'seconds',
+        rungs: [{ evil: '2000', souls: '5', value: 72_000 }],
+      },
+      {
+        id: 'forgetting',
+        name: 'Fixture Forgetting',
+        base: 60_000,
+        unit: 'seconds',
+        rungs: [{ evil: '3000', souls: '5', value: 30_000 }],
+      },
+      {
+        id: 'restraint',
+        name: 'Fixture Restraint',
+        base: 0.5,
+        unit: 'amount',
+        rungs: [{ evil: '5000', souls: '5', value: 0.25 }],
+      },
+    ],
+  },
 };
 
 /** Fixture with the tiers reversed, for the order-independence test. */

@@ -3,6 +3,7 @@ import Decimal from 'break_eternity.js';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { CURRENT, CURRENT_COPY } from '@dm/content';
+import { createState } from '@dm/engine';
 import { describe, expect, it, vi } from 'vitest';
 import { setReducedMotion } from '../../../test/setup.ts';
 import { EvilNode } from './EvilNode.tsx';
@@ -16,6 +17,7 @@ function evil(overrides: Partial<Parameters<typeof EvilNode>[0]> = {}): ReactEle
       report=""
       phase={{ kind: 'ready', share: 0 }}
       content={CURRENT}
+      state={createState(CURRENT)}
       feed={null}
       onSmite={vi.fn()}
       {...overrides}

@@ -2,12 +2,13 @@ import Decimal from 'break_eternity.js';
 import { describe, expect, it } from 'vitest';
 import { apply } from '../src/intents.ts';
 import { canSmite, smitePhase } from '../src/selectors.ts';
+import { smiteDurationMs, smiteWeight } from '../src/smite.ts';
 import { createState } from '../src/state.ts';
 import { globalMultiplier, step } from '../src/step.ts';
 import type { GameState } from '../src/types.ts';
 import { fixture } from './fixtures/content.ts';
 
-const { durationMs, cooldownMs, multiplier } = fixture.smite;
+const cooldownMs = fixture.smite.cooldownMs;
 
 function running(): GameState {
   const state = createState(fixture);
@@ -48,7 +49,7 @@ describe('smite', () => {
     const state = running();
     smite(state);
 
-    expect(state.smiteActiveMs).toBe(durationMs);
+    expect(state.smiteActiveMs).toBe(smiteDurationMs(state, fixture));
   });
 
   it('starts the cooldown', () => {
@@ -61,15 +62,16 @@ describe('smite', () => {
   it('raises the global multiplier while it runs', () => {
     const state = running();
     const before = globalMultiplier(state, fixture);
+    const weight = smiteWeight(state, fixture);
     smite(state);
 
-    expect(globalMultiplier(state, fixture).div(before).toNumber()).toBe(multiplier);
+    expect(globalMultiplier(state, fixture).div(before).toNumber()).toBe(weight);
   });
 
   it('drops the multiplier back when the buff runs out', () => {
     const state = running();
     smite(state);
-    step(state, fixture, durationMs);
+    step(state, fixture, smiteDurationMs(state, fixture));
 
     expect(globalMultiplier(state, fixture).toNumber()).toBe(1);
   });
@@ -103,7 +105,7 @@ describe('smite', () => {
     step(state, fixture, cooldownMs);
     smite(state);
 
-    expect(state.smiteActiveMs).toBe(durationMs);
+    expect(state.smiteActiveMs).toBe(smiteDurationMs(state, fixture));
   });
 
   it('counts the blow whether or not anything was running', () => {
@@ -116,6 +118,7 @@ describe('smite', () => {
   it('produces exactly twice as much across a buffed slice', () => {
     const plain = running();
     const buffed = running();
+    const weight = smiteWeight(buffed, fixture);
     smite(buffed);
     buffed.resources.evil = new Decimal(0);
     plain.resources.evil = new Decimal(0);
@@ -123,13 +126,14 @@ describe('smite', () => {
     step(plain, fixture, 24_000);
     step(buffed, fixture, 24_000);
 
-    expect(buffed.resources.evil.div(plain.resources.evil).toNumber()).toBe(multiplier);
+    expect(buffed.resources.evil.div(plain.resources.evil).toNumber()).toBe(weight);
   });
 
   it('spends the buff during offline catch-up like any other slice', () => {
     const state = running();
+    const duration = smiteDurationMs(state, fixture);
     smite(state);
-    step(state, fixture, durationMs * 2);
+    step(state, fixture, duration * 2);
 
     expect(state.smiteActiveMs).toBe(0);
   });
@@ -144,7 +148,7 @@ describe('smite', () => {
   it('reports the cooldown once the buff is spent', () => {
     const state = running();
     smite(state);
-    step(state, fixture, durationMs);
+    step(state, fixture, smiteDurationMs(state, fixture));
 
     expect(smitePhase(state, fixture).kind).toBe('cooling');
   });
@@ -155,8 +159,9 @@ describe('smite', () => {
 
   it('reports the share left on the buff', () => {
     const state = running();
+    const duration = smiteDurationMs(state, fixture);
     smite(state);
-    step(state, fixture, durationMs / 2);
+    step(state, fixture, duration / 2);
 
     expect(smitePhase(state, fixture).share).toBeCloseTo(0.5);
   });

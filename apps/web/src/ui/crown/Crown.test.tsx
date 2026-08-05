@@ -1,7 +1,7 @@
 import Decimal from 'break_eternity.js';
 import { render, screen } from '@testing-library/react';
 import { CURRENT, CURRENT_COPY } from '@dm/content';
-import { apply, createState, step } from '@dm/engine';
+import { apply, createState, smiteDurationMs, step } from '@dm/engine';
 import { describe, expect, it } from 'vitest';
 import { Crown } from './Crown.tsx';
 
@@ -43,7 +43,7 @@ describe('Crown', () => {
 
   it('counts down only once the surge is spent', () => {
     const state = struck();
-    step(state, CURRENT, CURRENT.smite.durationMs);
+    step(state, CURRENT, smiteDurationMs(state, CURRENT));
     render(crown(state));
 
     expect(screen.getByText(/til ready/)).toBeInTheDocument();

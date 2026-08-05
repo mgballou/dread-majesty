@@ -1,4 +1,11 @@
-import type { AchievementId, OverseerId, ProducibleId, ResourceId, TierId } from './ids.ts';
+import type {
+  AchievementId,
+  OverseerId,
+  ProducibleId,
+  ResourceId,
+  SmiteUpgradeId,
+  TierId,
+} from './ids.ts';
 
 /**
  * What filling a post does to its tier.
@@ -115,23 +122,58 @@ export interface MilestoneDef {
   readonly multiplier: number;
 }
 
+/** How a ladder's value should be drawn. The engine never reads it; the web does. */
+export type SmiteUnit = 'seconds' | 'multiplier' | 'amount';
+
+export interface SmiteRungDef {
+  /** Evil to climb to this rung within a run. A string, so it never passes a float. */
+  readonly evil: string;
+  /** Souls to make this rung the permanent floor. A string, for the same reason. */
+  readonly souls: string;
+  /** What the effect reads at this rung. */
+  readonly value: number;
+}
+
 /**
- * The tap verb (spec §5.5).
+ * One ladder, and the four rungs above its base.
  *
- * A smite pays a little Evil at once and then **raises production for a while**. The
- * instant part keeps it worth pressing before anything is running at all, when a
- * multiplier on nothing would be nothing; the buff is what makes it stay worth
- * pressing for the rest of the game.
+ * `base` is rung 0 — what the ladder reads before anything is bought — and it carries
+ * no price. Keeping it here rather than beside `cooldownMs` is what stops a base value
+ * and a rung-0 value drifting apart.
+ */
+export interface SmiteUpgradeDef {
+  readonly id: SmiteUpgradeId;
+  /** Display title. The engine never reads it. */
+  readonly name: string;
+  readonly base: number;
+  readonly unit: SmiteUnit;
+  /** Rungs 1..N, ascending in price. Never includes rung 0. */
+  readonly rungs: readonly SmiteRungDef[];
+}
+
+/**
+ * The tap verb (spec §5.5), and what it costs to keep using it.
+ *
+ * A blow raises production for a while, and **every blow makes the next one worth
+ * less**. Apathy bleeds off on its own, so striking well beats striking constantly and
+ * both beat never striking. See `2026-08-04-smite-as-a-system-design.md` §2.
+ *
+ * The cooldown is flat and on no ladder. A blow lasts `reach` milliseconds, so a
+ * cooldown shorter than that only re-ups a buff already running — the useful range
+ * starts at the duration and every second above it cuts uptime. Escalating it could set
+ * a ceiling but never create a choice, which is why the escalation is on the blow's
+ * value instead. Reach is the tempo upgrade.
  */
 export interface SmiteDef {
-  /** The instant part: this many seconds of current production, floor 1. */
-  readonly seconds: number;
-  /** How long the buff runs. */
-  readonly durationMs: number;
-  /** How long before it can be used again, counted from the moment it is used. */
   readonly cooldownMs: number;
-  /** What the buff multiplies every tier's output by while it runs. */
-  readonly multiplier: number;
+  readonly apathy: {
+    /** Added to `smiteApathy` by every blow. */
+    readonly perBlow: number;
+    /** `smiteApathy` never exceeds this. */
+    readonly cap: number;
+  };
+  /** One per `SmiteUpgradeId`. Content order is offer order. */
+  readonly upgrades: readonly SmiteUpgradeDef[];
 }
 
 export interface PrestigeDef {

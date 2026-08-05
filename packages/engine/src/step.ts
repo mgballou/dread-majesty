@@ -3,6 +3,7 @@ import type { Content, ProducibleId, TierId } from '@dm/content';
 import { isResourceId, isTierId } from '@dm/content';
 import { achievementMultiplier } from './achievements.ts';
 import { effectiveCycleMs, effectiveYield, hasAutomator } from './roster.ts';
+import { smiteWeight } from './smite.ts';
 import type { GameState, StepReport } from './types.ts';
 
 /** The live slice. Every online tick is exactly this long. */
@@ -125,6 +126,6 @@ export function tierMultiplier(state: GameState, content: Content, owned: Decima
  */
 export function globalMultiplier(state: GameState, content: Content): Decimal {
   const fromSouls = new Decimal(1).add(state.souls.mul(content.prestige.perSoul));
-  const fromSmite = state.smiteActiveMs > 0 ? content.smite.multiplier : 1;
+  const fromSmite = state.smiteActiveMs > 0 ? smiteWeight(state, content) : 1;
   return fromSouls.mul(achievementMultiplier(state, content)).mul(fromSmite);
 }
