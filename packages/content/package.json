@@ -10,8 +10,5 @@
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit"
-  },
-  "devDependencies": {
-    "break_eternity.js": "^2.1.0"
   }
 }
