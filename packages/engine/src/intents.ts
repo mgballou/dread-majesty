@@ -4,7 +4,7 @@ import { newlyEarnedAchievements } from './achievements.ts';
 import { bulkCost, findTier, maxAffordable } from './cost.ts';
 import { findOverseer, hasAutomator, hasPost } from './roster.ts';
 import { isUnlockReached, prestigeGain } from './selectors.ts';
-import { smiteDurationMs } from './smite.ts';
+import { nextBlowMultiplier, smiteDurationMs } from './smite.ts';
 import { createState } from './state.ts';
 import type { GameState, Intent, IntentResult } from './types.ts';
 
@@ -67,11 +67,20 @@ function smite(
 
   state.stats.smites += 1;
 
-  // The lasting part. Set, not added: striking again the moment the cooldown lifts
-  // restarts the buff rather than stacking it, so two blows can never be worth more
-  // than two blows.
+  // Read before the strike, never after. This blow is priced by the Apathy it found,
+  // not by the Apathy it causes — which is what makes the first blow of a run full
+  // weight and the fourth one nearly nothing.
+  state.smiteBlow = nextBlowMultiplier(state, content);
+
+  // Set, not added: striking again the moment the cooldown lifts restarts the buff
+  // rather than stacking it, so two blows can never be worth more than two blows.
   state.smiteActiveMs = smiteDurationMs(state, content);
   state.smiteCooldownMs = content.smite.cooldownMs;
+
+  state.smiteApathy = Math.min(
+    content.smite.apathy.cap,
+    state.smiteApathy + content.smite.apathy.perBlow,
+  );
 
   return { ok: true, intent, detail: 'Struck' };
 }
@@ -168,9 +177,11 @@ function prestige(
   state.earnedAchievements = carried.earnedAchievements;
   state.unlocked = carried.unlocked;
   state.overseers = fresh.overseers;
-  // The run is over, so the buff goes with it. The cooldown does not: it is a limit on
-  // how often a player may strike, and resetting would hand out a free blow per reset.
+  // The run is over, so the buff goes with it. The cooldown and the Apathy do not: both
+  // are limits on how often a player may strike, and clearing either would hand out a
+  // free blow per reset. Apathy bleeds out inside a minute anyway.
   state.smiteActiveMs = 0;
+  state.smiteBlow = 1;
   state.stats = carried.stats;
 
   return { ok: true, intent, detail: `Claimed ${gain.toString()} Damned Souls` };
