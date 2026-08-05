@@ -54,7 +54,7 @@ function draw(): RailPlan {
     content: CURRENT,
     quantity: 1,
     isUnlocked: () => true,
-    held: { purchase: null, appoint: null },
+    held: { purchase: null, appoint: null, climb: null },
   });
 }
 

@@ -8,12 +8,13 @@ import {
   resolveCount,
   type HeldKeys,
   type RailAppointment,
+  type RailClimb,
   type RailPlan,
   type RailPurchase,
 } from './railPlan.ts';
 
 const all = (): boolean => true;
-const none: HeldKeys = { purchase: null, appoint: null };
+const none: HeldKeys = { purchase: null, appoint: null, climb: null };
 
 const MINION_HAND_COST =
   CURRENT.tiers.find((tier) => tier.id === 'minion')?.overseers[0]?.cost ?? '0';
@@ -38,6 +39,10 @@ function purchases(from: RailPlan): RailPurchase[] {
 
 function appointments(from: RailPlan): RailAppointment[] {
   return from.options.filter((option): option is RailAppointment => option.kind === 'appoint');
+}
+
+function climbs(from: RailPlan): RailClimb[] {
+  return from.options.filter((option): option is RailClimb => option.kind === 'climb');
 }
 
 function appointAll(): void {
@@ -134,7 +139,8 @@ describe('railPlan', () => {
   it('leaves a tier the player has not met out of the options entirely', () => {
     state.resources.evil = new Decimal('1e12');
 
-    const ids = plan(1, (id) => id === 'minion').options.map((option) => option.tierId);
+    const drawn = plan(1, (id) => id === 'minion');
+    const ids = [...purchases(drawn), ...appointments(drawn)].map((option) => option.tierId);
 
     expect(new Set(ids)).toEqual(new Set(['minion']));
   });
@@ -280,28 +286,28 @@ describe('the accent holds still', () => {
     state.gens.warren.owned = new Decimal(1);
     state.gens.warren.purchased = new Decimal(1);
     state.resources.evil = new Decimal(2600);
-    const held: HeldKeys = { purchase: 'minion', appoint: null };
+    const held: HeldKeys = { purchase: 'minion', appoint: null, climb: null };
 
     expect(plan(1, all, held).best.purchase?.tierId).toBe('minion');
   });
 
   it('hands over once a challenger clears the margin', () => {
     state.resources.evil = new Decimal(2600);
-    const held: HeldKeys = { purchase: 'minion', appoint: null };
+    const held: HeldKeys = { purchase: 'minion', appoint: null, climb: null };
 
     expect(plan(1, all, held).best.purchase?.tierId).not.toBe('minion');
   });
 
   it('drops a held option that stopped being affordable', () => {
     state.resources.evil = new Decimal(0);
-    const held: HeldKeys = { purchase: 'minion', appoint: null };
+    const held: HeldKeys = { purchase: 'minion', appoint: null, climb: null };
 
     expect(plan(1, all, held).best.purchase).toBeNull();
   });
 
   it('hands over when the held option has left a rail that still has spends on it', () => {
     state.resources.evil = new Decimal(2600);
-    const held: HeldKeys = { purchase: 'legion', appoint: null };
+    const held: HeldKeys = { purchase: 'legion', appoint: null, climb: null };
 
     expect(plan(1, all, held).best.purchase?.tierId).toBe('warren');
   });
@@ -337,5 +343,50 @@ describe('what a panel names to save toward', () => {
     state.resources.evil = new Decimal(0);
 
     expect(plan().saving.purchase?.tierId).toBe('warren');
+  });
+});
+
+describe('the wrath ladders on the plan', () => {
+  it('offers every ladder that has a rung left', () => {
+    state.resources.evil = new Decimal('1e9');
+
+    expect(climbs(plan())).toHaveLength(4);
+  });
+
+  it('drops a ladder at the top of itself', () => {
+    const reach = CURRENT.smite.upgrades.find((upgrade) => upgrade.id === 'reach');
+    state.resources.evil = new Decimal('1e9');
+    state.smiteRungs.reach = reach?.rungs.length ?? 0;
+
+    expect(climbs(plan()).some((option) => option.upgradeId === 'reach')).toBe(false);
+  });
+
+  it('lifts one ladder once one is affordable', () => {
+    state.resources.evil = new Decimal('1e9');
+
+    expect(plan().best.climb).not.toBeNull();
+  });
+
+  it('lifts nothing it cannot afford', () => {
+    expect(plan().best.climb).toBeNull();
+  });
+
+  it('names something to save toward instead', () => {
+    expect(plan().saving.climb).not.toBeNull();
+  });
+
+  it('leaves the muster its own accent', () => {
+    state.resources.evil = new Decimal('1e9');
+
+    expect(plan().best.purchase).not.toBeNull();
+  });
+
+  it('keeps its choice against a close challenger', () => {
+    state.resources.evil = new Decimal('1e9');
+    const held = plan().best.climb?.upgradeId ?? null;
+
+    expect(plan(1, all, { purchase: null, appoint: null, climb: held }).best.climb?.upgradeId).toBe(
+      held,
+    );
   });
 });

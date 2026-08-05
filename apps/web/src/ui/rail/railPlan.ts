@@ -5,6 +5,7 @@ import {
   type OverseerDef,
   type OverseerId,
   type ProducibleId,
+  type SmiteUpgradeId,
   type TierDef,
   type TierId,
 } from '@dm/content';
@@ -12,12 +13,14 @@ import {
   bulkCost,
   canAfford,
   canAppoint,
+  climbCost,
   effectiveCycleMs,
   effectiveYield,
   findTier,
   hasAutomator,
   hasPost,
   maxAffordable,
+  smiteAverageMultiplier,
   tierMultiplier,
   type GameState,
 } from '@dm/engine';
@@ -47,31 +50,47 @@ import type { BuyQuantity } from './quantity.ts';
  */
 export const HORIZON_SECONDS = 600;
 
-/** The two things a rail row can offer. Both are spends, so both are ranked. */
-export type RailOptionKind = 'purchase' | 'appoint';
+/** The three things a panel can offer. All are spends, so all are ranked. */
+export type RailOptionKind = 'purchase' | 'appoint' | 'climb';
 
 interface RailOptionShape {
-  tierId: TierId;
   cost: Decimal;
   affordable: boolean;
-  /** Extra Evil this spend yields over the horizon. */
+  /**
+   * What this spend returns.
+   *
+   * **The unit differs by kind and that is deliberate.** A purchase and an appointment
+   * are measured in Evil over the horizon; a climb is measured in the average
+   * production multiplier it adds. The two are never compared, because each panel picks
+   * from its own kind and the deck shows one panel at a time — so putting them on one
+   * axis would mean inventing an exchange rate nobody could defend.
+   */
   gain: Decimal;
-  /** Extra Evil per Evil spent. The ranking. */
+  /** Gain per unit of cost. The ranking, within one kind. */
   score: Decimal;
 }
 
 export interface RailPurchase extends RailOptionShape {
   kind: 'purchase';
+  tierId: TierId;
   /** Units this press buys. `'max'` is already resolved here. */
   count: number;
 }
 
 export interface RailAppointment extends RailOptionShape {
   kind: 'appoint';
+  tierId: TierId;
   overseerId: OverseerId;
 }
 
-export type RailOption = RailPurchase | RailAppointment;
+export interface RailClimb extends RailOptionShape {
+  kind: 'climb';
+  upgradeId: SmiteUpgradeId;
+  /** The rung this press buys, 1-based, so the row can print "Rung 2 of 4". */
+  rung: number;
+}
+
+export type RailOption = RailPurchase | RailAppointment | RailClimb;
 
 /**
  * How much better a challenger must be before the accent moves to it.
@@ -93,12 +112,15 @@ export interface RailBest {
   purchase: RailPurchase | null;
   /** The miscreants', or null when nothing there is affordable. */
   appoint: RailAppointment | null;
+  /** The wrath panel's, or null when nothing there is affordable. */
+  climb: RailClimb | null;
 }
 
 /** What each panel lifted last time, so the ranking can prefer to keep lifting it. */
 export interface HeldKeys {
   purchase: TierId | null;
   appoint: OverseerId | null;
+  climb: SmiteUpgradeId | null;
 }
 
 export interface RailPlan {
@@ -134,32 +156,35 @@ export interface RailPlanInput {
 /** Whether the plan lifted a row, and on what grounds. */
 export type SpendEmphasis = 'none' | 'best' | 'saving';
 
+/** The key a panel identifies one of its own rows by. */
+function keyOf(option: RailOption): TierId | OverseerId | SmiteUpgradeId {
+  switch (option.kind) {
+    case 'purchase':
+      return option.tierId;
+    case 'appoint':
+      return option.overseerId;
+    case 'climb':
+      return option.upgradeId;
+  }
+}
+
 /**
  * Whether one row of one panel is the row the plan lifted.
  *
- * Purchases and appointments are ranked together but no longer drawn together: the
- * muster holds one and the miscreants the other. Both ask the same question of the
- * same plan, so both ask it here, and each panel answers for itself.
- *
- * Keyed on `overseerId` for an appointment, not `tierId` — three posts now share a
- * tier and the plan can only ever lift one of them. Keying on the tier would light up
- * every post of a tier when only one of its three won.
+ * Every panel asks the same question of the same plan and each answers for itself.
+ * Keyed on the thing a panel can only ever lift one of — a tier for the muster, a post
+ * for the miscreants, a ladder for the wrath panel.
  */
 export function spendEmphasis(
   plan: RailPlan,
   kind: RailOptionKind,
-  key: TierId | OverseerId,
+  key: TierId | OverseerId | SmiteUpgradeId,
 ): SpendEmphasis {
   const matches = (option: RailOption | null): boolean =>
-    option !== null &&
-    option.kind === kind &&
-    (option.kind === 'appoint' ? option.overseerId === key : option.tierId === key);
+    option !== null && option.kind === kind && keyOf(option) === key;
 
-  const best = kind === 'purchase' ? plan.best.purchase : plan.best.appoint;
-  const saving = kind === 'purchase' ? plan.saving.purchase : plan.saving.appoint;
-
-  if (matches(best)) return 'best';
-  if (matches(saving)) return 'saving';
+  if (matches(plan.best[kind])) return 'best';
+  if (matches(plan.saving[kind])) return 'saving';
   return 'none';
 }
 
@@ -234,10 +259,13 @@ export function railPlan({ state, content, quantity, isUnlocked, held }: RailPla
     options.push(...appointOptions({ state, content, tier }));
   }
 
+  options.push(...climbOptions({ state, content }));
+
   const purchases = options.filter((option): option is RailPurchase => option.kind === 'purchase');
   const appointments = options.filter(
     (option): option is RailAppointment => option.kind === 'appoint',
   );
+  const climbs = options.filter((option): option is RailClimb => option.kind === 'climb');
 
   const bestPurchase = sticky(
     purchases.filter((option) => option.affordable),
@@ -249,13 +277,19 @@ export function railPlan({ state, content, quantity, isUnlocked, held }: RailPla
     held.appoint,
     (option) => option.overseerId,
   );
+  const bestClimb = sticky(
+    climbs.filter((option) => option.affordable),
+    held.climb,
+    (option) => option.upgradeId,
+  );
 
   return {
     options,
-    best: { purchase: bestPurchase, appoint: bestAppoint },
+    best: { purchase: bestPurchase, appoint: bestAppoint, climb: bestClimb },
     saving: {
       purchase: bestPurchase ? null : pick(worthwhile(purchases)),
       appoint: bestAppoint ? null : pick(worthwhile(appointments)),
+      climb: bestClimb ? null : pick(worthwhile(climbs)),
     },
   };
 }
@@ -390,6 +424,47 @@ function appointOptions({ state, content, tier }: AppointInput): RailAppointment
 /** What this post multiplies, if it is of the kind asked about. One otherwise. */
 function factorOf(post: OverseerDef, kind: 'quicken' | 'swell'): number {
   return post.effect.kind === kind ? post.effect.factor : 1;
+}
+
+interface ClimbInput {
+  state: GameState;
+  content: Content;
+}
+
+/**
+ * The next rung of each ladder, priced by what it does to the average blow.
+ *
+ * Ranked by the gain in `smiteAverageMultiplier` per Evil spent (spec §5.2). That
+ * measure assumes a player striking on every cooldown, which is an assumption and a
+ * stated one — somebody who paces their blows would rank these differently, and the
+ * panel cannot know which they are.
+ *
+ * A ladder at its top produces nothing at all rather than a zero-scoring row, so the
+ * panel simply stops offering it.
+ */
+function climbOptions({ state, content }: ClimbInput): RailClimb[] {
+  const options: RailClimb[] = [];
+  const now = smiteAverageMultiplier(state, content, null);
+
+  for (const upgrade of content.smite.upgrades) {
+    const cost = climbCost(state, content, upgrade.id);
+    if (cost === null || cost.lte(0)) continue;
+
+    const after = smiteAverageMultiplier(state, content, upgrade.id);
+    const gain = new Decimal(Math.max(0, after - now));
+
+    options.push({
+      kind: 'climb',
+      upgradeId: upgrade.id,
+      rung: state.smiteRungs[upgrade.id] + 1,
+      cost,
+      affordable: state.resources.evil.gte(cost),
+      gain,
+      score: gain.div(cost),
+    });
+  }
+
+  return options;
 }
 
 /** Highest score wins. Ties go to whichever content lists first, so it is stable. */
