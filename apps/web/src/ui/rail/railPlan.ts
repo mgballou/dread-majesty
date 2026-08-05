@@ -125,11 +125,13 @@ export interface HeldKeys {
 
 export interface RailPlan {
   /**
-   * Every spend on the rail, purchases and appointments together in one list.
+   * Every spend on the rail — purchases, appointments and climbs — in one list.
    *
-   * Still one list: the two are still ranked by the same measure and the miscreants
-   * panel still reads its offers out of it. What changed is who wins — one winner per
-   * panel rather than one across the deck.
+   * One list of three kinds, not one measure: each kind is scored on its own axis
+   * (see `RailOptionShape.gain`) and every panel filters this list down to its own
+   * kind before it picks a winner. What one list buys is that each panel still reads
+   * its offers out of the same plan, one winner per panel rather than one across the
+   * deck.
    */
   options: RailOption[];
   /**
