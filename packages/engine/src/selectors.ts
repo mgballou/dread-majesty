@@ -273,9 +273,12 @@ export function smitePhase(
   content: Content,
 ): { readonly kind: 'active' | 'cooling' | 'ready'; readonly share: number } {
   if (state.smiteActiveMs > 0) {
-    // Clamped, because Reach can be bought while a blow is running and the blow keeps
-    // the length it was struck at. A stored duration would be a field that matters for
-    // one frame a run; a clamp is a line.
+    // Clamped defensively. Reach can be bought while a blow is running, and the blow
+    // keeps the length it was struck at — so buying it mid-blow only ever raises this
+    // denominator, which makes the share drop and the ring visibly jump backwards.
+    // Nothing produces a share above 1; the clamp guards a future content edit rather
+    // than anything reachable today. The backward jump is accepted rather than fixed:
+    // storing the struck duration would be a field that matters for one frame a run.
     const duration = smiteDurationMs(state, content);
     return { kind: 'active', share: Math.min(1, state.smiteActiveMs / duration) };
   }
