@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useId, type ReactNode } from 'react';
 import type { Content, SmiteUnit, SmiteUpgradeDef, SmiteUpgradeId, WrathCopy } from '@dm/content';
 import { canKeep, climbCost, keepCost, smiteValueAt, type GameState } from '@dm/engine';
 import { formatNumber } from '../format.ts';
@@ -71,10 +71,17 @@ function Rung({ upgrade, state, content, emphasis, onClimb, onKeep, copy }: Rung
   const now = reads(smiteValueAt(content, upgrade.id, rung), upgrade.unit);
   const next = reads(smiteValueAt(content, upgrade.id, rung + 1), upgrade.unit);
 
+  const id = useId();
+  const nameId = `${id}-name`;
+  const climbId = `${id}-climb`;
+  const keepId = `${id}-keep`;
+
   return (
     <li className={`wrath__rung wrath__rung--${emphasis}`}>
       <span className="wrath__body">
-        <span className="wrath__name">{copy.names[upgrade.id]}</span>
+        <span className="wrath__name" id={nameId}>
+          {copy.names[upgrade.id]}
+        </span>
         <span className="wrath__note">{copy.notes[upgrade.id]}</span>
         <span className="wrath__step">{climb === null ? now : copy.step({ now, next })}</span>
       </span>
@@ -91,7 +98,9 @@ function Rung({ upgrade, state, content, emphasis, onClimb, onKeep, copy }: Rung
       <span className="wrath__actions">
         <button
           type="button"
-          className="button button--primary"
+          id={climbId}
+          className={`button${emphasis === 'best' ? ' button--primary' : ''}`}
+          aria-labelledby={`${climbId} ${nameId}`}
           disabled={climb === null || state.resources.evil.lt(climb)}
           onClick={onClimb}
         >
@@ -103,7 +112,9 @@ function Rung({ upgrade, state, content, emphasis, onClimb, onKeep, copy }: Rung
 
         <button
           type="button"
+          id={keepId}
           className="button button--quiet"
+          aria-labelledby={`${keepId} ${nameId}`}
           disabled={!keepable}
           onClick={onKeep}
         >
