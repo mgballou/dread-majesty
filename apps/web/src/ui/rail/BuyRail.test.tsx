@@ -93,7 +93,7 @@ describe('BuyRail', () => {
   });
 
   it('enables an affordable row without saying so in words', () => {
-    state.resources.evil = new Decimal(2600);
+    state.resources.evil = new Decimal(5200);
 
     draw();
 
@@ -101,7 +101,7 @@ describe('BuyRail', () => {
   });
 
   it('leaves the shortfall silent once a row is affordable', () => {
-    state.resources.evil = new Decimal(2600);
+    state.resources.evil = new Decimal(5200);
 
     const { container } = draw();
 
@@ -109,7 +109,7 @@ describe('BuyRail', () => {
   });
 
   it('lifts exactly one spend to the accent', () => {
-    state.resources.evil = new Decimal(2600);
+    state.resources.evil = new Decimal(5200);
 
     const { container } = draw();
 
@@ -123,7 +123,7 @@ describe('BuyRail', () => {
   });
 
   it('names the lifted row as lifted, for anyone reading by ear', () => {
-    state.resources.evil = new Decimal(2600);
+    state.resources.evil = new Decimal(5200);
 
     draw();
 
@@ -139,7 +139,7 @@ describe('BuyRail', () => {
   });
 
   it('disables a row the player cannot afford', () => {
-    state.resources.evil = new Decimal(100);
+    state.resources.evil = new Decimal(200);
 
     draw();
 
@@ -147,7 +147,7 @@ describe('BuyRail', () => {
   });
 
   it('says how far short an unaffordable row is', () => {
-    state.resources.evil = new Decimal(100);
+    state.resources.evil = new Decimal(200);
 
     draw();
 
@@ -159,7 +159,7 @@ describe('BuyRail', () => {
   });
 
   it('keeps every other control on the rail at secondary weight', () => {
-    state.resources.evil = new Decimal(2600);
+    state.resources.evil = new Decimal(5200);
 
     const { container } = draw();
 
@@ -227,7 +227,7 @@ describe('BuyRail', () => {
   });
 
   it('fires the purchase callback with the tier and the chosen quantity', async () => {
-    state.resources.evil = new Decimal(2600);
+    state.resources.evil = new Decimal(5200);
 
     const { onPurchase } = draw();
     await userEvent.click(screen.getByRole('button', { name: buyNameStart('minion', 1) }));
@@ -236,7 +236,7 @@ describe('BuyRail', () => {
   });
 
   it('carries the chosen quantity into the callback', async () => {
-    state.resources.evil = new Decimal(2600);
+    state.resources.evil = new Decimal(5200);
 
     const { onPurchase } = draw(() => true, 10);
     await userEvent.click(screen.getByRole('button', { name: buyNameStart('minion', 10) }));
@@ -255,7 +255,7 @@ describe('BuyRail', () => {
   });
 
   it('never spends the accent on the quantity setting', async () => {
-    state.resources.evil = new Decimal(2600);
+    state.resources.evil = new Decimal(5200);
 
     const { container } = draw();
     await userEvent.click(
@@ -300,7 +300,7 @@ describe('BuyRail', () => {
   });
 
   it('offers no appointment, because appointments are not the muster', () => {
-    state.resources.evil = new Decimal(2600);
+    state.resources.evil = new Decimal(5200);
 
     draw();
 
@@ -319,7 +319,7 @@ describe('BuyRail', () => {
 
   it('still lifts its own best purchase even while an appointment scores higher', () => {
     state.gens.minion.owned = new Decimal(400);
-    state.resources.evil = new Decimal(1000);
+    state.resources.evil = new Decimal(2000);
 
     const { container } = draw();
 
@@ -328,7 +328,7 @@ describe('BuyRail', () => {
 
   it('still marks its own row as lifted even while an appointment scores higher', () => {
     state.gens.minion.owned = new Decimal(400);
-    state.resources.evil = new Decimal(1000);
+    state.resources.evil = new Decimal(2000);
 
     const { container } = draw();
 
@@ -372,7 +372,7 @@ describe('BuyRail', () => {
 
     const row = container.querySelector('[data-tier="minion"] .rail__line');
 
-    expect(row).toHaveTextContent(/^5 Evil every/);
+    expect(row).toHaveTextContent(/^10 Evil every/);
   });
 
   it('draws what the tier makes rather than naming it twice', () => {

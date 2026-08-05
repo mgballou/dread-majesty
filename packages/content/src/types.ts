@@ -172,6 +172,20 @@ export interface SmiteDef {
     /** `smiteApathy` never exceeds this. */
     readonly cap: number;
   };
+  /**
+   * What a rung's Evil price is multiplied by, per reset already taken.
+   *
+   * **This is what stops the ladders going stale and what makes a Keep worth buying.**
+   * A rung priced in flat Evil is a real decision on the first run and pocket change on
+   * the fourth, because souls raise production and every later run is richer. Climbing
+   * therefore gets dearer each time, and the soul price of *keeping* a rung does not —
+   * so the gap between re-earning a rung and having kept it widens every reset, which
+   * is the only thing that can make souls worth spending here.
+   *
+   * Growth applies to the Evil price alone. `SmiteRungDef.souls` is flat by rung for
+   * ever, which is the whole of "the Evil goes up per run, the Keep goes up per rung".
+   */
+  readonly climbGrowth: number;
   /** One per `SmiteUpgradeId`. Content order is offer order. */
   readonly upgrades: readonly SmiteUpgradeDef[];
 }

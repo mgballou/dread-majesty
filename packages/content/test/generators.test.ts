@@ -140,6 +140,21 @@ function ladder(id: SmiteUpgradeId): SmiteUpgradeDef {
   return found;
 }
 
+describe('every Evil figure the content authors', () => {
+  it('is a whole number, so what a tier promises reads as what it pays', () => {
+    const evil: string[] = [
+      ...v1.tiers.filter((tier) => tier.produces === 'evil').map((tier) => tier.yield),
+      ...v1.tiers.map((tier) => tier.baseCost),
+      ...v1.tiers.flatMap((tier) => tier.overseers.map((post) => post.cost)),
+      ...v1.smite.upgrades.flatMap((upgrade) => upgrade.rungs.map((rung) => rung.evil)),
+    ];
+
+    for (const value of evil) {
+      expect(Number(value) % 1).toBe(0);
+    }
+  });
+});
+
 describe('the smite ladders', () => {
   it('ships one ladder per id', () => {
     expect(v1.smite.upgrades.map((upgrade) => upgrade.id).sort()).toEqual(
@@ -201,6 +216,10 @@ describe('the smite ladders', () => {
 
   it('never lets the cooldown fall under the shortest blow', () => {
     expect(v1.smite.cooldownMs).toBeGreaterThanOrEqual(ladder('reach').base);
+  });
+
+  it('makes re-climbing dearer every run, so keeping a rung can be worth souls', () => {
+    expect(v1.smite.climbGrowth).toBeGreaterThan(1);
   });
 
   it('keeps the cooldown inside the regime the ranking assumes', () => {

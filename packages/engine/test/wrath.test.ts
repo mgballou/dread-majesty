@@ -161,6 +161,51 @@ describe('keeping a rung', () => {
   });
 });
 
+describe('the price of climbing across runs', () => {
+  it('charges the authored price on a first run', () => {
+    expect(climbCost(rich(), fixture, 'weight')?.eq(1000)).toBe(true);
+  });
+
+  it('charges more after a reset', () => {
+    const state = rich();
+    state.stats.prestiges = 1;
+
+    expect(climbCost(state, fixture, 'weight')?.eq(2000)).toBe(true);
+  });
+
+  it('compounds the growth per reset', () => {
+    const state = rich();
+    state.stats.prestiges = 3;
+
+    expect(climbCost(state, fixture, 'weight')?.toNumber()).toBeCloseTo(8000, 6);
+  });
+
+  it('leaves the soul price of keeping a rung alone across runs', () => {
+    const state = rich();
+    state.stats.prestiges = 5;
+    climb(state, 'weight');
+
+    expect(keepCost(state, fixture, 'weight')?.eq(5)).toBe(true);
+  });
+
+  it('still refuses a climb the purse cannot reach once the price has grown', () => {
+    const state = createState(fixture);
+    state.resources.evil = new Decimal(1500);
+    state.stats.prestiges = 1;
+
+    expect(climb(state, 'weight').ok).toBe(false);
+  });
+
+  it('spends the grown price, not the authored one', () => {
+    const state = rich();
+    state.stats.prestiges = 1;
+    const before = state.resources.evil;
+    climb(state, 'weight');
+
+    expect(before.sub(state.resources.evil).eq(2000)).toBe(true);
+  });
+});
+
 describe('a reset and the ladders', () => {
   it('drops an unkept rung back to nothing', () => {
     const state = rich();

@@ -3,7 +3,7 @@ import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'rea
 import type { Content, PrestigeCopy } from '@dm/content';
 import { msToNextSoul, prestigeGain, type GameState } from '@dm/engine';
 import { Panel } from '../Panel.tsx';
-import { formatCount, formatDuration, formatNumber } from '../format.ts';
+import { formatNumber, formatWhole, formatDuration } from '../format.ts';
 import '../controls.css';
 import './PrestigePanel.css';
 
@@ -64,11 +64,11 @@ export function PrestigePanel({
   };
 
   return (
-    <Panel title={copy.name} glyph="✧" trailing={formatCount(state.souls)}>
+    <Panel title={copy.name} glyph="✧" trailing={formatWhole(state.souls)}>
       <dl className="prestige__figures">
         <div className="prestige__figure">
           <dt className="prestige__term">{copy.held}</dt>
-          <dd className="prestige__value">{formatCount(state.souls)}</dd>
+          <dd className="prestige__value">{formatWhole(state.souls)}</dd>
         </div>
         <div className="prestige__figure">
           <dt className="prestige__term">
@@ -78,7 +78,7 @@ export function PrestigePanel({
         </div>
         <div className="prestige__figure">
           <dt className="prestige__term">{copy.reckoning}</dt>
-          <dd className="prestige__value">{formatCount(gain)}</dd>
+          <dd className="prestige__value">{formatWhole(gain)}</dd>
         </div>
         <div className="prestige__figure">
           <dt className="prestige__term">{copy.runLength}</dt>
@@ -116,7 +116,7 @@ export function PrestigePanel({
         disabled={!owed}
         onClick={() => setConfirming(true)}
       >
-        {owed ? copy.claim(formatCount(gain)) : copy.noneOwed}
+        {owed ? copy.claim(formatWhole(gain)) : copy.noneOwed}
       </button>
 
       <dialog
@@ -129,7 +129,7 @@ export function PrestigePanel({
         <h3 className="prestige__dialog-title" id={titleId}>
           {copy.confirmTitle}
         </h3>
-        <p className="prestige__dialog-body">{copy.confirmBody(formatCount(gain))}</p>
+        <p className="prestige__dialog-body">{copy.confirmBody(formatWhole(gain))}</p>
         <div className="prestige__choices">
           <button type="button" className="button" onClick={() => setConfirming(false)}>
             {copy.cancel}

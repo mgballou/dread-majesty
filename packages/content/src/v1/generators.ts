@@ -181,25 +181,25 @@ export const v1: Content = {
       yield: '1',
       cycleMs: 90 * MINUTE,
       costResource: 'evil',
-      baseCost: '8e11',
+      baseCost: '1.6e12',
       costRate: 1.3,
       overseers: [
         {
           id: 'throne-hand',
           name: 'Steward of the High Seat',
-          cost: '8e14',
+          cost: '1.6e15',
           effect: { kind: 'automate' },
         },
         {
           id: 'throne-goad',
           name: 'Keeper of the Long Hour',
-          cost: '3.2e15',
+          cost: '6.4e15',
           effect: { kind: 'quicken', factor: 2 },
         },
         {
           id: 'throne-glut',
           name: 'Chancellor of Titles',
-          cost: '1.28e16',
+          cost: '2.56e16',
           effect: { kind: 'swell', factor: 2 },
         },
       ],
@@ -213,25 +213,25 @@ export const v1: Content = {
       yield: '1',
       cycleMs: 30 * MINUTE,
       costResource: 'evil',
-      baseCost: '3e8',
+      baseCost: '6e8',
       costRate: 1.3,
       overseers: [
         {
           id: 'fortress-hand',
           name: 'Castellan of the Black Keep',
-          cost: '3.2e11',
+          cost: '6.4e11',
           effect: { kind: 'automate' },
         },
         {
           id: 'fortress-goad',
           name: 'Overseer of the Scaffold',
-          cost: '1.28e12',
+          cost: '2.56e12',
           effect: { kind: 'quicken', factor: 2 },
         },
         {
           id: 'fortress-glut',
           name: 'Master of the Quarry',
-          cost: '5.12e12',
+          cost: '1.024e13',
           effect: { kind: 'swell', factor: 2 },
         },
       ],
@@ -245,25 +245,25 @@ export const v1: Content = {
       yield: '1',
       cycleMs: 10 * MINUTE,
       costResource: 'evil',
-      baseCost: '3e7',
+      baseCost: '6e7',
       costRate: 1.1,
       overseers: [
         {
           id: 'legion-hand',
           name: 'Quartermaster of the Host',
-          cost: '1.2e8',
+          cost: '2.4e8',
           effect: { kind: 'automate' },
         },
         {
           id: 'legion-goad',
           name: 'Marshal of the Forced March',
-          cost: '4.8e8',
+          cost: '9.6e8',
           effect: { kind: 'quicken', factor: 2 },
         },
         {
           id: 'legion-glut',
           name: 'Herald of the Levy',
-          cost: '1.92e9',
+          cost: '3.84e9',
           effect: { kind: 'swell', factor: 2 },
         },
       ],
@@ -277,25 +277,25 @@ export const v1: Content = {
       yield: '5',
       cycleMs: 60 * SECOND,
       costResource: 'evil',
-      baseCost: '1500',
+      baseCost: '3000',
       costRate: 1.25,
       overseers: [
         {
           id: 'warren-hand',
           name: 'Warden of the Warrens',
-          cost: '1.2e7',
+          cost: '2.4e7',
           effect: { kind: 'automate' },
         },
         {
           id: 'warren-goad',
           name: 'Mistress of the Quickening',
-          cost: '4.8e7',
+          cost: '9.6e7',
           effect: { kind: 'quicken', factor: 2 },
         },
         {
           id: 'warren-glut',
           name: 'Broodkeeper',
-          cost: '1.92e8',
+          cost: '3.84e8',
           effect: { kind: 'swell', factor: 2 },
         },
       ],
@@ -306,28 +306,28 @@ export const v1: Content = {
       name: 'Minion',
       plural: 'Minions',
       produces: 'evil',
-      yield: '2.5',
+      yield: '5',
       cycleMs: 4 * SECOND,
       costResource: 'evil',
-      baseCost: '80',
+      baseCost: '160',
       costRate: 1.012,
       overseers: [
         {
           id: 'minion-hand',
           name: 'Taskmaster of the Pits',
-          cost: '600',
+          cost: '1200',
           effect: { kind: 'automate' },
         },
         {
           id: 'minion-goad',
           name: 'Keeper of the Whip',
-          cost: '2400',
+          cost: '4800',
           effect: { kind: 'quicken', factor: 2 },
         },
         {
           id: 'minion-glut',
           name: 'Reckoner of the Tally',
-          cost: '9600',
+          cost: '19200',
           effect: { kind: 'swell', factor: 2 },
         },
       ],
@@ -349,7 +349,7 @@ export const v1: Content = {
   prestige: {
     k: 150,
     // First soul lands at 45m (lifetime = scale / k^2 = 2.53e9).
-    scale: '5.7e13',
+    scale: '1.14e14',
     perSoul: 0.02,
   },
 
@@ -358,6 +358,10 @@ export const v1: Content = {
     // Flat, and on no ladder. See SmiteDef's note on why escalating it cannot work.
     cooldownMs: 20 * SECOND,
     apathy: { perBlow: 1, cap: 3 },
+    // A seed, like every balance number here. Each reset roughly doubles production via
+    // souls and shortens the run, so tripling the climb keeps a rung a real decision on
+    // the third run rather than a rounding error. The harness settles it.
+    climbGrowth: 3,
     // Reach first: it is the cheapest, and uptime is the effect a player feels before
     // they have worked out what Apathy is doing.
     upgrades: [
@@ -367,10 +371,10 @@ export const v1: Content = {
         base: 15 * SECOND,
         unit: 'seconds',
         rungs: [
-          { evil: '2.5e3', souls: '8', value: 17 * SECOND },
-          { evil: '3e4', souls: '20', value: 19 * SECOND },
-          { evil: '3.6e5', souls: '50', value: 21 * SECOND },
-          { evil: '4.3e6', souls: '120', value: 23 * SECOND },
+          { evil: '5000', souls: '8', value: 17 * SECOND },
+          { evil: '60000', souls: '20', value: 19 * SECOND },
+          { evil: '7.2e5', souls: '50', value: 21 * SECOND },
+          { evil: '8.6e6', souls: '120', value: 23 * SECOND },
         ],
       },
       {
@@ -379,10 +383,10 @@ export const v1: Content = {
         base: 2,
         unit: 'multiplier',
         rungs: [
-          { evil: '5e3', souls: '8', value: 2.25 },
-          { evil: '6e4', souls: '20', value: 2.5 },
-          { evil: '7.2e5', souls: '50', value: 2.75 },
-          { evil: '8.6e6', souls: '120', value: 3 },
+          { evil: '10000', souls: '8', value: 2.25 },
+          { evil: '1.2e5', souls: '20', value: 2.5 },
+          { evil: '1.44e6', souls: '50', value: 2.75 },
+          { evil: '1.72e7', souls: '120', value: 3 },
         ],
       },
       {
@@ -391,10 +395,10 @@ export const v1: Content = {
         base: 45 * SECOND,
         unit: 'seconds',
         rungs: [
-          { evil: '1e4', souls: '8', value: 40 * SECOND },
-          { evil: '1.2e5', souls: '20', value: 36 * SECOND },
-          { evil: '1.44e6', souls: '50', value: 32 * SECOND },
-          { evil: '1.73e7', souls: '120', value: 30 * SECOND },
+          { evil: '20000', souls: '8', value: 40 * SECOND },
+          { evil: '2.4e5', souls: '20', value: 36 * SECOND },
+          { evil: '2.88e6', souls: '50', value: 32 * SECOND },
+          { evil: '3.46e7', souls: '120', value: 30 * SECOND },
         ],
       },
       {
@@ -403,10 +407,10 @@ export const v1: Content = {
         base: 0.25,
         unit: 'amount',
         rungs: [
-          { evil: '1.5e4', souls: '8', value: 0.225 },
-          { evil: '1.8e5', souls: '20', value: 0.2 },
-          { evil: '2.16e6', souls: '50', value: 0.175 },
-          { evil: '2.6e7', souls: '120', value: 0.15 },
+          { evil: '30000', souls: '8', value: 0.225 },
+          { evil: '3.6e5', souls: '20', value: 0.2 },
+          { evil: '4.32e6', souls: '50', value: 0.175 },
+          { evil: '5.2e7', souls: '120', value: 0.15 },
         ],
       },
     ],

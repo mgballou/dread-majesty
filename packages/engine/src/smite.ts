@@ -85,7 +85,14 @@ function nextFloor(state: GameState, content: Content, id: SmiteUpgradeId) {
 /** Evil to climb one rung. Null at the top of the ladder. */
 export function climbCost(state: GameState, content: Content, id: SmiteUpgradeId): Decimal | null {
   const rung = nextRung(state, content, id);
-  return rung ? new Decimal(rung.evil) : null;
+  if (!rung) return null;
+
+  // Dearer every reset. A flat price is a decision on the first run and pocket change on
+  // the fourth, because souls raise production and every later run is richer — so the
+  // ladders would quietly stop being a choice at exactly the point the shop is supposed
+  // to open up. Keying on `prestiges` rather than on souls held keeps it a step the
+  // player takes deliberately rather than a number that drifts under them.
+  return new Decimal(rung.evil).mul(Decimal.pow(content.smite.climbGrowth, state.stats.prestiges));
 }
 
 /** Souls to raise the floor one rung. Null at the top of the ladder. */

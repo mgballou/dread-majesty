@@ -56,11 +56,23 @@ describe('the apathy ticks', () => {
   it('reads the share of the cap rather than the count', () => {
     render(<ApathyTicks apathy={3} cap={6} copy={copy} />);
 
+    expect(lit()).toBe(3);
+  });
+
+  it('holds a tick until the value drops clear of it', () => {
+    render(<ApathyTicks apathy={1} cap={3} copy={copy} />);
+
     expect(lit()).toBe(2);
   });
 
-  it('lights a tick only once it is filled', () => {
-    render(<ApathyTicks apathy={1} cap={3} copy={copy} />);
+  it('holds the top tick just under the cap, where a hammering player lives', () => {
+    render(<ApathyTicks apathy={2.56} cap={3} copy={copy} />);
+
+    expect(lit()).toBe(CYCLE_SEGMENTS);
+  });
+
+  it('lights the first tick on the least apathy there can be', () => {
+    render(<ApathyTicks apathy={0.01} cap={3} copy={copy} />);
 
     expect(lit()).toBe(1);
   });

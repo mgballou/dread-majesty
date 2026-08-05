@@ -110,7 +110,7 @@ describe('ChainStage', () => {
   it('puts every count through the one formatter', () => {
     render(stage({ state: tapped(600), version: 1 }));
 
-    expect(screen.getByText('1.5K')).toBeInTheDocument();
+    expect(screen.getByText('3K')).toBeInTheDocument();
   });
 
   it('holds exactly one rung the player has not reached, as the next goal', () => {

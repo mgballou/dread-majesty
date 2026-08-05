@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import type { SmiteCopy } from '@dm/content';
-import { CYCLE_SEGMENTS, quantise } from '../segments.ts';
+import { CYCLE_SEGMENTS } from '../segments.ts';
 import './ApathyTicks.css';
 
 interface ApathyTicksProps {
@@ -37,10 +37,17 @@ interface ApathyTicksProps {
  */
 export function ApathyTicks({ apathy, cap, copy }: ApathyTicksProps): ReactNode {
   const share = cap > 0 ? Math.min(1, Math.max(0, apathy / cap)) : 0;
-  // The same flooring the rings use: a tick lights once it is filled, so a lit tick
-  // always means at least that much Apathy has been earned. `Math.round` only undoes
-  // the float noise in `quantise`'s own division.
-  const lit = Math.round(quantise(share) * CYCLE_SEGMENTS);
+  // Upward bound, and **deliberately the opposite of the flooring `quantise` does for
+  // the cycle rings.** A ring measures how much of a cycle has elapsed, so it must not
+  // claim progress that has not happened — floor. This measures where a level stands,
+  // so a tick owns the band beneath it and stays lit until the value drops clear of it.
+  //
+  // Flooring here made the top tick unreachable in practice. Apathy is capped at exactly
+  // `cap`, so `share === 1` held for the single 100ms slice after a blow landed on the
+  // cap and `step` immediately bled it below — the fifth tick flashed for one frame a
+  // minute and never sat still. A player hammering on cooldown holds Apathy between
+  // 2.56 and 3.0 of 3 forever and saw four.
+  const lit = Math.ceil(share * CYCLE_SEGMENTS);
 
   return (
     <div className="apathy" role="img" aria-label={`${copy.apathy}. ${band(share, copy.bands)}`}>

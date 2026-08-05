@@ -4,7 +4,7 @@ import { newlyEarnedAchievements } from './achievements.ts';
 import { bulkCost, findTier, maxAffordable } from './cost.ts';
 import { findOverseer, hasAutomator, hasPost } from './roster.ts';
 import { isUnlockReached, prestigeGain } from './selectors.ts';
-import { nextBlowMultiplier, smiteDurationMs } from './smite.ts';
+import { nextBlowMultiplier, smiteDurationMs, climbCost, keepCost } from './smite.ts';
 import { createState } from './state.ts';
 import type { GameState, Intent, IntentResult } from './types.ts';
 
@@ -94,6 +94,13 @@ function smite(
  *
  * Named `climbLadder` rather than `climb` only because `smite.ts` already exports
  * `climbCost` and a bare `climb` beside it reads as its pair when it is not.
+ *
+ * **The price comes from `climbCost` and never from `rung.evil`.** It used to read the
+ * authored figure directly, which was harmless only for as long as the price *was* the
+ * authored figure. The moment climbing grew dearer per reset, that shortcut made the
+ * panel print one number and the intent charge another — a shop that lies about its own
+ * prices. `climbCost` returning null is also the whole of the bounds check, so there is
+ * no second place that has to know how long a ladder is.
  */
 function climbLadder(
   state: GameState,
@@ -103,14 +110,13 @@ function climbLadder(
   const upgrade = content.smite.upgrades.find((entry) => entry.id === intent.upgradeId);
   if (!upgrade) return { ok: false, intent, reason: 'unknown-upgrade' };
 
-  const rung = state.smiteRungs[intent.upgradeId];
-  const next = upgrade.rungs[rung];
-  if (!next) return { ok: false, intent, reason: 'rung-maxed' };
+  const cost = climbCost(state, content, intent.upgradeId);
+  if (cost === null) return { ok: false, intent, reason: 'rung-maxed' };
 
-  const cost = new Decimal(next.evil);
   const budget = state.resources.evil;
   if (cost.gt(budget)) return { ok: false, intent, reason: 'insufficient-resource' };
 
+  const rung = state.smiteRungs[intent.upgradeId];
   state.resources.evil = budget.sub(cost);
   state.smiteRungs[intent.upgradeId] = rung + 1;
 
@@ -140,10 +146,12 @@ function keepRung(
     return { ok: false, intent, reason: 'nothing-to-keep' };
   }
 
-  const next = upgrade.rungs[kept];
-  if (!next) return { ok: false, intent, reason: 'rung-maxed' };
-
-  const cost = new Decimal(next.souls);
+  // Through the selector, for the same reason `climbLadder` is — one place decides what
+  // a thing costs. The soul price happens to be flat by rung and expected to stay that
+  // way, but "it does not vary yet" is exactly the reasoning that put the Evil price out
+  // of step with its own display.
+  const cost = keepCost(state, content, intent.upgradeId);
+  if (cost === null) return { ok: false, intent, reason: 'rung-maxed' };
   if (cost.gt(state.souls)) return { ok: false, intent, reason: 'insufficient-souls' };
 
   state.souls = state.souls.sub(cost);

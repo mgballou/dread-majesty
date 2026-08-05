@@ -56,7 +56,7 @@ describe('railPlan', () => {
   it('lifts the purchase that returns most per Evil spent, not the dearest affordable one', () => {
     state.gens.warren.owned = new Decimal(12);
     state.gens.warren.purchased = new Decimal(12);
-    state.resources.evil = new Decimal(20000);
+    state.resources.evil = new Decimal(40000);
 
     expect(plan().best.purchase?.tierId).toBe('minion');
   });
@@ -77,13 +77,13 @@ describe('railPlan', () => {
   });
 
   it('lifts a purchase when nothing is owned to appoint anybody over', () => {
-    state.resources.evil = new Decimal(2600);
+    state.resources.evil = new Decimal(5200);
 
     expect(plan().best.purchase?.kind).toBe('purchase');
   });
 
   it('values a Warren by what reaches the bottom of the chain, not by its own yield', () => {
-    state.resources.evil = new Decimal(2600);
+    state.resources.evil = new Decimal(5200);
 
     const warren = purchases(plan()).find((option) => option.tierId === 'warren');
 
@@ -131,7 +131,7 @@ describe('railPlan', () => {
   });
 
   it('names nothing to save toward while a purchase is available', () => {
-    state.resources.evil = new Decimal(2600);
+    state.resources.evil = new Decimal(5200);
 
     expect(plan().saving.purchase).toBeNull();
   });
@@ -146,7 +146,7 @@ describe('railPlan', () => {
   });
 
   it('marks an option the player cannot afford as unaffordable rather than dropping it', () => {
-    state.resources.evil = new Decimal(100);
+    state.resources.evil = new Decimal(200);
 
     const warren = purchases(plan()).find((option) => option.tierId === 'warren');
 
@@ -217,14 +217,14 @@ describe('railPlan', () => {
 
   it('lifts an appointment on its own panel when hiring beats every purchase', () => {
     state.gens.minion.owned = new Decimal(400);
-    state.resources.evil = new Decimal(1000);
+    state.resources.evil = new Decimal(2000);
 
     expect(plan().best.appoint?.kind).toBe('appoint');
   });
 
   it('lifts the tier whose Overseer it means', () => {
     state.gens.minion.owned = new Decimal(400);
-    state.resources.evil = new Decimal(1000);
+    state.resources.evil = new Decimal(2000);
 
     expect(plan().best.appoint?.tierId).toBe('minion');
   });
@@ -245,7 +245,7 @@ describe('railPlan', () => {
   });
 
   it('resolves a max buy against the purse', () => {
-    state.resources.evil = new Decimal(2000);
+    state.resources.evil = new Decimal(4000);
 
     const count = resolveCount({ state, content: CURRENT, tierId: 'minion', quantity: 'max' });
 
@@ -262,14 +262,14 @@ describe('railPlan', () => {
 describe('each panel gets its own best', () => {
   it('lifts a purchase even while an appointment outscores it', () => {
     state.gens.minion.owned = new Decimal(400);
-    state.resources.evil = new Decimal(1000);
+    state.resources.evil = new Decimal(2000);
 
     expect(plan().best.purchase).not.toBeNull();
   });
 
   it('lifts the appointment at the same time', () => {
     state.gens.minion.owned = new Decimal(400);
-    state.resources.evil = new Decimal(1000);
+    state.resources.evil = new Decimal(2000);
 
     expect(plan().best.appoint?.overseerId).toBe('minion-hand');
   });
@@ -285,14 +285,14 @@ describe('the accent holds still', () => {
   it('keeps the held purchase when a challenger only just beats it', () => {
     state.gens.warren.owned = new Decimal(1);
     state.gens.warren.purchased = new Decimal(1);
-    state.resources.evil = new Decimal(2600);
+    state.resources.evil = new Decimal(5200);
     const held: HeldKeys = { purchase: 'minion', appoint: null, climb: null };
 
     expect(plan(1, all, held).best.purchase?.tierId).toBe('minion');
   });
 
   it('hands over once a challenger clears the margin', () => {
-    state.resources.evil = new Decimal(2600);
+    state.resources.evil = new Decimal(5200);
     const held: HeldKeys = { purchase: 'minion', appoint: null, climb: null };
 
     expect(plan(1, all, held).best.purchase?.tierId).not.toBe('minion');
@@ -306,7 +306,7 @@ describe('the accent holds still', () => {
   });
 
   it('hands over when the held option has left a rail that still has spends on it', () => {
-    state.resources.evil = new Decimal(2600);
+    state.resources.evil = new Decimal(5200);
     const held: HeldKeys = { purchase: 'legion', appoint: null, climb: null };
 
     expect(plan(1, all, held).best.purchase?.tierId).toBe('warren');
@@ -316,14 +316,14 @@ describe('the accent holds still', () => {
 describe('the premise the per-panel tests rest on', () => {
   it('has the appointment outscoring every purchase once Minions are stacked', () => {
     state.gens.minion.owned = new Decimal(400);
-    state.resources.evil = new Decimal(1000);
+    state.resources.evil = new Decimal(2000);
     const drawn = plan();
 
     expect(drawn.best.appoint?.score.gt(drawn.best.purchase?.score ?? new Decimal(0))).toBe(true);
   });
 
   it('has a purchase outscoring every appointment from a standing start', () => {
-    state.resources.evil = new Decimal(2600);
+    state.resources.evil = new Decimal(5200);
     const drawn = plan();
 
     expect(drawn.best.purchase?.score.gt(drawn.best.appoint?.score ?? new Decimal(0))).toBe(true);
@@ -334,7 +334,7 @@ describe('what a panel names to save toward', () => {
   it('never names a post on a tier that would produce nothing', () => {
     state.gens.minion.owned = new Decimal(400);
     state.overseers.minion = ['minion-hand', 'minion-goad', 'minion-glut'];
-    state.resources.evil = new Decimal(50);
+    state.resources.evil = new Decimal(100);
 
     expect(plan().saving.appoint).toBeNull();
   });
