@@ -15,6 +15,7 @@ import {
   migrate,
 } from '../src/index.ts';
 import type { SaveBlob } from '../src/index.ts';
+import { SMITE_UPGRADE_IDS } from '@dm/content';
 import { fixture } from './fixtures/content.ts';
 import { appointed } from './fixtures/state.ts';
 import type { GameState } from '../src/types.ts';
@@ -255,5 +256,46 @@ describe('the version floor', () => {
     };
 
     expect(() => deserialize(blob)).toThrow(ObsoleteSave);
+  });
+});
+
+describe('save version 8', () => {
+  it('migrates a version 7 blob', () => {
+    const blob = { ...serialize(createState(fixture), 0), saveVersion: 7 };
+
+    expect(migrate(blob).saveVersion).toBe(8);
+  });
+
+  it('starts a migrated save with no apathy', () => {
+    const blob = { ...serialize(createState(fixture), 0), saveVersion: 7 };
+
+    expect(deserialize(blob).smiteApathy).toBe(0);
+  });
+
+  it('starts a migrated save with a blow worth nothing extra', () => {
+    const blob = { ...serialize(createState(fixture), 0), saveVersion: 7 };
+
+    expect(deserialize(blob).smiteBlow).toBe(1);
+  });
+
+  it('starts a migrated save at the bottom of every ladder', () => {
+    const blob = { ...serialize(createState(fixture), 0), saveVersion: 7 };
+    const state = deserialize(blob);
+
+    expect(SMITE_UPGRADE_IDS.map((id) => state.smiteRungs[id])).toEqual([0, 0, 0, 0]);
+  });
+
+  it('starts a migrated save having spent no souls', () => {
+    const blob = { ...serialize(createState(fixture), 0), saveVersion: 7 };
+
+    expect(deserialize(blob).soulsSpent.eq(0)).toBe(true);
+  });
+
+  it('round-trips the rungs it was given', () => {
+    const state = createState(fixture);
+    state.smiteRungs.weight = 2;
+    state.smiteKept.weight = 1;
+
+    expect(deserialize(serialize(state, 0)).smiteKept.weight).toBe(1);
   });
 });

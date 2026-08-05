@@ -1,6 +1,6 @@
 import Decimal from 'break_eternity.js';
-import type { Content, OverseerId, ResourceId, TierId } from '@dm/content';
-import { RESOURCE_IDS, TIER_IDS } from '@dm/content';
+import type { Content, OverseerId, ResourceId, SmiteUpgradeId, TierId } from '@dm/content';
+import { RESOURCE_IDS, SMITE_UPGRADE_IDS, TIER_IDS } from '@dm/content';
 import type { AchievementId } from '@dm/content';
 import type { GameState, TierState } from './types.ts';
 
@@ -13,8 +13,10 @@ import type { GameState, TierState } from './types.ts';
  * 6: adds purchased counts, and turns `overseers` from a per-tier flag into the
  *    posts held, in content order.
  * 7: adds the per-run clock.
+ * 8: adds Apathy, the running blow's multiplier, the two ladder counters and the
+ *    souls spent on permanence.
  */
-export const SAVE_VERSION = 7;
+export const SAVE_VERSION = 8;
 
 /**
  * The oldest save this build will load.
@@ -64,17 +66,29 @@ export function createState(content: Content): GameState {
 
   const earnedAchievements: AchievementId[] = [];
 
+  const smiteRungs = {} as Record<SmiteUpgradeId, number>;
+  const smiteKept = {} as Record<SmiteUpgradeId, number>;
+  for (const id of SMITE_UPGRADE_IDS) {
+    smiteRungs[id] = 0;
+    smiteKept[id] = 0;
+  }
+
   return {
     saveVersion: SAVE_VERSION,
     resources,
     gens,
     souls: new Decimal(0),
+    soulsSpent: new Decimal(0),
     lifetimeEvil: new Decimal(0),
     earnedAchievements,
     unlocked,
     overseers,
     smiteActiveMs: 0,
     smiteCooldownMs: 0,
+    smiteApathy: 0,
+    smiteBlow: 1,
+    smiteRungs,
+    smiteKept,
     stats: { playTimeMs: 0, smites: 0, prestiges: 0, runMs: 0 },
   };
 }
@@ -102,17 +116,29 @@ export function cloneState(state: GameState): GameState {
   const overseers = {} as Record<TierId, readonly OverseerId[]>;
   for (const id of TIER_IDS) overseers[id] = [...state.overseers[id]];
 
+  const smiteRungs = {} as Record<SmiteUpgradeId, number>;
+  const smiteKept = {} as Record<SmiteUpgradeId, number>;
+  for (const id of SMITE_UPGRADE_IDS) {
+    smiteRungs[id] = state.smiteRungs[id];
+    smiteKept[id] = state.smiteKept[id];
+  }
+
   return {
     saveVersion: state.saveVersion,
     resources,
     gens,
     souls: new Decimal(state.souls),
+    soulsSpent: new Decimal(state.soulsSpent),
     lifetimeEvil: new Decimal(state.lifetimeEvil),
     earnedAchievements: [...state.earnedAchievements],
     unlocked,
     overseers,
     smiteActiveMs: state.smiteActiveMs,
     smiteCooldownMs: state.smiteCooldownMs,
+    smiteApathy: state.smiteApathy,
+    smiteBlow: state.smiteBlow,
+    smiteRungs,
+    smiteKept,
     stats: { ...state.stats },
   };
 }
