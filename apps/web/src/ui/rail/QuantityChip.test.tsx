@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { CURRENT_COPY } from '@dm/content';
@@ -106,5 +108,19 @@ describe('the chip', () => {
       <QuantityChip labelledBy="setting-name" quantity="max" onChange={() => {}} copy={copy} />,
     );
     expect(screen.getByRole('button')).toHaveAttribute('data-step', '4');
+  });
+});
+
+describe('the chip stylesheet', () => {
+  // jsdom computes no layout — getBoundingClientRect returns zero — so a rendered
+  // assertion about width would pass against any value whatsoever. Reading the file is the only way.
+  const styles = readFileSync(join(process.cwd(), 'apps/web/src/ui/rail/QuantityChip.css'), 'utf8');
+
+  it('holds the text box at four characters', () => {
+    expect(styles).toContain('calc(4ch + 2 * var(--space-2))');
+  });
+
+  it('gives the face room on both sides', () => {
+    expect(styles).toContain('padding-inline: var(--space-2)');
   });
 });
