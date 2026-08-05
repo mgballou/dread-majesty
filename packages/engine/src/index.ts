@@ -2,7 +2,14 @@ export { createState, cloneState, SAVE_VERSION, MIN_SUPPORTED_SAVE_VERSION } fro
 export { step, tierMultiplier, globalMultiplier, BASE_DT_MS } from './step.ts';
 export { apply } from './intents.ts';
 export { catchUp, COARSE_DT_MS, COARSEN_ABOVE_MS } from './offline.ts';
-export { smiteValueAt, smiteWeight, smiteDurationMs, smiteBleedMs, smiteStep } from './smite.ts';
+export {
+  smiteValueAt,
+  smiteWeight,
+  smiteDurationMs,
+  smiteBleedMs,
+  smiteStep,
+  nextBlowMultiplier,
+} from './smite.ts';
 
 export {
   costOfNth,
