@@ -205,7 +205,17 @@ describe('a reset and the ladders', () => {
 
 describe('the measure the shop ranks by', () => {
   it('reads a fresh state at the unupgraded average', () => {
-    expect(smiteAverageMultiplier(createState(fixture), fixture, null)).toBeCloseTo(1.2, 5);
+    // A fresh state stands at every ladder's base: reach 48000ms, forgetting 60000ms,
+    // weight 2 and restraint 0.5, against a fixture cooldown of 120000ms.
+    //
+    // Apathy bled per cycle is cooldownMs / bleedMs = 120000 / 60000 = 2, which is
+    // above the fixture's perBlow of 1 — so a blow striking on cooldown bleeds faster
+    // than it accrues and Apathy settles at nothing, not at `cap - bledPerCycle`.
+    //
+    // With settled Apathy at 0, a blow reads its full weight: 2. Uptime is
+    // reach / cooldown = 48000 / 120000 = 0.4, so the average is
+    // 0.4 * 2 + 0.6 * 1 = 1.4.
+    expect(smiteAverageMultiplier(createState(fixture), fixture, null)).toBeCloseTo(1.4, 5);
   });
 
   it('reports a gain for a rung not yet bought', () => {
