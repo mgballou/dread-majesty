@@ -1,13 +1,13 @@
 /*
- * The shop. See Wrath.tsx.
+ * The shop. See Malice.tsx.
  *
  * One component token: every ladder holds a name, a note, a reading and two actions, so
  * the row has a height and the panel does not discover it from whichever note wrapped.
  * Four rows, always four, which fixes the panel's height for the whole game.
  */
 
-.wrath {
-  --wrath-row: 7rem;
+.malice {
+  --malice-row: 7rem;
 
   display: grid;
   gap: var(--space-2);
@@ -16,11 +16,11 @@
   list-style: none;
 }
 
-.wrath__rung {
+.malice__rung {
   display: flex;
   align-items: center;
   gap: var(--space-4);
-  min-block-size: var(--wrath-row);
+  min-block-size: var(--malice-row);
   padding: var(--space-3) var(--space-4);
   background: var(--surface-panel);
   border: 1px solid var(--line);
@@ -36,71 +36,71 @@
  * doubles and the name goes bold, so a viewer who cannot see the gold reads the state
  * from weight rather than from colour alone.
  */
-.wrath__rung--best {
+.malice__rung--best {
   background: var(--accent-well);
   border-color: var(--accent);
   border-inline-start-color: var(--accent);
   border-inline-start-width: 6px;
 }
 
-.wrath__rung--best .wrath__name {
+.malice__rung--best .malice__name {
   font-weight: 600;
 }
 
 /* Nothing is affordable, so nothing acts. A structural mark and no gold at all. */
-.wrath__rung--saving {
+.malice__rung--saving {
   border-inline-start-color: var(--line-strong);
 }
 
-.wrath__body {
+.malice__body {
   display: grid;
   gap: var(--space-1);
   flex: 1;
   min-inline-size: 0;
 }
 
-.wrath__name {
+.malice__name {
   font-weight: 600;
 }
 
-.wrath__note {
+.malice__note {
   font-size: var(--text-sm);
   color: var(--ink-dim);
 }
 
-.wrath__rung--best .wrath__note {
+.malice__rung--best .malice__note {
   color: var(--ink-muted);
 }
 
 /* What the ladder reads now, and what the next rung would read. */
-.wrath__step {
+.malice__step {
   font-family: var(--font-numeric);
   font-size: var(--text-xs);
   color: var(--ink-muted);
   font-variant-numeric: tabular-nums;
 }
 
-.wrath__standing {
+.malice__standing {
   display: grid;
   justify-items: end;
   gap: var(--space-1);
   flex: none;
 }
 
-.wrath__at {
+.malice__at {
   font-size: var(--text-xs);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ink-muted);
 }
 
-.wrath__actions {
+.malice__actions {
   display: flex;
   gap: var(--space-2);
   flex: none;
 }
 
-.wrath__price {
+.malice__price {
   display: block;
   font-family: var(--font-numeric);
   font-size: var(--text-xs);
@@ -108,7 +108,7 @@
 }
 
 /* Said, never shown. The row's own weight carries the same fact by looking. */
-.wrath__lifted {
+.malice__lifted {
   position: absolute;
   inline-size: 1px;
   block-size: 1px;
@@ -124,13 +124,13 @@
  * the row never pushes the page sideways (ui-sensibility §9).
  */
 @media (width <= 52rem) {
-  .wrath__rung {
+  .malice__rung {
     flex-wrap: wrap;
     gap: var(--space-2) var(--space-3);
   }
 
-  .wrath__standing,
-  .wrath__actions {
+  .malice__standing,
+  .malice__actions {
     justify-items: start;
     flex: 1 1 100%;
   }

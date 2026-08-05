@@ -99,10 +99,21 @@ describe('EvilNode', () => {
     expect(screen.getByText(CURRENT_COPY.smite.action)).toBeInTheDocument();
   });
 
-  it('says the surge while the buff runs', () => {
-    render(evil({ phase: { kind: 'active', share: 0.5 } }));
+  it('says what the running blow is worth', () => {
+    const state = createState(CURRENT);
+    state.smiteBlow = 1.75;
+    render(evil({ phase: { kind: 'active', share: 0.5 }, state }));
 
-    expect(screen.getByText(CURRENT_COPY.smite.surging)).toBeInTheDocument();
+    expect(screen.getByText('×1.75')).toBeInTheDocument();
+  });
+
+  it('holds the struck blow rather than what a fresh one would be worth', () => {
+    const state = createState(CURRENT);
+    state.smiteBlow = 1.5;
+    state.smiteRungs.weight = 4;
+    render(evil({ phase: { kind: 'active', share: 0.5 }, state }));
+
+    expect(screen.getByText('×1.50')).toBeInTheDocument();
   });
 
   it('says it is coming while it is spent', () => {
@@ -111,7 +122,7 @@ describe('EvilNode', () => {
     expect(screen.getByText(CURRENT_COPY.smite.cooling)).toBeInTheDocument();
   });
 
-  it('puts no number on the control, whatever state it is in', () => {
+  it('puts no countdown on the control while it is spent', () => {
     render(evil({ phase: { kind: 'cooling', share: 0.5 } }));
 
     expect(strike().textContent).not.toMatch(/\ds/);
