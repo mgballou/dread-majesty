@@ -1,5 +1,12 @@
 import type Decimal from 'break_eternity.js';
-import type { AchievementId, OverseerId, ProducibleId, ResourceId, TierId } from '@dm/content';
+import type {
+  AchievementId,
+  OverseerId,
+  ProducibleId,
+  ResourceId,
+  SmiteUpgradeId,
+  TierId,
+} from '@dm/content';
 
 export interface TierState {
   owned: Decimal;
@@ -41,6 +48,16 @@ export interface GameState {
   resources: Record<ResourceId, Decimal>;
   gens: Record<TierId, TierState>;
   souls: Decimal;
+  /**
+   * Souls spent on permanence, kept for ever.
+   *
+   * `prestigeGain` is `soulsEarned(lifetimeEvil) − souls`, so without this a spent soul
+   * would come straight back on the next reset and permanence would be free. Subtracting
+   * it is what makes a Keep cost something. `globalMultiplier` reads `souls` alone and
+   * not this, so spending also costs the 2%-per-soul production it was granting — which
+   * is the whole price of locking a rung in.
+   */
+  soulsSpent: Decimal;
   /** Drives the prestige formula. Never reset. */
   lifetimeEvil: Decimal;
   /**
@@ -69,6 +86,37 @@ export interface GameState {
    */
   smiteActiveMs: number;
   smiteCooldownMs: number;
+  /**
+   * How tired the realm is of being smitten. 0 to `content.smite.apathy.cap`, real.
+   *
+   * Every blow adds to it and it bleeds off on its own, which is what turns Smite from
+   * a metronome into a decision — see spec §2. A real number rather than an integer
+   * deliberately: an integer sheds in visible jumps, and a jump is a knife-edge where
+   * hitting the shed by a second is worth a great deal and missing it by a second is
+   * worth nothing.
+   *
+   * A plain number, not a `Decimal`. It is a bounded gauge, not a resource or a
+   * generator count, and it sits beside the countdowns above for the same reason.
+   */
+  smiteApathy: number;
+  /**
+   * The multiplier the running blow carries. 1 when none runs.
+   *
+   * Necessary because the multiplier now varies per blow: `globalMultiplier` has to
+   * know what **this** blow was worth, not what a fresh one would be. Without it,
+   * buying Weight mid-blow would retroactively upgrade the blow already running.
+   */
+  smiteBlow: number;
+  /**
+   * Where each ladder stands this run. A reset drops each to its `smiteKept` floor.
+   *
+   * Rung 0 is the ladder's base value and costs nothing. The invariant `smiteKept[id]
+   * <= smiteRungs[id]` holds always, which is why the effective value reads
+   * `smiteRungs` alone and there is no `max()` anywhere in the engine.
+   */
+  smiteRungs: Record<SmiteUpgradeId, number>;
+  /** The permanent floor, bought with souls. Never cleared by a reset. */
+  smiteKept: Record<SmiteUpgradeId, number>;
   /**
    * The posts filled over each tier, in content order.
    *
