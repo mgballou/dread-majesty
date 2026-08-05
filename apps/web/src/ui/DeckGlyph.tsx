@@ -38,9 +38,21 @@ export function DeckGlyph({ kind }: DeckGlyphProps): ReactNode {
  *
  * The muster is a hammer, the thing that raises. The miscreants are a diamond, the
  * shape that already means "a post, not a generator" in that panel. The deeds are a
- * star, regular and even-armed; the malice is a burst, the same shape struck ragged —
- * what a blow looks like, and kept unlike the star on purpose so the two do not read
- * as one mark at tab size.
+ * star. The malice is a fang.
+ *
+ * **The malice was a burst and the burst had to go, for a structural reason rather
+ * than a matter of taste: it was radial, and so is the star.** Two marks built the same
+ * way sat two tabs apart. At 48px the point counts told them apart; at 20px, which is
+ * the only size that matters here, both collapsed to a spiky round thing. The fang is
+ * the answer because it is the one mark in the deck with a curve in it — every other is
+ * straight-edged — so it cannot be confused with any of them however small the tube gets.
+ *
+ * **The hammer's handle is centred on `x 24` and run up into the head's notch, and both
+ * of those are load-bearing.** It used to sit at `x 21–27` against a head centred on
+ * `x 20`, starting at `y 16` when the head's solid bar stopped at `y 12` — so it hung
+ * right of centre and touched the head only by a one-unit sliver against the right leg.
+ * A crossbar with a stem off its right side, floating clear of the middle, reads as a
+ * question mark. It was never going to read as a hammer.
  *
  * **Returns `ReactElement`, not `ReactNode`, and that is the exhaustiveness check.**
  * A switch with no `default` does not on its own make a missing case a type error:
@@ -54,8 +66,8 @@ function shape(kind: DeckGlyphKind): ReactElement {
     case 'muster':
       return (
         <g fill="currentColor">
-          <rect x="21" y="16" width="6" height="29" rx="1" />
-          <path d="M6 6 L34 6 L34 18 L26 18 L26 12 L14 12 L14 18 L6 18 Z" />
+          <path d="M6 6 L42 6 L42 20 L30 20 L30 14 L18 14 L18 20 L6 20 Z" />
+          <rect x="21" y="13" width="6" height="32" rx="1" />
         </g>
       );
     case 'miscreants':
@@ -69,9 +81,10 @@ function shape(kind: DeckGlyphKind): ReactElement {
       );
     case 'malice':
       return (
-        <g fill="currentColor">
-          <path d="M24 2 L28 16 L42 12 L32 23 L44 30 L29 30 L31 45 L24 34 L17 45 L19 30 L4 30 L16 23 L6 12 L20 16 Z" />
-        </g>
+        <path
+          d="M10 5 C16 9 32 9 38 5 C37 20 32 34 24 46 C16 34 11 20 10 5 Z"
+          fill="currentColor"
+        />
       );
   }
 }
