@@ -1,6 +1,12 @@
 import Decimal from 'break_eternity.js';
-import type { AchievementId, OverseerId, ResourceId, TierId } from '@dm/content';
-import { isAchievementId, isOverseerId, RESOURCE_IDS, TIER_IDS } from '@dm/content';
+import type { AchievementId, OverseerId, ResourceId, SmiteUpgradeId, TierId } from '@dm/content';
+import {
+  isAchievementId,
+  isOverseerId,
+  RESOURCE_IDS,
+  SMITE_UPGRADE_IDS,
+  TIER_IDS,
+} from '@dm/content';
 import { MIN_SUPPORTED_SAVE_VERSION, SAVE_VERSION } from './state.ts';
 import type { GameState, TierState } from './types.ts';
 
@@ -37,6 +43,12 @@ export interface SaveBlob {
   /** Added in save version 5. Optional for the same reason. */
   smiteActiveMs?: number;
   smiteCooldownMs?: number;
+  /** Added in save version 8. Optional because a version 7 blob does not carry it. */
+  smiteApathy?: number;
+  smiteBlow?: number;
+  smiteRungs?: Record<string, number>;
+  smiteKept?: Record<string, number>;
+  soulsSpent?: string;
   /** Server time when the meta-plane exists; client time until then. */
   savedAtMs: number;
 }
@@ -63,6 +75,13 @@ export function serialize(state: GameState, savedAtMs: number): SaveBlob {
   const overseers: Record<string, string[]> = {};
   for (const id of TIER_IDS) overseers[id] = [...state.overseers[id]];
 
+  const smiteRungs: Record<string, number> = {};
+  const smiteKept: Record<string, number> = {};
+  for (const id of SMITE_UPGRADE_IDS) {
+    smiteRungs[id] = state.smiteRungs[id];
+    smiteKept[id] = state.smiteKept[id];
+  }
+
   return {
     saveVersion: SAVE_VERSION,
     resources,
@@ -74,6 +93,11 @@ export function serialize(state: GameState, savedAtMs: number): SaveBlob {
     overseers,
     smiteActiveMs: state.smiteActiveMs,
     smiteCooldownMs: state.smiteCooldownMs,
+    smiteApathy: state.smiteApathy,
+    smiteBlow: state.smiteBlow,
+    smiteRungs,
+    smiteKept,
+    soulsSpent: state.soulsSpent.toString(),
     stats: { ...state.stats },
     savedAtMs,
   };
@@ -115,17 +139,33 @@ export function deserialize(blob: SaveBlob): GameState {
     );
   }
 
+  // Unknown ids are dropped rather than trusted, and a missing one reads as the bottom
+  // of its ladder — the same policy the achievement and roster lists follow above.
+  const smiteRungs = {} as Record<SmiteUpgradeId, number>;
+  const smiteKept = {} as Record<SmiteUpgradeId, number>;
+  for (const id of SMITE_UPGRADE_IDS) {
+    const rung = migrated.smiteRungs?.[id] ?? 0;
+    const kept = migrated.smiteKept?.[id] ?? 0;
+    smiteRungs[id] = Math.max(rung, kept);
+    smiteKept[id] = Math.min(rung, kept);
+  }
+
   return {
     saveVersion: SAVE_VERSION,
     resources,
     gens,
     souls: new Decimal(migrated.souls),
+    soulsSpent: new Decimal(migrated.soulsSpent ?? '0'),
     lifetimeEvil: new Decimal(migrated.lifetimeEvil),
     earnedAchievements,
     unlocked,
     overseers,
     smiteActiveMs: migrated.smiteActiveMs ?? 0,
     smiteCooldownMs: migrated.smiteCooldownMs ?? 0,
+    smiteApathy: migrated.smiteApathy ?? 0,
+    smiteBlow: migrated.smiteBlow ?? 1,
+    smiteRungs,
+    smiteKept,
     // `runMs` is spread first then re-applied with a fallback, not written as
     // `{ runMs: 0, ...migrated.stats }`: `SaveBlob['stats']` reuses `GameState['stats']`
     // wholesale, so its type already claims `runMs` is always present and tsc refuses
@@ -153,6 +193,11 @@ const MIGRATIONS: Record<number, (blob: SaveBlob) => SaveBlob> = {
     saveVersion: 7,
     stats: { ...blob.stats, runMs: blob.stats.runMs ?? 0 },
   }),
+  // 7 → 8: Apathy, the two ladder counters and the souls spent on permanence arrive.
+  // Every default is the game a version 7 save was already playing — no Apathy, a blow
+  // worth its base, every ladder at rung 0 and nothing spent. `deserialize` supplies
+  // them, so this step only moves the number.
+  7: (blob) => ({ ...blob, saveVersion: 8 }),
 };
 
 export function migrate(blob: SaveBlob): SaveBlob {
