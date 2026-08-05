@@ -19,6 +19,10 @@ export function apply(state: GameState, content: Content, intent: Intent): Inten
       return purchase(state, content, intent);
     case 'smite':
       return smite(state, content, intent);
+    case 'climb':
+      return climbLadder(state, content, intent);
+    case 'keep':
+      return keepRung(state, content, intent);
     case 'rouse':
       return rouse(state, content, intent);
     case 'appoint':
@@ -83,6 +87,70 @@ function smite(
   );
 
   return { ok: true, intent, detail: 'Struck' };
+}
+
+/**
+ * Buy the next rung of one ladder with Evil.
+ *
+ * Named `climbLadder` rather than `climb` only because `smite.ts` already exports
+ * `climbCost` and a bare `climb` beside it reads as its pair when it is not.
+ */
+function climbLadder(
+  state: GameState,
+  content: Content,
+  intent: Extract<Intent, { kind: 'climb' }>,
+): IntentResult {
+  const upgrade = content.smite.upgrades.find((entry) => entry.id === intent.upgradeId);
+  if (!upgrade) return { ok: false, intent, reason: 'unknown-upgrade' };
+
+  const rung = state.smiteRungs[intent.upgradeId];
+  const next = upgrade.rungs[rung];
+  if (!next) return { ok: false, intent, reason: 'rung-maxed' };
+
+  const cost = new Decimal(next.evil);
+  const budget = state.resources.evil;
+  if (cost.gt(budget)) return { ok: false, intent, reason: 'insufficient-resource' };
+
+  state.resources.evil = budget.sub(cost);
+  state.smiteRungs[intent.upgradeId] = rung + 1;
+
+  return { ok: true, intent, detail: `Climbed ${upgrade.name} to ${rung + 1}` };
+}
+
+/**
+ * Spend souls to make a rung survive the next reset.
+ *
+ * The rung must already be climbed. Souls buy permanence and never progress, so the
+ * floor can only ever follow where Evil has already been.
+ *
+ * The souls go onto `soulsSpent` as well as off `souls`, because `prestigeGain` is
+ * `soulsEarned − souls` and without the record every Keep would refund itself on the
+ * next reset.
+ */
+function keepRung(
+  state: GameState,
+  content: Content,
+  intent: Extract<Intent, { kind: 'keep' }>,
+): IntentResult {
+  const upgrade = content.smite.upgrades.find((entry) => entry.id === intent.upgradeId);
+  if (!upgrade) return { ok: false, intent, reason: 'unknown-upgrade' };
+
+  const kept = state.smiteKept[intent.upgradeId];
+  if (kept >= state.smiteRungs[intent.upgradeId]) {
+    return { ok: false, intent, reason: 'nothing-to-keep' };
+  }
+
+  const next = upgrade.rungs[kept];
+  if (!next) return { ok: false, intent, reason: 'rung-maxed' };
+
+  const cost = new Decimal(next.souls);
+  if (cost.gt(state.souls)) return { ok: false, intent, reason: 'insufficient-souls' };
+
+  state.souls = state.souls.sub(cost);
+  state.soulsSpent = state.soulsSpent.add(cost);
+  state.smiteKept[intent.upgradeId] = kept + 1;
+
+  return { ok: true, intent, detail: `Kept ${upgrade.name} at ${kept + 1}` };
 }
 
 /**
@@ -167,6 +235,8 @@ function prestige(
     // Every `running` flag does go, and `createState` supplies the false ones.
     earnedAchievements: state.earnedAchievements,
     unlocked: state.unlocked,
+    smiteKept: { ...state.smiteKept },
+    soulsSpent: state.soulsSpent,
   };
 
   const fresh = createState(content);
@@ -177,6 +247,11 @@ function prestige(
   state.earnedAchievements = carried.earnedAchievements;
   state.unlocked = carried.unlocked;
   state.overseers = fresh.overseers;
+  // Evil-bought rungs go; soul-bought floors stay, and the run restarts standing on
+  // them. `kept <= rung` holds by construction, so this is the whole of the reset.
+  state.smiteKept = carried.smiteKept;
+  state.smiteRungs = { ...carried.smiteKept };
+  state.soulsSpent = carried.soulsSpent;
   // The run is over, so the buff goes with it. The cooldown and the Apathy do not: both
   // are limits on how often a player may strike, and clearing either would hand out a
   // free blow per reset. Apathy bleeds out inside a minute anyway.
