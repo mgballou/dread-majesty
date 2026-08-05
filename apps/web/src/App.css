@@ -59,6 +59,26 @@
 }
 
 /*
+ * The records live in the footer, not in the deck.
+ *
+ * The deck holds the things a player spends on, and four is what its tube fits. The
+ * ledger is a record rather than a spend, it takes over the screen when it opens, and
+ * the footer is where a thing that does that should be reached from.
+ */
+.shell__foot {
+  display: flex;
+  justify-content: center;
+  margin-block-start: var(--space-8);
+  padding-block-start: var(--space-4);
+  border-block-start: 1px solid var(--line);
+}
+
+.shell__records {
+  display: flex;
+  gap: var(--space-2);
+}
+
+/*
  * One column on a phone, in the order the game is played: rate, chain, deck.
  *
  * The chain is horizontal at every width, so nothing has to rearrange itself here.
@@ -75,6 +95,10 @@
 
   .shell__body {
     gap: var(--space-4);
+  }
+
+  .shell__foot {
+    margin-block-start: var(--space-6);
   }
 }
 

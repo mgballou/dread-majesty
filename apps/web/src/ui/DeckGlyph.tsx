@@ -1,7 +1,7 @@
 import type { ReactElement, ReactNode } from 'react';
 
 /** One mark per panel of the deck. */
-export type DeckGlyphKind = 'muster' | 'miscreants' | 'deeds' | 'ledger';
+export type DeckGlyphKind = 'muster' | 'miscreants' | 'deeds' | 'wrath';
 
 interface DeckGlyphProps {
   kind: DeckGlyphKind;
@@ -38,7 +38,9 @@ export function DeckGlyph({ kind }: DeckGlyphProps): ReactNode {
  *
  * The muster is a hammer, the thing that raises. The miscreants are a diamond, the
  * shape that already means "a post, not a generator" in that panel. The deeds are a
- * star. The ledger is a page with rules on it.
+ * star, regular and even-armed; the wrath is a burst, the same shape struck ragged —
+ * what a blow looks like, and kept unlike the star on purpose so the two do not read
+ * as one mark at tab size.
  *
  * **Returns `ReactElement`, not `ReactNode`, and that is the exhaustiveness check.**
  * A switch with no `default` does not on its own make a missing case a type error:
@@ -65,13 +67,10 @@ function shape(kind: DeckGlyphKind): ReactElement {
           fill="currentColor"
         />
       );
-    case 'ledger':
+    case 'wrath':
       return (
         <g fill="currentColor">
-          <path d="M9 4 L33 4 L39 11 L39 44 L9 44 Z" opacity="0.85" />
-          <rect x="15" y="17" width="18" height="3" className="art__void" />
-          <rect x="15" y="25" width="18" height="3" className="art__void" />
-          <rect x="15" y="33" width="11" height="3" className="art__void" />
+          <path d="M24 2 L28 16 L42 12 L32 23 L44 30 L29 30 L31 45 L24 34 L17 45 L19 30 L4 30 L16 23 L6 12 L20 16 Z" />
         </g>
       );
   }
