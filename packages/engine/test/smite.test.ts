@@ -2,7 +2,7 @@ import Decimal from 'break_eternity.js';
 import { describe, expect, it } from 'vitest';
 import { apply } from '../src/intents.ts';
 import { canSmite, smitePhase } from '../src/selectors.ts';
-import { nextBlowMultiplier, smiteBleedMs, smiteDurationMs, smiteWeight } from '../src/smite.ts';
+import { nextBlowMultiplier, smiteBleedMs, smiteDurationMs } from '../src/smite.ts';
 import { createState } from '../src/state.ts';
 import { globalMultiplier, step } from '../src/step.ts';
 import type { GameState } from '../src/types.ts';
@@ -49,7 +49,7 @@ describe('smite', () => {
     const state = running();
     smite(state);
 
-    expect(state.smiteActiveMs).toBe(smiteDurationMs(state, fixture));
+    expect(state.smiteActiveMs).toBe(48_000);
   });
 
   it('starts the cooldown', () => {
@@ -62,10 +62,9 @@ describe('smite', () => {
   it('raises the global multiplier while it runs', () => {
     const state = running();
     const before = globalMultiplier(state, fixture);
-    const weight = smiteWeight(state, fixture);
     smite(state);
 
-    expect(globalMultiplier(state, fixture).div(before).toNumber()).toBe(weight);
+    expect(globalMultiplier(state, fixture).div(before).toNumber()).toBe(2);
   });
 
   it('drops the multiplier back when the buff runs out', () => {
@@ -118,7 +117,6 @@ describe('smite', () => {
   it('produces exactly twice as much across a buffed slice', () => {
     const plain = running();
     const buffed = running();
-    const weight = smiteWeight(buffed, fixture);
     smite(buffed);
     buffed.resources.evil = new Decimal(0);
     plain.resources.evil = new Decimal(0);
@@ -126,7 +124,7 @@ describe('smite', () => {
     step(plain, fixture, 24_000);
     step(buffed, fixture, 24_000);
 
-    expect(buffed.resources.evil.div(plain.resources.evil).toNumber()).toBe(weight);
+    expect(buffed.resources.evil.div(plain.resources.evil).toNumber()).toBe(2);
   });
 
   it('spends the buff during offline catch-up like any other slice', () => {

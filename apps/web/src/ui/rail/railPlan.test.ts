@@ -381,12 +381,14 @@ describe('the wrath ladders on the plan', () => {
     expect(plan().best.purchase).not.toBeNull();
   });
 
-  it('keeps its choice against a close challenger', () => {
+  it('keeps a held ladder when a challenger only just beats it', () => {
     state.resources.evil = new Decimal('1e9');
-    const held = plan().best.climb?.upgradeId ?? null;
+    state.smiteRungs.weight = 3;
+    state.smiteRungs.reach = 4;
+    state.smiteRungs.forgetting = 2;
+    state.smiteRungs.restraint = 2;
+    const held: HeldKeys = { purchase: null, appoint: null, climb: 'restraint' };
 
-    expect(plan(1, all, { purchase: null, appoint: null, climb: held }).best.climb?.upgradeId).toBe(
-      held,
-    );
+    expect(plan(1, all, held).best.climb?.upgradeId).toBe('restraint');
   });
 });
