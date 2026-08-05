@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { CURRENT, CURRENT_COPY, type TierId } from '@dm/content';
 import { isAppointed, isRousable, isTierUnlocked } from '@dm/engine';
@@ -10,7 +10,7 @@ import { Ledger } from './screens/Ledger.tsx';
 import { OfflineSummary } from './screens/OfflineSummary.tsx';
 import { Trophies } from './screens/Trophies.tsx';
 import { Deck, type DeckTab } from './ui/Deck.tsx';
-import { formatDuration } from './ui/format.ts';
+import { Sheet } from './ui/Sheet.tsx';
 import { Crown } from './ui/crown/Crown.tsx';
 import { BuyRail } from './ui/rail/BuyRail.tsx';
 import { Miscreants } from './ui/rail/Miscreants.tsx';
@@ -18,6 +18,7 @@ import { PrestigePanel } from './ui/rail/PrestigePanel.tsx';
 import { useBuyQuantity } from './ui/rail/useBuyQuantity.ts';
 import { useRailPlan } from './ui/rail/useRailPlan.ts';
 import { ChainStage } from './ui/stage/ChainStage.tsx';
+import { Wrath } from './ui/wrath/Wrath.tsx';
 import './App.css';
 
 /**
@@ -26,6 +27,11 @@ import './App.css';
  * The frame persists and nothing here rebuilds to show that it is loading: the stage,
  * the deck and the crown are mounted once and only their contents change. The return
  * summary is an overlay over that frame, never a replacement for it.
+ *
+ * The deck holds muster, miscreants, deeds and wrath — four is what its tube fits. The
+ * ledger is reached from the footer instead of a fifth tab: it is a record rather than
+ * a spend, it takes over the screen when it opens, and a thing that does that belongs
+ * outside the row of things you spend on rather than beside them.
  *
  * **One accent per region, and the regions do not move.** The stage's is Smite,
  * whenever the blow is ready. The open panel's is the best affordable spend in that
@@ -50,6 +56,12 @@ export function App(): ReactNode {
   // One owner for the setting. It prices every row of the muster and it prices the
   // plan the whole screen is arranged around; two copies of it would drift.
   const { quantity, setQuantity } = useBuyQuantity();
+
+  // The ledger is a record lifted over the game, not a panel of it. `Sheet` listens on
+  // the dialog's own `close` event, so the closer has to be stable or the listener is
+  // torn down and rebuilt every render.
+  const [ledgerOpen, setLedgerOpen] = useState(false);
+  const closeLedger = useCallback(() => setLedgerOpen(false), []);
 
   const { state, dispatch } = session;
 
@@ -81,6 +93,14 @@ export function App(): ReactNode {
   const met = content.tiers.filter((tier) => unlocked(tier.id)).length;
   const posts = content.tiers.reduce((total, tier) => total + tier.overseers.length, 0);
   const filled = content.tiers.reduce((total, tier) => total + state.overseers[tier.id].length, 0);
+  const ladders = content.smite.upgrades.reduce(
+    (total, upgrade) => total + upgrade.rungs.length,
+    0,
+  );
+  const climbed = content.smite.upgrades.reduce(
+    (total, upgrade) => total + state.smiteRungs[upgrade.id],
+    0,
+  );
 
   const tabs: DeckTab[] = [
     {
@@ -133,21 +153,24 @@ export function App(): ReactNode {
       panel: <Trophies state={state} content={content} copy={copy.deeds} />,
     },
     {
-      id: 'ledger',
-      title: copy.ledger.title,
-      glyph: 'ledger',
-      trailing: formatDuration(state.stats.playTimeMs),
+      id: 'wrath',
+      title: copy.wrath.title,
+      glyph: 'wrath',
+      trailing: `${climbed}/${ladders}`,
       panel: (
-        <Ledger
-          state={state}
+        <Wrath
           content={content}
-          copy={copy.ledger}
-          errors={copy.errors}
-          soundEnabled={sound.enabled}
-          onToggleSound={sound.toggle}
-          onExport={session.exportBlob}
-          onImport={session.importBlob}
-          onAbdicate={session.abdicate}
+          state={state}
+          plan={plan}
+          copy={copy.wrath}
+          onClimb={(upgradeId) => {
+            const result = dispatch({ kind: 'climb', upgradeId });
+            if (result.ok) sound.play('purchase');
+          }}
+          onKeep={(upgradeId) => {
+            const result = dispatch({ kind: 'keep', upgradeId });
+            if (result.ok) sound.play('unlock');
+          }}
         />
       ),
     },
@@ -204,6 +227,39 @@ export function App(): ReactNode {
             )}
           </div>
         </main>
+
+        <footer className="shell__foot">
+          {/* One control, so no landmark around it. The old footer wrapped two in a
+              `nav` labelled "Records"; a landmark holding a single named button adds a
+              stop to traverse and says nothing the button does not. */}
+          <button
+            type="button"
+            className="button button--quiet"
+            aria-haspopup="dialog"
+            onClick={() => setLedgerOpen(true)}
+          >
+            {copy.ledger.title}
+          </button>
+        </footer>
+
+        <Sheet
+          open={ledgerOpen}
+          label={copy.ledger.title}
+          closeLabel={copy.close}
+          onClose={closeLedger}
+        >
+          <Ledger
+            state={state}
+            content={content}
+            copy={copy.ledger}
+            errors={copy.errors}
+            soundEnabled={sound.enabled}
+            onToggleSound={sound.toggle}
+            onExport={session.exportBlob}
+            onImport={session.importBlob}
+            onAbdicate={session.abdicate}
+          />
+        </Sheet>
 
         <DevBar
           content={content}
