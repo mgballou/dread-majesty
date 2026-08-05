@@ -2,7 +2,7 @@ import { useId, type ReactNode } from 'react';
 import type Decimal from 'break_eternity.js';
 import type { ArtSlot, OverseerCopy, StageCopy } from '@dm/content';
 import { TierArt } from '../art/TierArt.tsx';
-import { formatCount } from '../format.ts';
+import { formatWhole } from '../format.ts';
 import { useReducedMotion } from '../useReducedMotion.ts';
 import { CycleRing } from './CycleRing.tsx';
 import { usePulse } from './usePulse.ts';
@@ -199,7 +199,7 @@ export function TierNode({
 
       <p className="stage-node__count">
         {isUnlocked ? (
-          formatCount(count)
+          formatWhole(count)
         ) : (
           <span className="stage-node__bar stage-node__bar--short" aria-hidden="true" />
         )}

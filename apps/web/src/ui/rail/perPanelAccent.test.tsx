@@ -60,21 +60,21 @@ function draw(): RailPlan {
 
 describe('each panel wears exactly one accent, and never the other panel', () => {
   it('lifts one purchase on the muster', () => {
-    state.resources.evil = new Decimal(2600);
+    state.resources.evil = new Decimal(5200);
     const { rail } = renderScreen(draw());
     expect(rail.querySelectorAll('.rail__row--best')).toHaveLength(1);
   });
 
   it('lifts one post in the miscreants at the same time', () => {
     state.gens.minion.owned = new Decimal(400);
-    state.resources.evil = new Decimal(1000);
+    state.resources.evil = new Decimal(2000);
     const { miscreants } = renderScreen(draw());
     expect(miscreants.querySelectorAll('.miscreant__post--best')).toHaveLength(1);
   });
 
   it('lifts a purchase even while an appointment outscores it', () => {
     state.gens.minion.owned = new Decimal(400);
-    state.resources.evil = new Decimal(1000);
+    state.resources.evil = new Decimal(2000);
     const { rail } = renderScreen(draw());
     expect(rail.querySelectorAll('.rail__row--best')).toHaveLength(1);
   });
@@ -86,21 +86,21 @@ describe('each panel wears exactly one accent, and never the other panel', () =>
   });
 
   it('names the lifted purchase as lifted, for anyone reading by ear', () => {
-    state.resources.evil = new Decimal(2600);
+    state.resources.evil = new Decimal(5200);
     const { rail } = renderScreen(draw());
     const lifted = rail.querySelector('.rail__row--best button');
     expect(lifted?.getAttribute('aria-label')).toContain(CURRENT_COPY.rail.lifted);
   });
 
   it('puts no flag beside the name of the lifted row', () => {
-    state.resources.evil = new Decimal(2600);
+    state.resources.evil = new Decimal(5200);
     const { rail } = renderScreen(draw());
     expect(rail.querySelector('.rail__row--best .rail__flag')).toBeNull();
   });
 
   it('puts no flag beside the name of the lifted post', () => {
     state.gens.minion.owned = new Decimal(400);
-    state.resources.evil = new Decimal(1000);
+    state.resources.evil = new Decimal(2000);
     const { miscreants } = renderScreen(draw());
     expect(miscreants.querySelector('.miscreant__post--best .miscreant__flag')).toBeNull();
   });

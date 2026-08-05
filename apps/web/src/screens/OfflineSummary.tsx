@@ -3,7 +3,7 @@ import type Decimal from 'break_eternity.js';
 import type { Content, Copy, ProducibleId, TierDef } from '@dm/content';
 import type { OfflineReport } from '@dm/engine';
 import { TierArt } from '../ui/art/TierArt.tsx';
-import { formatDuration, formatNumber } from '../ui/format.ts';
+import { formatWhole, formatDuration } from '../ui/format.ts';
 import './OfflineSummary.css';
 
 interface OfflineSummaryProps {
@@ -48,7 +48,7 @@ export function OfflineSummary({
               <li className="return__row" key={tier.id}>
                 <TierArt slot={tier.art} size={28} decorative />
                 <span className="return__source">{tier.plural}</span>
-                <span className="return__amount">+{formatNumber(amount)}</span>
+                <span className="return__amount">+{formatWhole(amount)}</span>
                 <span className="return__unit">{label(content, tier.produces)}</span>
               </li>
             ))}

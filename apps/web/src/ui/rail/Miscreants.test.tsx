@@ -61,7 +61,7 @@ describe('Miscreants', () => {
   });
 
   it('reports which post was chosen', async () => {
-    state.resources.evil = new Decimal(1000);
+    state.resources.evil = new Decimal(2000);
 
     const { onAppoint, user } = draw();
     await user.click(
@@ -119,7 +119,7 @@ describe('Miscreants', () => {
   });
 
   it('opens a post the purse can reach', async () => {
-    state.resources.evil = new Decimal(1000);
+    state.resources.evil = new Decimal(2000);
 
     const { user } = draw();
     await user.click(
@@ -130,7 +130,7 @@ describe('Miscreants', () => {
   });
 
   it('asks before it spends', async () => {
-    state.resources.evil = new Decimal(1000);
+    state.resources.evil = new Decimal(2000);
 
     const { onAppoint, user } = draw();
 
@@ -142,7 +142,7 @@ describe('Miscreants', () => {
   });
 
   it('heads the question with the Overseer it means', async () => {
-    state.resources.evil = new Decimal(1000);
+    state.resources.evil = new Decimal(2000);
 
     const { user } = draw();
     await user.click(
@@ -155,7 +155,7 @@ describe('Miscreants', () => {
   });
 
   it('appoints nobody when the question is refused', async () => {
-    state.resources.evil = new Decimal(1000);
+    state.resources.evil = new Decimal(2000);
 
     const { onAppoint, user } = draw();
     await user.click(
@@ -168,7 +168,7 @@ describe('Miscreants', () => {
   });
 
   it('puts the question away once it is answered', async () => {
-    state.resources.evil = new Decimal(1000);
+    state.resources.evil = new Decimal(2000);
 
     const { user } = draw();
     await user.click(
@@ -206,7 +206,7 @@ describe('Miscreants', () => {
 
   it('lifts the appointment when it is the best spend going', () => {
     state.gens.minion.owned = new Decimal(400);
-    state.resources.evil = new Decimal(1000);
+    state.resources.evil = new Decimal(2000);
 
     const { container } = draw();
 
@@ -215,7 +215,7 @@ describe('Miscreants', () => {
 
   it('names the lifted post as lifted, for anyone reading by ear', () => {
     state.gens.minion.owned = new Decimal(400);
-    state.resources.evil = new Decimal(1000);
+    state.resources.evil = new Decimal(2000);
 
     draw();
 
@@ -226,7 +226,7 @@ describe('Miscreants', () => {
 
   it('leaves the lifted marker in the accessibility tree rather than hiding it from it', () => {
     state.gens.minion.owned = new Decimal(400);
-    state.resources.evil = new Decimal(1000);
+    state.resources.evil = new Decimal(2000);
 
     const { container } = draw();
 
@@ -234,7 +234,7 @@ describe('Miscreants', () => {
   });
 
   it('still lifts its own best post even while a purchase scores higher', () => {
-    state.resources.evil = new Decimal(2600);
+    state.resources.evil = new Decimal(5200);
 
     const { container } = draw();
 
@@ -258,7 +258,7 @@ describe('Miscreants', () => {
   });
 
   it('states what a post does in the confirmation sheet too', async () => {
-    state.resources.evil = new Decimal(1000);
+    state.resources.evil = new Decimal(2000);
 
     const { user } = draw();
     await user.click(

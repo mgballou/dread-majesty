@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { CURRENT, CURRENT_COPY } from '@dm/content';
 import { createState, msToNextSoul, prestigeGain, type GameState } from '@dm/engine';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { formatDuration, formatNumber } from '../format.ts';
+import { formatNumber, formatDuration } from '../format.ts';
 import { PrestigePanel } from './PrestigePanel.tsx';
 
 function soulsFor(lifetimeEvil: string): Decimal {
