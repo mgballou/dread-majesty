@@ -146,7 +146,11 @@ export function deserialize(blob: SaveBlob): GameState {
   for (const id of SMITE_UPGRADE_IDS) {
     const rung = migrated.smiteRungs?.[id] ?? 0;
     const kept = migrated.smiteKept?.[id] ?? 0;
-    smiteRungs[id] = Math.max(rung, kept);
+    // Trust the lower privilege. `smiteKept <= smiteRungs` is an invariant the whole
+    // engine reads without checking, and a hand-edited blob is the one place it can
+    // arrive violated — so the floor comes down to the rung rather than the rung being
+    // granted up to the floor.
+    smiteRungs[id] = rung;
     smiteKept[id] = Math.min(rung, kept);
   }
 
