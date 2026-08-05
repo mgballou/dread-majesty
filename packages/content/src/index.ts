@@ -3,12 +3,21 @@ export {
   RESOURCE_IDS,
   ACHIEVEMENT_IDS,
   OVERSEER_IDS,
+  SMITE_UPGRADE_IDS,
   isTierId,
   isResourceId,
   isAchievementId,
   isOverseerId,
+  isSmiteUpgradeId,
 } from './ids.ts';
-export type { TierId, ResourceId, ProducibleId, AchievementId, OverseerId } from './ids.ts';
+export type {
+  TierId,
+  ResourceId,
+  ProducibleId,
+  AchievementId,
+  OverseerId,
+  SmiteUpgradeId,
+} from './ids.ts';
 
 export type {
   Content,
