@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ACHIEVEMENT_IDS, OVERSEER_IDS, TIER_IDS } from '../src/ids.ts';
+import { ACHIEVEMENT_IDS, OVERSEER_IDS, SMITE_UPGRADE_IDS, TIER_IDS } from '../src/ids.ts';
 import type { OverseerId } from '../src/ids.ts';
 import type { OverseerDef } from '../src/types.ts';
 import { v1Achievements } from '../src/v1/achievements.ts';
@@ -249,5 +249,65 @@ describe('the reset copy', () => {
 
   it('names both in the confirmation', () => {
     expect(v1Copy.prestige.confirmBody('14')).toContain('stay');
+  });
+});
+
+describe('the wrath panel copy', () => {
+  it('names every ladder', () => {
+    for (const id of SMITE_UPGRADE_IDS) {
+      expect(v1Copy.wrath.names[id]).toBeTruthy();
+    }
+  });
+
+  it('notes every ladder', () => {
+    for (const id of SMITE_UPGRADE_IDS) {
+      expect(v1Copy.wrath.notes[id]).toBeTruthy();
+    }
+  });
+
+  it('gives every ladder a different name', () => {
+    const names = SMITE_UPGRADE_IDS.map((id) => v1Copy.wrath.names[id]);
+
+    expect(new Set(names).size).toBe(names.length);
+  });
+
+  it('gives every ladder a different note', () => {
+    const notes = SMITE_UPGRADE_IDS.map((id) => v1Copy.wrath.notes[id]);
+
+    expect(new Set(notes).size).toBe(notes.length);
+  });
+
+  it('substitutes into the rung line', () => {
+    expect(v1Copy.wrath.rung({ at: '2', of: '4' })).toContain('2');
+  });
+
+  it('substitutes into the step line', () => {
+    expect(v1Copy.wrath.step({ now: '×2.00', next: '×2.25' })).toContain('×2.25');
+  });
+
+  it('substitutes into the climb price', () => {
+    expect(v1Copy.wrath.climbCost('2,500')).toContain('2,500');
+  });
+
+  it('substitutes into the keep price', () => {
+    expect(v1Copy.wrath.keepCost('8')).toContain('8');
+  });
+});
+
+describe('the apathy copy', () => {
+  it('names the gauge', () => {
+    expect(v1Copy.smite.apathy).toBeTruthy();
+  });
+
+  it('carries a line for each third of the gauge', () => {
+    expect(v1Copy.smite.bands).toHaveLength(3);
+  });
+
+  it('says something different in each band', () => {
+    expect(new Set(v1Copy.smite.bands).size).toBe(3);
+  });
+
+  it('substitutes into the next-blow line', () => {
+    expect(v1Copy.smite.blow('×1.75')).toContain('×1.75');
   });
 });
