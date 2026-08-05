@@ -346,7 +346,7 @@ describe('what a panel names to save toward', () => {
   });
 });
 
-describe('the wrath ladders on the plan', () => {
+describe('the Malice ladders on the plan', () => {
   it('offers every ladder that has a rung left', () => {
     state.resources.evil = new Decimal('1e9');
 

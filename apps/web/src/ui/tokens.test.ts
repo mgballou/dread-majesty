@@ -199,6 +199,10 @@ describe('contrast', () => {
     expect(contrast('--accent-soft', '--accent-well')).toBeGreaterThanOrEqual(3);
   });
 
+  it('separates a lit apathy tick from an unlit one', () => {
+    expect(contrast('--tone-apathy', '--line')).toBeGreaterThanOrEqual(3);
+  });
+
   it('separates the apathy fill from the well it runs over', () => {
     expect(contrast('--tone-apathy', '--tone-apathy-well')).toBeGreaterThanOrEqual(3);
   });

@@ -6,7 +6,7 @@ import { CURRENT, CURRENT_COPY } from '@dm/content';
 import { createState } from '@dm/engine';
 import type { GameState } from '@dm/engine';
 import { railPlan } from '../rail/railPlan.ts';
-import { Wrath } from './Wrath.tsx';
+import { Malice } from './Malice.tsx';
 
 function rich(): GameState {
   const state = createState(CURRENT);
@@ -25,20 +25,20 @@ function show(state: GameState, onClimb = vi.fn(), onKeep = vi.fn()) {
   });
 
   render(
-    <Wrath
+    <Malice
       content={CURRENT}
       state={state}
       plan={plan}
       onClimb={onClimb}
       onKeep={onKeep}
-      copy={CURRENT_COPY.wrath}
+      copy={CURRENT_COPY.malice}
     />,
   );
 
   return { onClimb, onKeep };
 }
 
-describe('the wrath panel', () => {
+describe('the Malice panel', () => {
   it('shows a row for every ladder', () => {
     show(rich());
 
@@ -48,7 +48,7 @@ describe('the wrath panel', () => {
   it('names every ladder', () => {
     show(rich());
 
-    expect(screen.getByText(CURRENT_COPY.wrath.names.weight)).toBeInTheDocument();
+    expect(screen.getByText(CURRENT_COPY.malice.names.weight)).toBeInTheDocument();
   });
 
   it('climbs when the Evil action is pressed', async () => {
@@ -84,7 +84,7 @@ describe('the wrath panel', () => {
   it('lifts exactly one row', () => {
     show(rich());
 
-    expect(screen.getAllByText(CURRENT_COPY.wrath.lifted)).toHaveLength(1);
+    expect(screen.getAllByText(CURRENT_COPY.malice.lifted)).toHaveLength(1);
   });
 
   it('says a mastered ladder is mastered', () => {
@@ -94,7 +94,7 @@ describe('the wrath panel', () => {
     }
     show(state);
 
-    expect(screen.getAllByText(CURRENT_COPY.wrath.maxed)).toHaveLength(4);
+    expect(screen.getAllByText(CURRENT_COPY.malice.maxed)).toHaveLength(4);
   });
 
   it('does not say mastered twice for a ladder that is fully kept as well', () => {
@@ -105,7 +105,7 @@ describe('the wrath panel', () => {
     }
     show(state);
 
-    expect(screen.getAllByText(CURRENT_COPY.wrath.maxed)).toHaveLength(4);
+    expect(screen.getAllByText(CURRENT_COPY.malice.maxed)).toHaveLength(4);
   });
 
   it('tells the ladders apart by name', () => {
@@ -113,7 +113,7 @@ describe('the wrath panel', () => {
 
     expect(
       screen.getByRole('button', {
-        name: new RegExp(`^Climb.*${CURRENT_COPY.wrath.names.weight}`),
+        name: new RegExp(`^Climb.*${CURRENT_COPY.malice.names.weight}`),
       }),
     ).toBeInTheDocument();
   });

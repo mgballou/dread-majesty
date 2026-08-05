@@ -18,7 +18,7 @@ import { PrestigePanel } from './ui/rail/PrestigePanel.tsx';
 import { useBuyQuantity } from './ui/rail/useBuyQuantity.ts';
 import { useRailPlan } from './ui/rail/useRailPlan.ts';
 import { ChainStage } from './ui/stage/ChainStage.tsx';
-import { Wrath } from './ui/wrath/Wrath.tsx';
+import { Malice } from './ui/malice/Malice.tsx';
 import './App.css';
 
 /**
@@ -28,7 +28,7 @@ import './App.css';
  * the deck and the crown are mounted once and only their contents change. The return
  * summary is an overlay over that frame, never a replacement for it.
  *
- * The deck holds muster, miscreants, deeds and wrath — four is what its tube fits. The
+ * The deck holds muster, miscreants, deeds and malice — four is what its tube fits. The
  * ledger is reached from the footer instead of a fifth tab: it is a record rather than
  * a spend, it takes over the screen when it opens, and a thing that does that belongs
  * outside the row of things you spend on rather than beside them.
@@ -153,16 +153,16 @@ export function App(): ReactNode {
       panel: <Trophies state={state} content={content} copy={copy.deeds} />,
     },
     {
-      id: 'wrath',
-      title: copy.wrath.title,
-      glyph: 'wrath',
+      id: 'malice',
+      title: copy.malice.title,
+      glyph: 'malice',
       trailing: `${climbed}/${ladders}`,
       panel: (
-        <Wrath
+        <Malice
           content={content}
           state={state}
           plan={plan}
-          copy={copy.wrath}
+          copy={copy.malice}
           onClimb={(upgradeId) => {
             const result = dispatch({ kind: 'climb', upgradeId });
             if (result.ok) sound.play('purchase');

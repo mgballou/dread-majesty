@@ -112,7 +112,7 @@ export interface RailBest {
   purchase: RailPurchase | null;
   /** The miscreants', or null when nothing there is affordable. */
   appoint: RailAppointment | null;
-  /** The wrath panel's, or null when nothing there is affordable. */
+  /** The Malice panel's, or null when nothing there is affordable. */
   climb: RailClimb | null;
 }
 
@@ -175,7 +175,7 @@ function keyOf(option: RailOption): TierId | OverseerId | SmiteUpgradeId {
  *
  * Every panel asks the same question of the same plan and each answers for itself.
  * Keyed on the thing a panel can only ever lift one of — a tier for the muster, a post
- * for the miscreants, a ladder for the wrath panel.
+ * for the miscreants, a ladder for the Malice panel.
  */
 export function spendEmphasis(
   plan: RailPlan,

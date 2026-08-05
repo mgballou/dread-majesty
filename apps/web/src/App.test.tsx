@@ -11,10 +11,10 @@ describe('the deck and the records', () => {
     expect(await screen.findAllByRole('tab')).toHaveLength(4);
   });
 
-  it('carries a wrath tab', async () => {
+  it('carries a malice tab', async () => {
     render(<App />);
 
-    expect(await screen.findByRole('tab', { name: CURRENT_COPY.wrath.title })).toBeInTheDocument();
+    expect(await screen.findByRole('tab', { name: CURRENT_COPY.malice.title })).toBeInTheDocument();
   });
 
   it('carries no ledger tab', async () => {

@@ -46,13 +46,16 @@ export interface SmiteCopy {
    */
   readonly spoken: (amount: string) => string;
   /**
-   * The three faces of the control, and they are the same width on purpose.
+   * What the control says while the blow is spent.
    *
-   * A button whose label changes length moves everything beside it, and this one
-   * changes three times a minute. Five characters each, so the layout cannot shift —
-   * the state is carried by colour *and* by the word, never by width.
+   * **Five characters, like every other face of this control.** A button whose label
+   * changes length moves everything beside it, and this one changes three times a
+   * minute. `action` is the third face; the second is not a word at all but the live
+   * multiplier, which the web prints as `×0.00` — also five.
+   *
+   * There is no word for the running state any more. It used to say "Surge", which
+   * named the state without saying what it was worth; the number does both.
    */
-  readonly surging: string;
   readonly cooling: string;
   /** Said on the status line while a blow is ready. */
   readonly ready: string;
@@ -76,11 +79,11 @@ export interface SmiteCopy {
    * Where the realm stands, in thirds of the cap. Empty, middling, full.
    *
    * Three, and the length is pinned by the type, so a fourth band cannot be added
-   * without the code that picks one being made to say what it means.
+   * without the code that picks one being made to say what it means. This is the whole
+   * of what the gauge says: the ticks show how far along it is and these say what that
+   * means, so nothing has to print a number the player would have to reason about.
    */
   readonly bands: readonly [string, string, string];
-  /** What the next blow is worth, printed at the gauge's end. `multiplier` is formatted. */
-  readonly blow: (multiplier: string) => string;
 }
 
 /**
@@ -90,7 +93,7 @@ export interface SmiteCopy {
  * than shipping blank. Numbers arrive formatted — the web owns `formatNumber` and this
  * file owns the words around it.
  */
-export interface WrathCopy {
+export interface MaliceCopy {
   readonly title: string;
   readonly names: Readonly<Record<SmiteUpgradeId, string>>;
   /** One line saying what the ladder does, in voice. */
@@ -382,7 +385,7 @@ export interface Copy {
   readonly tiers: Readonly<Record<TierId, TierCopy>>;
   readonly achievements: Readonly<Record<AchievementId, AchievementCopy>>;
   readonly smite: SmiteCopy;
-  readonly wrath: WrathCopy;
+  readonly malice: MaliceCopy;
   readonly milestone: MilestoneCopy;
   readonly prestige: PrestigeCopy;
   readonly offline: OfflineCopy;

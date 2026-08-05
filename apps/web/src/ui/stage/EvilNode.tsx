@@ -6,7 +6,7 @@ import type { GameState } from '@dm/engine';
 import { TierArt } from '../art/TierArt.tsx';
 import { formatNumber } from '../format.ts';
 import { useReducedMotion } from '../useReducedMotion.ts';
-import { ApathyBar } from './ApathyBar.tsx';
+import { ApathyTicks } from './ApathyTicks.tsx';
 import { usePulse } from './usePulse.ts';
 import type { Feed } from './TierNode.tsx';
 import './EvilNode.css';
@@ -95,15 +95,10 @@ export function EvilNode({
 
         <span className="evil-node__name">{name}</span>
         <span className="evil-node__total">{shown}</span>
-        <span className="evil-node__verb">{verb(phase, copy)}</span>
+        <span className="evil-node__verb">{verb(phase, state, copy)}</span>
       </button>
 
-      <ApathyBar
-        apathy={state.smiteApathy}
-        cap={content.smite.apathy.cap}
-        blow={nextBlowMultiplier(state, content)}
-        copy={copy}
-      />
+      <ApathyTicks apathy={state.smiteApathy} cap={content.smite.apathy.cap} copy={copy} />
 
       {/* Held open whether or not there is a report, so a blow never moves the chain. */}
       <p className="evil-node__report">{report}</p>
@@ -112,21 +107,24 @@ export function EvilNode({
 }
 
 /**
- * The verb, or what is happening instead of it.
- *
- * Counted down in whole seconds. A blow is a fifteen-second window inside a minute, and
- * a player deciding whether to wait needs a number, not a bar they have to estimate
- * from. The bar is there too, under the chip.
- */
-/**
  * The verb, in one of three faces of the same width.
  *
- * No number goes on the button. A label that changes length moves everything beside it
- * — the report line, the chain, the whole column — and this one changes three times a
- * minute. The count lives on the status line instead, which has nothing to its right.
+ * **While a blow runs, the face is the blow's own multiplier** — what everything is
+ * being worth right now, not a word naming the state. It used to read "Surge", which
+ * said that something was happening without saying what it came to; the number says
+ * both, and it is the figure the whole Apathy system exists to move.
+ *
+ * `state.smiteBlow` is what *this* blow was struck for, so it stays put while it runs
+ * even if a ladder is climbed mid-blow. Reading the current weight instead would let
+ * the face improve on a blow already in flight.
+ *
+ * Five characters in every face — `SMITE`, `×2.00`, `Soon` — because a label that
+ * changes length moves everything beside it, and this one changes three times a minute.
+ * Two decimals are not decoration: they are what holds the width fixed from ×1.00 to
+ * ×3.00, and the stylesheet pins a minimum besides.
  */
-function verb(phase: SmitePhase, copy: SmiteCopy): string {
-  if (phase.kind === 'active') return copy.surging;
+function verb(phase: SmitePhase, state: GameState, copy: SmiteCopy): string {
+  if (phase.kind === 'active') return `×${state.smiteBlow.toFixed(2)}`;
   if (phase.kind === 'cooling') return copy.cooling;
   return copy.action;
 }

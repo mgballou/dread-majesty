@@ -168,7 +168,6 @@ export const v1Copy = {
     action: 'Smite',
     hint: 'Do it yourself. It is not beneath you.',
     spoken: (amount) => `Smite. You hold ${amount} Evil.`,
-    surging: 'Surge',
     cooling: 'Soon',
     ready: 'Enact your will',
     reigning: 'All shall kneel',
@@ -187,11 +186,10 @@ export const v1Copy = {
       'The realm has seen worse.',
       'The realm has stopped looking.',
     ] as const,
-    blow: (multiplier) => `Next ${multiplier}`,
   },
 
-  wrath: {
-    title: 'Wrath',
+  malice: {
+    title: 'Malice',
     names: {
       reach: 'Reach',
       weight: 'Weight',
