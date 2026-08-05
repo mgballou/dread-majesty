@@ -73,11 +73,6 @@
   border-block-start: 1px solid var(--line);
 }
 
-.shell__records {
-  display: flex;
-  gap: var(--space-2);
-}
-
 /*
  * One column on a phone, in the order the game is played: rate, chain, deck.
  *
