@@ -349,4 +349,13 @@ describe('save version 8', () => {
 
     expect(deserialize(serialize(state, 0)).smiteKept.weight).toBe(1);
   });
+
+  it('trusts the lower privilege when a blob claims a kept floor above its rung', () => {
+    const state = createState(fixture);
+    const blob = serialize(state, 0);
+    blob.smiteRungs = { weight: 0 };
+    blob.smiteKept = { weight: 4 };
+
+    expect(deserialize(blob).smiteRungs.weight).toBe(0);
+  });
 });
