@@ -210,6 +210,14 @@ describe('apathy', () => {
     expect(state.smiteBlow).toBe(2);
   });
 
+  it('prices a blow at part-bled apathy', () => {
+    const state = running();
+    smite(state);
+    step(state, fixture, smiteBleedMs(state, fixture) / 2);
+
+    expect(nextBlowMultiplier(state, fixture)).toBeCloseTo(1.75);
+  });
+
   it('prices the second blow lower', () => {
     const state = running();
     smite(state);
