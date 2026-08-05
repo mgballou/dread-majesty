@@ -97,6 +97,17 @@ describe('the wrath panel', () => {
     expect(screen.getAllByText(CURRENT_COPY.wrath.maxed)).toHaveLength(4);
   });
 
+  it('does not say mastered twice for a ladder that is fully kept as well', () => {
+    const state = rich();
+    for (const upgrade of CURRENT.smite.upgrades) {
+      state.smiteRungs[upgrade.id] = upgrade.rungs.length;
+      state.smiteKept[upgrade.id] = upgrade.rungs.length;
+    }
+    show(state);
+
+    expect(screen.getAllByText(CURRENT_COPY.wrath.maxed)).toHaveLength(4);
+  });
+
   it('tells the ladders apart by name', () => {
     show(rich());
 
