@@ -354,23 +354,61 @@ export const v1: Content = {
   },
 
   offlineCapMs: 4 * HOUR,
-  /**
-   * A blow lands a little Evil at once and then doubles everything for fifteen
-   * seconds, once a minute.
-   *
-   * Fifteen seconds is longer than a Minion cycle (4s) and well short of a Warren's
-   * (60s), which is the window that makes a blow feel like it covered something
-   * without letting one press carry a whole tier. At ×2 for 15s in every 60s a player
-   * who never misses a cooldown runs about 25% ahead of the idle economy — enough
-   * that pressing it is always right, not enough to make §5.2's table a fiction.
-   *
-   * The harness does not smite, deliberately: it measures the idle economy, and this
-   * is the reward for being at the keyboard (spec §5.7).
-   */
   smite: {
-    seconds: 3,
-    durationMs: 15 * SECOND,
-    cooldownMs: 60 * SECOND,
-    multiplier: 2,
+    // Flat, and on no ladder. See SmiteDef's note on why escalating it cannot work.
+    cooldownMs: 20 * SECOND,
+    apathy: { perBlow: 1, cap: 3 },
+    // Reach first: it is the cheapest, and uptime is the effect a player feels before
+    // they have worked out what Apathy is doing.
+    upgrades: [
+      {
+        id: 'reach',
+        name: 'Reach',
+        base: 15 * SECOND,
+        unit: 'seconds',
+        rungs: [
+          { evil: '2.5e3', souls: '8', value: 17 * SECOND },
+          { evil: '3e4', souls: '20', value: 19 * SECOND },
+          { evil: '3.6e5', souls: '50', value: 21 * SECOND },
+          { evil: '4.3e6', souls: '120', value: 23 * SECOND },
+        ],
+      },
+      {
+        id: 'weight',
+        name: 'Weight',
+        base: 2,
+        unit: 'multiplier',
+        rungs: [
+          { evil: '5e3', souls: '8', value: 2.25 },
+          { evil: '6e4', souls: '20', value: 2.5 },
+          { evil: '7.2e5', souls: '50', value: 2.75 },
+          { evil: '8.6e6', souls: '120', value: 3 },
+        ],
+      },
+      {
+        id: 'forgetting',
+        name: 'Forgetting',
+        base: 45 * SECOND,
+        unit: 'seconds',
+        rungs: [
+          { evil: '1e4', souls: '8', value: 40 * SECOND },
+          { evil: '1.2e5', souls: '20', value: 36 * SECOND },
+          { evil: '1.44e6', souls: '50', value: 32 * SECOND },
+          { evil: '1.73e7', souls: '120', value: 30 * SECOND },
+        ],
+      },
+      {
+        id: 'restraint',
+        name: 'Restraint',
+        base: 0.25,
+        unit: 'amount',
+        rungs: [
+          { evil: '1.5e4', souls: '8', value: 0.225 },
+          { evil: '1.8e5', souls: '20', value: 0.2 },
+          { evil: '2.16e6', souls: '50', value: 0.175 },
+          { evil: '2.6e7', souls: '120', value: 0.15 },
+        ],
+      },
+    ],
   },
 };

@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react';
 import type Decimal from 'break_eternity.js';
 import type { Content, SmiteCopy } from '@dm/content';
+import { smiteDurationMs, smiteWeight } from '@dm/engine';
+import type { GameState } from '@dm/engine';
 import { TierArt } from '../art/TierArt.tsx';
 import { formatNumber } from '../format.ts';
 import { useReducedMotion } from '../useReducedMotion.ts';
@@ -24,8 +26,10 @@ interface EvilNodeProps {
   report: string;
   /** Whether the blow is running, cooling, or ready — and how far through. */
   phase: SmitePhase;
-  /** Read only for the smite durations, so the node can say them in seconds. */
+  /** Read only for the smite ladders, so the node can say what a blow is worth. */
   content: Content;
+  /** Read-only here, as everywhere outside the engine. */
+  state: GameState;
   /** The Minion rung, so the node can mark a delivery landing. */
   feed: Feed | null;
   onSmite: () => void;
@@ -61,6 +65,7 @@ export function EvilNode({
   report,
   phase,
   content,
+  state,
   feed,
   onSmite,
 }: EvilNodeProps): ReactNode {
@@ -77,7 +82,7 @@ export function EvilNode({
         onClick={onSmite}
         disabled={!ready}
         aria-label={copy.spoken(shown)}
-        title={ready ? worth(copy, content) : copy.hint}
+        title={ready ? worth(copy, state, content) : copy.hint}
       >
         <span className="evil-node__medallion">
           <TierArt slot={EVIL_ART} decorative />
@@ -118,9 +123,9 @@ function verb(phase: SmitePhase, copy: SmiteCopy): string {
   return copy.action;
 }
 
-function worth(copy: SmiteCopy, content: Content): string {
+function worth(copy: SmiteCopy, state: GameState, content: Content): string {
   return copy.worth({
-    multiplier: `×${content.smite.multiplier}`,
-    seconds: `${Math.round(content.smite.durationMs / 1000)}s`,
+    multiplier: `×${smiteWeight(state, content)}`,
+    seconds: `${Math.round(smiteDurationMs(state, content) / 1000)}s`,
   });
 }

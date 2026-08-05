@@ -4,6 +4,7 @@ import { newlyEarnedAchievements } from './achievements.ts';
 import { bulkCost, findTier, maxAffordable } from './cost.ts';
 import { findOverseer, hasAutomator, hasPost } from './roster.ts';
 import { isUnlockReached, prestigeGain } from './selectors.ts';
+import { smiteDurationMs } from './smite.ts';
 import { createState } from './state.ts';
 import type { GameState, Intent, IntentResult } from './types.ts';
 
@@ -69,7 +70,7 @@ function smite(
   // The lasting part. Set, not added: striking again the moment the cooldown lifts
   // restarts the buff rather than stacking it, so two blows can never be worth more
   // than two blows.
-  state.smiteActiveMs = content.smite.durationMs;
+  state.smiteActiveMs = smiteDurationMs(state, content);
   state.smiteCooldownMs = content.smite.cooldownMs;
 
   return { ok: true, intent, detail: 'Struck' };

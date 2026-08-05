@@ -176,6 +176,7 @@ export function ChainStage({
         report={report(state, copy.smite.results)}
         phase={smite}
         content={content}
+        state={state}
         feed={feedFrom({ producer: last, state, version })}
         onSmite={onSmite}
       />
