@@ -58,3 +58,15 @@ export function smiteBleedMs(state: GameState, content: Content): number {
 export function smiteStep(state: GameState, content: Content): number {
   return valueNow(state, content, 'restraint');
 }
+
+/**
+ * What the next blow would multiply production by, at the Apathy standing now.
+ *
+ * **Floored at 1.** A blow that made things worse would be a trap, and the floor means
+ * a player who has not worked the system out can only ever waste taps rather than lose
+ * ground. It also means a content edit cannot accidentally invert the verb.
+ */
+export function nextBlowMultiplier(state: GameState, content: Content): number {
+  const raw = smiteWeight(state, content) - smiteStep(state, content) * state.smiteApathy;
+  return Math.max(1, raw);
+}

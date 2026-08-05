@@ -3,7 +3,7 @@ import type { Content, ProducibleId, TierId } from '@dm/content';
 import { isResourceId, isTierId } from '@dm/content';
 import { achievementMultiplier } from './achievements.ts';
 import { effectiveCycleMs, effectiveYield, hasAutomator } from './roster.ts';
-import { smiteWeight } from './smite.ts';
+import { smiteBleedMs } from './smite.ts';
 import type { GameState, StepReport } from './types.ts';
 
 /** The live slice. Every online tick is exactly this long. */
@@ -28,6 +28,15 @@ export function step(state: GameState, content: Content, dtMs: number): StepRepo
   // get paid at the raised rate. The countdowns are the only clock the engine has.
   state.smiteActiveMs = Math.max(0, state.smiteActiveMs - dtMs);
   state.smiteCooldownMs = Math.max(0, state.smiteCooldownMs - dtMs);
+
+  // The blow's worth is spent with it. Reading `smiteActiveMs` alone would leave the
+  // last struck multiplier lying on the state for the interface to find.
+  if (state.smiteActiveMs <= 0) state.smiteBlow = 1;
+
+  // Apathy bleeds at the same rate everywhere — online, offline and in the harness —
+  // because it is spent out of `dtMs` like every other counter. That is what makes a
+  // returning player always come back at zero without a single special case.
+  state.smiteApathy = Math.max(0, state.smiteApathy - dtMs / smiteBleedMs(state, content));
 
   const owned = snapshotCounts(state, content);
   const delta: Partial<Record<ProducibleId, Decimal>> = {};
@@ -126,6 +135,6 @@ export function tierMultiplier(state: GameState, content: Content, owned: Decima
  */
 export function globalMultiplier(state: GameState, content: Content): Decimal {
   const fromSouls = new Decimal(1).add(state.souls.mul(content.prestige.perSoul));
-  const fromSmite = state.smiteActiveMs > 0 ? smiteWeight(state, content) : 1;
+  const fromSmite = state.smiteActiveMs > 0 ? state.smiteBlow : 1;
   return fromSouls.mul(achievementMultiplier(state, content)).mul(fromSmite);
 }

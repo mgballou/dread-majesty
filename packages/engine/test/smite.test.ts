@@ -2,7 +2,7 @@ import Decimal from 'break_eternity.js';
 import { describe, expect, it } from 'vitest';
 import { apply } from '../src/intents.ts';
 import { canSmite, smitePhase } from '../src/selectors.ts';
-import { smiteDurationMs, smiteWeight } from '../src/smite.ts';
+import { nextBlowMultiplier, smiteBleedMs, smiteDurationMs, smiteWeight } from '../src/smite.ts';
 import { createState } from '../src/state.ts';
 import { globalMultiplier, step } from '../src/step.ts';
 import type { GameState } from '../src/types.ts';
@@ -182,5 +182,125 @@ describe('smite', () => {
     apply(state, fixture, { kind: 'prestige' });
 
     expect(state.smiteCooldownMs).toBe(cooldownMs);
+  });
+});
+
+describe('apathy', () => {
+  it('starts at nothing', () => {
+    expect(createState(fixture).smiteApathy).toBe(0);
+  });
+
+  it('prices the first blow of a run at full weight', () => {
+    const state = running();
+
+    expect(nextBlowMultiplier(state, fixture)).toBe(2);
+  });
+
+  it('rises by one with a blow', () => {
+    const state = running();
+    smite(state);
+
+    expect(state.smiteApathy).toBe(1);
+  });
+
+  it('prices a blow by the apathy it found, not the apathy it caused', () => {
+    const state = running();
+    smite(state);
+
+    expect(state.smiteBlow).toBe(2);
+  });
+
+  it('prices the second blow lower', () => {
+    const state = running();
+    smite(state);
+
+    expect(nextBlowMultiplier(state, fixture)).toBe(1.5);
+  });
+
+  it('bleeds a whole point over the forgetting time', () => {
+    const state = running();
+    smite(state);
+    step(state, fixture, smiteBleedMs(state, fixture));
+
+    expect(state.smiteApathy).toBe(0);
+  });
+
+  it('bleeds by exactly the share of the slice', () => {
+    const state = running();
+    smite(state);
+    step(state, fixture, smiteBleedMs(state, fixture) / 4);
+
+    expect(state.smiteApathy).toBeCloseTo(0.75);
+  });
+
+  it('never bleeds below nothing', () => {
+    const state = running();
+    smite(state);
+    step(state, fixture, smiteBleedMs(state, fixture) * 10);
+
+    expect(state.smiteApathy).toBe(0);
+  });
+
+  it('caps rather than spiralling', () => {
+    const state = running();
+    for (let blow = 0; blow < 20; blow += 1) {
+      state.smiteCooldownMs = 0;
+      smite(state);
+    }
+
+    expect(state.smiteApathy).toBe(fixture.smite.apathy.cap);
+  });
+
+  it('floors a blow at one, so a blow is never a penalty', () => {
+    const state = running();
+    state.smiteApathy = fixture.smite.apathy.cap;
+
+    expect(nextBlowMultiplier(state, fixture)).toBe(1);
+  });
+
+  it('agrees on apathy whichever way the slice is cut', () => {
+    const once = running();
+    const twice = running();
+    smite(once);
+    smite(twice);
+    step(once, fixture, 20_000);
+    step(twice, fixture, 10_000);
+    step(twice, fixture, 10_000);
+
+    expect(once.smiteApathy).toBeCloseTo(twice.smiteApathy);
+  });
+
+  it('holds the running blow at what it was struck for', () => {
+    const state = running();
+    smite(state);
+    state.smiteRungs.weight = 2;
+
+    expect(globalMultiplier(state, fixture).toNumber()).toBe(2);
+  });
+
+  it('gives the blow back its worth once it runs out', () => {
+    const state = running();
+    smite(state);
+    step(state, fixture, smiteDurationMs(state, fixture));
+
+    expect(state.smiteBlow).toBe(1);
+  });
+
+  it('keeps the apathy through a reset, so a reset does not clear the debt', () => {
+    const state = running();
+    state.lifetimeEvil = new Decimal('1e30');
+    smite(state);
+    apply(state, fixture, { kind: 'prestige' });
+
+    expect(state.smiteApathy).toBe(1);
+  });
+
+  it('clears the running blow on a reset', () => {
+    const state = running();
+    state.lifetimeEvil = new Decimal('1e30');
+    smite(state);
+    apply(state, fixture, { kind: 'prestige' });
+
+    expect(state.smiteBlow).toBe(1);
   });
 });
