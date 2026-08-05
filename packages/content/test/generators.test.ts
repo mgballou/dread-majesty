@@ -1,4 +1,3 @@
-import Decimal from 'break_eternity.js';
 import { describe, expect, it } from 'vitest';
 import { v1 } from '../src/v1/generators.ts';
 import { TIER_IDS, SMITE_UPGRADE_IDS, isSmiteUpgradeId } from '../src/ids.ts';
@@ -188,14 +187,14 @@ describe('the smite ladders', () => {
 
   it('raises the Evil price at every rung of every ladder', () => {
     for (const upgrade of v1.smite.upgrades) {
-      const prices = upgrade.rungs.map((rung) => new Decimal(rung.evil).toNumber());
+      const prices = upgrade.rungs.map((rung) => Number(rung.evil));
       expect(prices).toEqual([...prices].sort((a, b) => a - b));
     }
   });
 
   it('raises the soul price at every rung of every ladder', () => {
     for (const upgrade of v1.smite.upgrades) {
-      const prices = upgrade.rungs.map((rung) => new Decimal(rung.souls).toNumber());
+      const prices = upgrade.rungs.map((rung) => Number(rung.souls));
       expect(prices).toEqual([...prices].sort((a, b) => a - b));
     }
   });
