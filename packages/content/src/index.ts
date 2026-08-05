@@ -40,7 +40,7 @@ export type {
   ResourceCopy,
   AchievementCopy,
   SmiteCopy,
-  WrathCopy,
+  MaliceCopy,
   MilestoneCopy,
   PrestigeCopy,
   OfflineCopy,

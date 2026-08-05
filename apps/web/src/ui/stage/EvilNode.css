@@ -91,6 +91,9 @@
   min-inline-size: 5.5rem;
   padding: var(--space-1) var(--space-3);
   text-align: center;
+  /* One of the three faces is a live multiplier now, so the digits have to hold their
+     column as it changes rather than shuffling the word left and right inside the pin. */
+  font-variant-numeric: tabular-nums;
   font-size: var(--text-xs);
   letter-spacing: 0.14em;
   text-transform: uppercase;

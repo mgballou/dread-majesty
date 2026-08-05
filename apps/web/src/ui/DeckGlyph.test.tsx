@@ -2,7 +2,7 @@ import { render } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { DeckGlyph, type DeckGlyphKind } from './DeckGlyph.tsx';
 
-const kinds: DeckGlyphKind[] = ['muster', 'miscreants', 'deeds', 'wrath'];
+const kinds: DeckGlyphKind[] = ['muster', 'miscreants', 'deeds', 'malice'];
 
 describe('every tab has a drawing of its own', () => {
   it.each(kinds)('draws %s', (kind) => {

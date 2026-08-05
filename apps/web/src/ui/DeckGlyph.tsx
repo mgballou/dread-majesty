@@ -1,7 +1,7 @@
 import type { ReactElement, ReactNode } from 'react';
 
 /** One mark per panel of the deck. */
-export type DeckGlyphKind = 'muster' | 'miscreants' | 'deeds' | 'wrath';
+export type DeckGlyphKind = 'muster' | 'miscreants' | 'deeds' | 'malice';
 
 interface DeckGlyphProps {
   kind: DeckGlyphKind;
@@ -38,7 +38,7 @@ export function DeckGlyph({ kind }: DeckGlyphProps): ReactNode {
  *
  * The muster is a hammer, the thing that raises. The miscreants are a diamond, the
  * shape that already means "a post, not a generator" in that panel. The deeds are a
- * star, regular and even-armed; the wrath is a burst, the same shape struck ragged —
+ * star, regular and even-armed; the malice is a burst, the same shape struck ragged —
  * what a blow looks like, and kept unlike the star on purpose so the two do not read
  * as one mark at tab size.
  *
@@ -67,7 +67,7 @@ function shape(kind: DeckGlyphKind): ReactElement {
           fill="currentColor"
         />
       );
-    case 'wrath':
+    case 'malice':
       return (
         <g fill="currentColor">
           <path d="M24 2 L28 16 L42 12 L32 23 L44 30 L29 30 L31 45 L24 34 L17 45 L19 30 L4 30 L16 23 L6 12 L20 16 Z" />

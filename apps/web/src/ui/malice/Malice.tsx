@@ -1,12 +1,12 @@
 import { useId, type ReactNode } from 'react';
-import type { Content, SmiteUnit, SmiteUpgradeDef, SmiteUpgradeId, WrathCopy } from '@dm/content';
+import type { Content, SmiteUnit, SmiteUpgradeDef, SmiteUpgradeId, MaliceCopy } from '@dm/content';
 import { canClimb, canKeep, climbCost, keepCost, smiteValueAt, type GameState } from '@dm/engine';
 import { formatNumber } from '../format.ts';
 import { spendEmphasis, type RailPlan, type SpendEmphasis } from '../rail/railPlan.ts';
 import '../controls.css';
-import './Wrath.css';
+import './Malice.css';
 
-interface WrathProps {
+interface MaliceProps {
   content: Content;
   /** Read-only here, as everywhere outside the engine. */
   state: GameState;
@@ -14,7 +14,7 @@ interface WrathProps {
   plan: RailPlan;
   onClimb: (upgradeId: SmiteUpgradeId) => void;
   onKeep: (upgradeId: SmiteUpgradeId) => void;
-  copy: WrathCopy;
+  copy: MaliceCopy;
 }
 
 /**
@@ -32,9 +32,9 @@ interface WrathProps {
  * Souls can never advance a ladder. `canKeep` refuses a rung that has not been climbed
  * with Evil in this run, so the rule lives in the engine and this panel only draws it.
  */
-export function Wrath({ content, state, plan, onClimb, onKeep, copy }: WrathProps): ReactNode {
+export function Malice({ content, state, plan, onClimb, onKeep, copy }: MaliceProps): ReactNode {
   return (
-    <ul className="wrath">
+    <ul className="malice">
       {content.smite.upgrades.map((upgrade) => (
         <Rung
           key={upgrade.id}
@@ -58,7 +58,7 @@ interface RungProps {
   emphasis: SpendEmphasis;
   onClimb: () => void;
   onKeep: () => void;
-  copy: WrathCopy;
+  copy: MaliceCopy;
 }
 
 function Rung({ upgrade, state, content, emphasis, onClimb, onKeep, copy }: RungProps): ReactNode {
@@ -77,25 +77,25 @@ function Rung({ upgrade, state, content, emphasis, onClimb, onKeep, copy }: Rung
   const keepId = `${id}-keep`;
 
   return (
-    <li className={`wrath__rung wrath__rung--${emphasis}`}>
-      <span className="wrath__body">
-        <span className="wrath__name" id={nameId}>
+    <li className={`malice__rung malice__rung--${emphasis}`}>
+      <span className="malice__body">
+        <span className="malice__name" id={nameId}>
           {copy.names[upgrade.id]}
         </span>
-        <span className="wrath__note">{copy.notes[upgrade.id]}</span>
-        <span className="wrath__step">{climb === null ? now : copy.step({ now, next })}</span>
+        <span className="malice__note">{copy.notes[upgrade.id]}</span>
+        <span className="malice__step">{climb === null ? now : copy.step({ now, next })}</span>
       </span>
 
-      <span className="wrath__standing">
-        <span className="wrath__at">
+      <span className="malice__standing">
+        <span className="malice__at">
           {climb === null ? copy.maxed : copy.rung({ at: String(rung), of: String(top) })}
         </span>
         {state.smiteKept[upgrade.id] >= rung && rung > 0 && (
-          <span className="wrath__at">{copy.held}</span>
+          <span className="malice__at">{copy.held}</span>
         )}
       </span>
 
-      <span className="wrath__actions">
+      <span className="malice__actions">
         <button
           type="button"
           id={climbId}
@@ -105,7 +105,7 @@ function Rung({ upgrade, state, content, emphasis, onClimb, onKeep, copy }: Rung
           onClick={onClimb}
         >
           {copy.climb}
-          <span className="wrath__price">
+          <span className="malice__price">
             {climb === null ? null : copy.climbCost(formatNumber(climb))}
           </span>
         </button>
@@ -119,13 +119,13 @@ function Rung({ upgrade, state, content, emphasis, onClimb, onKeep, copy }: Rung
           onClick={onKeep}
         >
           {copy.keep}
-          <span className="wrath__price">
+          <span className="malice__price">
             {keep === null ? null : copy.keepCost(formatNumber(keep))}
           </span>
         </button>
       </span>
 
-      {emphasis === 'best' && <span className="wrath__lifted">{copy.lifted}</span>}
+      {emphasis === 'best' && <span className="malice__lifted">{copy.lifted}</span>}
     </li>
   );
 }
