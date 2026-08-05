@@ -178,7 +178,7 @@ describe('contrast', () => {
   });
 
   it('holds every enumerated tone at AA against --surface', () => {
-    for (const name of ['--tone-positive', '--tone-danger', '--tone-resource']) {
+    for (const name of ['--tone-positive', '--tone-danger', '--tone-resource', '--tone-apathy']) {
       expect(contrast(name, '--surface')).toBeGreaterThanOrEqual(4.5);
     }
   });
@@ -197,6 +197,10 @@ describe('contrast', () => {
 
   it('separates a swept meter fill from the well it runs over', () => {
     expect(contrast('--accent-soft', '--accent-well')).toBeGreaterThanOrEqual(3);
+  });
+
+  it('separates the apathy fill from the well it runs over', () => {
+    expect(contrast('--tone-apathy', '--tone-apathy-well')).toBeGreaterThanOrEqual(3);
   });
 
   it('keeps a secondary control outline perceivable', () => {
@@ -225,6 +229,10 @@ describe('nothing crowds the accent', () => {
     for (const name of ['--accent-line', '--accent-soft', '--accent-well']) {
       expect(contrast('--accent', '--surface')).toBeGreaterThan(contrast(name, '--surface'));
     }
+  });
+
+  it('keeps apathy clear of gold', () => {
+    expect(hueDistance('--tone-apathy', '--accent')).toBeGreaterThanOrEqual(45);
   });
 
   it('keeps every chain tone clear of every other chain tone', () => {

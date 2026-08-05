@@ -1,11 +1,12 @@
 import type { ReactNode } from 'react';
 import type Decimal from 'break_eternity.js';
 import type { Content, SmiteCopy } from '@dm/content';
-import { smiteDurationMs, smiteWeight } from '@dm/engine';
+import { nextBlowMultiplier, smiteDurationMs, smiteWeight } from '@dm/engine';
 import type { GameState } from '@dm/engine';
 import { TierArt } from '../art/TierArt.tsx';
 import { formatNumber } from '../format.ts';
 import { useReducedMotion } from '../useReducedMotion.ts';
+import { ApathyBar } from './ApathyBar.tsx';
 import { usePulse } from './usePulse.ts';
 import type { Feed } from './TierNode.tsx';
 import './EvilNode.css';
@@ -96,6 +97,13 @@ export function EvilNode({
         <span className="evil-node__total">{shown}</span>
         <span className="evil-node__verb">{verb(phase, copy)}</span>
       </button>
+
+      <ApathyBar
+        apathy={state.smiteApathy}
+        cap={content.smite.apathy.cap}
+        blow={nextBlowMultiplier(state, content)}
+        copy={copy}
+      />
 
       {/* Held open whether or not there is a report, so a blow never moves the chain. */}
       <p className="evil-node__report">{report}</p>
