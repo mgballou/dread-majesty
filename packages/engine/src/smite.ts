@@ -135,9 +135,16 @@ export function smiteAverageMultiplier(
 
   const cooldownMs = content.smite.cooldownMs;
   const uptime = Math.min(1, at('reach') / cooldownMs);
-  // Where Apathy settles for somebody striking on every cooldown: a point arrives with
-  // each blow and `cooldownMs / bleedMs` of a point bleeds away between them.
-  const settled = Math.max(0, content.smite.apathy.cap - cooldownMs / at('forgetting'));
+  // Where Apathy settles for somebody striking on every cooldown. A blow adds
+  // `perBlow` and `cooldownMs / bleedMs` of a point bleeds away before the next one —
+  // so Apathy only piles up to the cap when a blow adds at least as much as the wait
+  // gives back. Below that it bleeds faster than it accrues and settles at nothing,
+  // and the naive `cap - P/bleed` would read a fatigue the player never feels.
+  const bledPerCycle = cooldownMs / at('forgetting');
+  const settled =
+    content.smite.apathy.perBlow >= bledPerCycle
+      ? Math.max(0, content.smite.apathy.cap - bledPerCycle)
+      : 0;
   const blow = Math.max(1, at('weight') - at('restraint') * settled);
 
   return uptime * blow + (1 - uptime);
