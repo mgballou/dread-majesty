@@ -96,4 +96,14 @@ describe('the wrath panel', () => {
 
     expect(screen.getAllByText(CURRENT_COPY.wrath.maxed)).toHaveLength(4);
   });
+
+  it('tells the ladders apart by name', () => {
+    show(rich());
+
+    expect(
+      screen.getByRole('button', {
+        name: new RegExp(`^Climb.*${CURRENT_COPY.wrath.names.weight}`),
+      }),
+    ).toBeInTheDocument();
+  });
 });
