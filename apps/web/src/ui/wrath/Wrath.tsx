@@ -1,6 +1,6 @@
 import { useId, type ReactNode } from 'react';
 import type { Content, SmiteUnit, SmiteUpgradeDef, SmiteUpgradeId, WrathCopy } from '@dm/content';
-import { canKeep, climbCost, keepCost, smiteValueAt, type GameState } from '@dm/engine';
+import { canClimb, canKeep, climbCost, keepCost, smiteValueAt, type GameState } from '@dm/engine';
 import { formatNumber } from '../format.ts';
 import { spendEmphasis, type RailPlan, type SpendEmphasis } from '../rail/railPlan.ts';
 import '../controls.css';
@@ -101,7 +101,7 @@ function Rung({ upgrade, state, content, emphasis, onClimb, onKeep, copy }: Rung
           id={climbId}
           className={`button${emphasis === 'best' ? ' button--primary' : ''}`}
           aria-labelledby={`${climbId} ${nameId}`}
-          disabled={climb === null || state.resources.evil.lt(climb)}
+          disabled={!canClimb(state, content, upgrade.id)}
           onClick={onClimb}
         >
           {copy.climb}
@@ -120,7 +120,7 @@ function Rung({ upgrade, state, content, emphasis, onClimb, onKeep, copy }: Rung
         >
           {copy.keep}
           <span className="wrath__price">
-            {keep === null ? copy.maxed : copy.keepCost(formatNumber(keep))}
+            {keep === null ? null : copy.keepCost(formatNumber(keep))}
           </span>
         </button>
       </span>
