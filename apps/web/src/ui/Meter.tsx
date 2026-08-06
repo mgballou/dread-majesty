@@ -15,6 +15,12 @@ interface MeterProps {
   max: number;
   /** Layout the caller owns — width, margins, position in a row. Never colour. */
   className?: string;
+  /**
+   * Hover text. The accessible name still comes from `label` — `aria-label` wins over
+   * `title`, so this adds a way to read the exact figures with a pointer without
+   * changing what is announced.
+   */
+  title?: string;
 }
 
 /** The style object carries one component token, which plain CSSProperties cannot type. */
@@ -34,7 +40,7 @@ type MeterStyle = CSSProperties & Record<'--meter-swept', string>;
  * The progress itself never goes missing and the spoken value stays exact — reduced
  * motion drops movement, never content (§8).
  */
-export function Meter({ label, value, max, className = '' }: MeterProps): ReactNode {
+export function Meter({ label, value, max, className = '', title }: MeterProps): ReactNode {
   const reduced = useReducedMotion();
 
   const swept = max > 0 ? clamp(value / max) : 0;
@@ -51,6 +57,7 @@ export function Meter({ label, value, max, className = '' }: MeterProps): ReactN
       aria-valuemax={100}
       aria-valuenow={Math.round(swept * 100)}
       style={style}
+      {...(title === undefined ? {} : { title })}
     >
       <span className="meter__fill" />
       <span className="meter__teeth" aria-hidden="true" />

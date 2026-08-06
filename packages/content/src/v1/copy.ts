@@ -229,6 +229,10 @@ export const v1Copy = {
     }): string => `${remaining} more ${plural} for ${multiplier} output at ${threshold}.`,
     done: 'Every milestone taken.',
     noMore: 'They will not make more than this.',
+    bar: ({ remaining, plural, multiplier, threshold }): string =>
+      `${remaining} more ${plural} for ${multiplier} output at ${threshold}.`,
+    barDone: (plural: string): string =>
+      `Every milestone taken. The ${plural} will not make more than this.`,
   },
 
   prestige: {
@@ -296,7 +300,7 @@ export const v1Copy = {
     upcomingTitle: 'Next in the chain',
     upcoming: ({ tier, cost }: { tier: string; cost: string }): string =>
       `${tier} cost ${cost}. Further than you have come.`,
-    bought: (count: string): string => `${count} bought`,
+    bought: (count: string): string => `${count} bought — the price follows this`,
     lifted: 'best available',
   },
 
