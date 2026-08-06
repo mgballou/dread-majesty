@@ -127,7 +127,7 @@ describe('railPlan', () => {
     state.gens.warren.owned = new Decimal(12);
     state.gens.warren.purchased = new Decimal(12);
 
-    expect(plan().saving.purchase?.tierId).toBe('minion');
+    expect(plan().saving.purchase?.tierId).toBe('warren');
   });
 
   it('names nothing to save toward while a purchase is available', () => {
@@ -259,6 +259,28 @@ describe('railPlan', () => {
   });
 });
 
+describe('the horizon lifts a tier at the count where a player notices', () => {
+  function withGens(counts: { minion: number; warren: number }): void {
+    state.gens.minion.owned = new Decimal(counts.minion);
+    state.gens.minion.purchased = new Decimal(counts.minion);
+    state.gens.warren.owned = new Decimal(counts.warren);
+    state.gens.warren.purchased = new Decimal(counts.warren);
+    state.resources.evil = new Decimal('1e12');
+  }
+
+  it('lifts the Warren over the Minion at the count where a player notices', () => {
+    withGens({ minion: 300, warren: 26 });
+
+    expect(plan().best.purchase?.tierId).toBe('warren');
+  });
+
+  it('reaches past the Warren once Dark Legions are affordable', () => {
+    withGens({ minion: 1000, warren: 40 });
+
+    expect(plan().best.purchase?.tierId).toBe('legion');
+  });
+});
+
 describe('each panel gets its own best', () => {
   it('lifts a purchase even while an appointment outscores it', () => {
     state.gens.minion.owned = new Decimal(400);
@@ -283,9 +305,9 @@ describe('each panel gets its own best', () => {
 
 describe('the accent holds still', () => {
   it('keeps the held purchase when a challenger only just beats it', () => {
-    state.gens.warren.owned = new Decimal(1);
-    state.gens.warren.purchased = new Decimal(1);
-    state.resources.evil = new Decimal(5200);
+    state.gens.warren.owned = new Decimal(12);
+    state.gens.warren.purchased = new Decimal(12);
+    state.resources.evil = new Decimal(50000);
     const held: HeldKeys = { purchase: 'minion', appoint: null, climb: null };
 
     expect(plan(1, all, held).best.purchase?.tierId).toBe('minion');
