@@ -45,7 +45,17 @@ describe('EvilNode', () => {
   it('speaks the figure as well as the verb', () => {
     render(evil());
 
-    expect(strike()).toHaveAccessibleName('Smite. You hold 4.88K Evil.');
+    expect(strike()).toHaveAccessibleName('Smite. You hold 4.88K Evil. The realm flinches.');
+  });
+
+  it('speaks the highest band once apathy reaches the cap', () => {
+    const state = createState(CURRENT);
+    state.smiteApathy = CURRENT.smite.apathy.cap;
+    render(evil({ state }));
+
+    expect(strike()).toHaveAccessibleName(
+      'Smite. You hold 4.88K Evil. The realm has stopped looking.',
+    );
   });
 
   it('names the verb in words, not by colour alone', () => {

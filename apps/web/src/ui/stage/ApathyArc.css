@@ -1,0 +1,37 @@
+/*
+ * The realm's patience, curved around the medallion. See ApathyArc.tsx.
+ *
+ * One component token: a segment's stroke is a drawn weight rather than a laid-out
+ * region, and no step on the space scale is the right thickness for a mark that has to
+ * read as a gauge at the size a medallion gives it.
+ */
+
+.apathy {
+  --apathy-stroke: 3px;
+
+  position: absolute;
+  inset: 0;
+  display: block;
+  /* The gauge is a readout drawn over a control. It must never take the press. */
+  pointer-events: none;
+}
+
+.apathy__dial {
+  inline-size: 100%;
+  block-size: 100%;
+  overflow: visible;
+}
+
+.apathy__segment {
+  fill: none;
+  stroke: var(--line);
+  stroke-width: var(--apathy-stroke);
+  stroke-linecap: round;
+  /* Colour only — there is no geometry to animate, which is why this drawing needs no
+     reduced-motion branch at all. The global collapse to 1ms covers it either way. */
+  transition: stroke var(--duration-fast) ease-out;
+}
+
+.apathy__segment--lit {
+  stroke: var(--tone-apathy);
+}

@@ -6,7 +6,7 @@ import type { GameState } from '@dm/engine';
 import { TierArt } from '../art/TierArt.tsx';
 import { formatWhole } from '../format.ts';
 import { useReducedMotion } from '../useReducedMotion.ts';
-import { ApathyTicks } from './ApathyTicks.tsx';
+import { ApathyArc, apathyShare } from './ApathyArc.tsx';
 import { usePulse } from './usePulse.ts';
 import type { Feed } from './TierNode.tsx';
 import './EvilNode.css';
@@ -82,11 +82,15 @@ export function EvilNode({
         className={ready ? 'evil-node__strike evil-node__strike--lifted' : 'evil-node__strike'}
         onClick={onSmite}
         disabled={!ready}
-        aria-label={copy.spoken(shown)}
+        aria-label={copy.spoken(
+          shown,
+          band(apathyShare(state.smiteApathy, content.smite.apathy.cap), copy.bands),
+        )}
         title={ready ? worth(copy, state, content) : copy.hint}
       >
         <span className="evil-node__medallion">
           <TierArt slot={EVIL_ART} decorative />
+          <ApathyArc apathy={state.smiteApathy} cap={content.smite.apathy.cap} />
 
           {landing !== null && (
             <span className="evil-node__landing" key={`land-${landing.id}`} aria-hidden="true" />
@@ -97,8 +101,6 @@ export function EvilNode({
         <span className="evil-node__total">{shown}</span>
         <span className="evil-node__verb">{verb(phase, state, copy)}</span>
       </button>
-
-      <ApathyTicks apathy={state.smiteApathy} cap={content.smite.apathy.cap} copy={copy} />
 
       {/* Held open whether or not there is a report, so a blow never moves the chain. */}
       <p className="evil-node__report">{report}</p>
@@ -134,4 +136,16 @@ function worth(copy: SmiteCopy, state: GameState, content: Content): string {
     multiplier: `×${nextBlowMultiplier(state, content).toFixed(2)}`,
     seconds: `${Math.round(smiteDurationMs(state, content) / 1000)}s`,
   });
+}
+
+/**
+ * Which of the three sentences the realm is living in.
+ *
+ * Thirds, and the top band is reached only at the very top — `Math.min` rather than a
+ * `Math.floor` that would put a full gauge in a fourth band that does not exist.
+ */
+function band(share: number, bands: SmiteCopy['bands']): string {
+  const index = Math.min(bands.length - 1, Math.floor(share * bands.length));
+
+  return bands[index] ?? bands[0];
 }
