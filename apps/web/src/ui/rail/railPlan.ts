@@ -29,26 +29,33 @@ import type { BuyQuantity } from './quantity.ts';
 /**
  * How far ahead a purchase is judged, in seconds.
  *
- * This constant is the whole of the ranking's opinion, and it is a genuine choice
- * rather than a detail: a Minion pays immediately, a Fortress pays through three
- * intermediaries, so *any* comparison between them is a statement about how long the
- * player intends to keep playing. Ten minutes is a session, and the spec tunes every
- * tier above Minions for a payback period of tens of minutes (§5.2), so ten minutes
- * is the horizon at which the tiers are meant to be comparable at all.
+ * This constant is the whole of the ranking's opinion. A Minion pays in four seconds; a
+ * Warren pays through Minions, so its return over a window grows with the window squared
+ * over two, and a Legion cubed over six. The window's length therefore decides which tier
+ * wins, and any value is a statement about how long the player intends to keep playing.
  *
- * Push it up and the rail will favour the top of the chain; pull it down and it will
- * never recommend anything but Minions. Both are correct answers to different
- * questions.
+ * **Two hours: the length of a run, not the length of a sitting.** The first reset worth
+ * taking lands near 1h 47m.
  *
- * **The payback-period claim above is retracted.** It cites §5.2 of
- * `docs/superpowers/specs/2026-08-03-dread-majesty-design.md`, which still carries it
- * verbatim at line 259 — the source was never lost. What is lost is its authority: the
- * economy retune superseded that first-pass table twice over, first with its own fit
- * and again once the obsolescence rule reshaped every cost curve, and neither pass
- * re-measured a payback period to check ten minutes still holds. The number stands
- * only because nothing has shown it wrong, not because the reasoning above still does.
+ * This was 600 for most of the project's life, on a payback-period argument that had
+ * already been retracted as unmeasured. It has now been measured, and 600 was wrong.
+ * Three simulated players making one purchase a second for two hours:
+ *
+ *   follows the gold, H=600            30m 1.28e9   1h 1.49e10   2h 5.49e13
+ *   buys the biggest affordable tier   30m 1.73e9   1h 1.97e10   2h 1.15e14
+ *
+ * Following the recommendation was half as good as the genre's most naive heuristic.
+ * Sweeping the horizon against the first policy:
+ *
+ *   600s   2h 5.49e13      4800s  2h 1.15e14
+ *   1800s  2h 7.38e13      7200s  2h 1.15e14
+ *                          86400s 2h 1.15e14
+ *
+ * It climbs to about 4800 and then flat-lines. **A plateau, not a peak** — which is the
+ * property that matters, because nobody re-measures this before shipping a content
+ * change. See the 2026-08-06 post-smite-tuning spec §3.1.
  */
-export const HORIZON_SECONDS = 600;
+export const HORIZON_SECONDS = 7200;
 
 /** The three things a panel can offer. All are spends, so all are ranked. */
 export type RailOptionKind = 'purchase' | 'appoint' | 'climb';
