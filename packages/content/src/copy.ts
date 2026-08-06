@@ -132,6 +132,21 @@ export interface MilestoneCopy {
   readonly done: string;
   /** Follows `done` on a tier that has taken every milestone it has. */
   readonly noMore: string;
+  /**
+   * Names the milestone bar, and carries the figures the printed line used to.
+   *
+   * Every part arrives formatted. The bar replaced a line of text, so this string is
+   * the only place those numbers still live — it is read by pointer through `title`
+   * and by ear through `aria-label`.
+   */
+  readonly bar: (args: {
+    readonly remaining: string;
+    readonly plural: string;
+    readonly multiplier: string;
+    readonly threshold: string;
+  }) => string;
+  /** The bar's name once a tier has taken every milestone it has. */
+  readonly barDone: (plural: string) => string;
 }
 
 /**
