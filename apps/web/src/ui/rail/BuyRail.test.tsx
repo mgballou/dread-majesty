@@ -82,16 +82,6 @@ describe('BuyRail', () => {
     expect(screen.getByText(CURRENT_COPY.rail.held('1'))).toBeInTheDocument();
   });
 
-  it('names the cycle bar after the tier it belongs to', () => {
-    draw();
-
-    const minion = CURRENT.tiers.find((tier) => tier.id === 'minion')!;
-
-    expect(
-      screen.getByRole('progressbar', { name: CURRENT_COPY.rail.cycle(minion.name) }),
-    ).toBeInTheDocument();
-  });
-
   it('enables an affordable row without saying so in words', () => {
     state.resources.evil = new Decimal(5200);
 
@@ -208,14 +198,14 @@ describe('BuyRail', () => {
     draw();
 
     const minion = CURRENT.tiers.find((tier) => tier.id === 'minion')!;
-    const distance = CURRENT_COPY.milestone.next({
+    const label = CURRENT_COPY.milestone.bar({
       remaining: '24',
       plural: minion.plural,
       multiplier: '×2',
       threshold: '25',
     });
 
-    expect(screen.getByText(distance)).toBeInTheDocument();
+    expect(screen.getByRole('progressbar', { name: label })).toBeInTheDocument();
   });
 
   it('says so in its own words when a tier is past every milestone', () => {
@@ -223,7 +213,20 @@ describe('BuyRail', () => {
 
     draw();
 
-    expect(screen.getByText(new RegExp(CURRENT_COPY.milestone.done))).toBeInTheDocument();
+    const minion = CURRENT.tiers.find((tier) => tier.id === 'minion')!;
+
+    expect(
+      screen.getByRole('progressbar', { name: CURRENT_COPY.milestone.barDone(minion.plural) }),
+    ).toBeInTheDocument();
+  });
+
+  it('fills the bar with progress through the current milestone band', () => {
+    state.gens.minion.owned = new Decimal(30);
+    draw();
+
+    const bar = screen.getByRole('progressbar', { name: /more Minions for/ });
+
+    expect(bar).toHaveAttribute('aria-valuenow', '20');
   });
 
   it('fires the purchase callback with the tier and the chosen quantity', async () => {
@@ -271,13 +274,13 @@ describe('BuyRail', () => {
     expect(screen.getByText(CURRENT_COPY.rail.quantity)).toBeInTheDocument();
   });
 
-  it('sweeps the cycle between slices under normal motion', () => {
+  it('sweeps the milestone bar between slices under normal motion', () => {
     draw();
 
     expect(screen.getAllByRole('progressbar')[0]).toHaveAttribute('data-motion', 'full');
   });
 
-  it('jumps the cycle slice to slice under reduced motion', () => {
+  it('jumps the milestone bar slice to slice under reduced motion', () => {
     setReducedMotion(true);
 
     draw();
@@ -285,7 +288,7 @@ describe('BuyRail', () => {
     expect(screen.getAllByRole('progressbar')[0]).toHaveAttribute('data-motion', 'reduced');
   });
 
-  it('still shows the cycle under reduced motion', () => {
+  it('still shows the milestone bar under reduced motion', () => {
     setReducedMotion(true);
 
     draw();
@@ -309,12 +312,12 @@ describe('BuyRail', () => {
     expect(screen.queryByRole('button', { name: new RegExp(appoint) })).not.toBeInTheDocument();
   });
 
-  it('still says in a word that somebody holds a tier', () => {
+  it('does not flag a tier as appointed on its row', () => {
+    state.gens.minion.owned = new Decimal(30);
     state.overseers.minion = ['minion-hand'];
-
     draw();
 
-    expect(screen.getByText(CURRENT_COPY.overseer.filled)).toBeInTheDocument();
+    expect(screen.queryByText(CURRENT_COPY.overseer.filled)).toBeNull();
   });
 
   it('still lifts its own best purchase even while an appointment scores higher', () => {
@@ -353,16 +356,12 @@ describe('BuyRail', () => {
     expect(screen.queryByText(/bought/)).not.toBeInTheDocument();
   });
 
-  it("bounds a quickened row's meter by its halved cycle, not the raw one", () => {
-    const minion = CURRENT.tiers.find((tier) => tier.id === 'minion')!;
-    state.overseers.minion = ['minion-goad'];
-    state.gens.minion.progressMs = 1900;
-
+  it('says which count the price follows when bred units outnumber bought ones', () => {
+    state.gens.minion.owned = new Decimal(30);
+    state.gens.minion.purchased = new Decimal(10);
     draw();
 
-    const meter = screen.getByRole('progressbar', { name: CURRENT_COPY.rail.cycle(minion.name) });
-
-    expect(meter).toHaveAttribute('aria-valuenow', '95');
+    expect(screen.getByText(CURRENT_COPY.rail.bought('10'))).toBeInTheDocument();
   });
 
   it("states a swollen row's doubled yield, not the raw one", () => {

@@ -101,12 +101,6 @@
   color: var(--ink-muted);
 }
 
-/* Somebody holds this post. A standing fact, said in one word — the offer to fill it
-   lives with the other posts, in the miscreants panel. */
-.rail__flag--overseen {
-  color: var(--ink-dim);
-}
-
 .rail__owned {
   margin-inline-start: auto;
   font-family: var(--font-numeric);
@@ -141,17 +135,13 @@
 }
 
 /* Held open at its full height whether or not there is anything to say, so the
-   price and the milestone line under it do not jump when the cascade crosses
-   the purchased count. */
+   price and the bar under it do not jump when the cascade crosses the
+   purchased count. */
 .rail__bought {
   margin: 0;
   min-block-size: var(--space-3);
   font-size: var(--text-xs);
   line-height: var(--space-3);
-  color: var(--ink-dim);
-}
-
-.rail__line--milestone {
   color: var(--ink-dim);
 }
 

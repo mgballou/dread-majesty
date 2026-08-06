@@ -4,9 +4,9 @@ import type { Content, Copy, MilestoneCopy, TierDef, TierId } from '@dm/content'
 import {
   effectiveCycleMs,
   effectiveYield,
-  isAppointed,
   milestoneProgress,
   type GameState,
+  type MilestoneProgress,
 } from '@dm/engine';
 import { TierArt } from '../art/TierArt.tsx';
 import { Banner } from '../Banner.tsx';
@@ -40,14 +40,14 @@ interface TierRowProps {
  * One generator, at secondary weight unless the plan lifted this row.
  *
  * Everything the buy decision needs is on the row: what it makes and how often, how
- * far the cycle has run, how far the next milestone is, and what this quantity costs.
- * Milestone distance is the reason the row is not just arithmetic (spec §5.3).
+ * far the next milestone is, and what this quantity costs. Milestone distance is the
+ * reason the row is not just arithmetic (spec §5.3).
  *
  * **Neither rousing nor appointing is here.** The verb that starts a manual tier sits
- * on that tier's node on the stage, on the thing it acts on (spec §6). Hiring somebody
- * so it never stops is a post, filled once and for ever, and it lives with the other
- * posts in the miscreants panel. What is left on the row is one word saying whether
- * anybody holds this one — the standing arrangement, and nothing to press.
+ * on that tier's node on the stage, on the thing it acts on (spec §6) — and that node
+ * already says whether a tier is running. Hiring somebody so it never stops is a post,
+ * filled once and for ever, and it lives with the other posts in the miscreants panel.
+ * The row carries the buy decision, and nothing else.
  */
 export function TierRow({
   tier,
@@ -61,6 +61,8 @@ export function TierRow({
 }: TierRowProps): ReactNode {
   const gen = state.gens[tier.id];
   const shortfall = purchase.cost.sub(state.resources[tier.costResource]);
+  const progress = milestoneProgress(state, content, tier.id);
+  const label = milestoneLabel({ progress, plural: tier.plural, copy: copy.milestone });
 
   return (
     <li className={`rail__slot rail__row rail__row--${emphasis}`} data-tier={tier.id}>
@@ -72,15 +74,12 @@ export function TierRow({
             {tier.plural}
           </Banner>
           {emphasis === 'saving' && <span className="rail__flag">{copy.rail.saving}</span>}
-          {isAppointed(state, content, tier.id) && (
-            <span className="rail__flag rail__flag--overseen">{copy.overseer.filled}</span>
-          )}
           <span className="rail__owned">{copy.rail.held(formatWhole(gen.owned))}</span>
         </div>
 
         {/* Always mounted, even with nothing to say. The cascade crosses the
             purchased count without warning, and a line that mounts on that
-            crossing would move the price and the milestone line under it. */}
+            crossing would move the price and the bar under it. */}
         <p className="rail__bought">
           {gen.purchased.lt(gen.owned) && copy.rail.bought(formatWhole(gen.purchased))}
         </p>
@@ -91,14 +90,11 @@ export function TierRow({
 
         <Meter
           className="rail__cycle"
-          label={copy.rail.cycle(tier.name)}
-          value={gen.progressMs}
-          max={effectiveCycleMs(state, tier)}
+          label={label}
+          title={label}
+          value={milestoneShare(progress)}
+          max={1}
         />
-
-        <p className="rail__line rail__line--milestone">
-          {milestoneLine(state, content, tier, copy.milestone)}
-        </p>
       </div>
 
       <div className="rail__buy">
@@ -176,21 +172,46 @@ function ProduceLine({ state, tier, content }: ProduceLineProps): ReactNode {
   );
 }
 
-function milestoneLine(
-  state: GameState,
-  content: Content,
-  tier: TierDef,
-  copy: MilestoneCopy,
-): string {
-  const { next, remaining, multiplier } = milestoneProgress(state, content, tier.id);
+/**
+ * How far through the current band, as a fraction.
+ *
+ * Both ends are `Decimal` and only the fraction is converted: owned counts run past
+ * `Number.MAX_SAFE_INTEGER` and the ratio never does. Past the last threshold there is
+ * no band left, and a full bar is the honest drawing of that.
+ */
+function milestoneShare(progress: MilestoneProgress): number {
+  const { next, previous, owned } = progress;
+  if (next === null) return 1;
+
+  const span = new Decimal(next).sub(previous);
+  if (span.lte(0)) return 1;
+
+  return Decimal.min(1, Decimal.max(0, owned.sub(previous).div(span))).toNumber();
+}
+
+/**
+ * What the bar is called, and the figures the printed line used to carry.
+ *
+ * The line came off the row: the bar says the same thing in less space, and a rail row
+ * carrying five lines of text was reading as a paragraph. Nothing is lost — this string
+ * reaches a pointer through `title` and a screen reader through `aria-label`.
+ */
+interface MilestoneLabelInput {
+  progress: MilestoneProgress;
+  plural: string;
+  copy: MilestoneCopy;
+}
+
+function milestoneLabel({ progress, plural, copy }: MilestoneLabelInput): string {
+  const { next, remaining, multiplier } = progress;
 
   if (next === null || remaining === null || multiplier === null) {
-    return `${copy.done} ${copy.noMore}`;
+    return copy.barDone(plural);
   }
 
-  return copy.next({
+  return copy.bar({
     remaining: formatWhole(remaining),
-    plural: tier.plural,
+    plural,
     multiplier: `×${formatNumber(new Decimal(multiplier))}`,
     threshold: formatWhole(new Decimal(next)),
   });
