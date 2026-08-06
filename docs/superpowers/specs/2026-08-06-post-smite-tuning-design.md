@@ -240,8 +240,11 @@ The Fortress and Throne rows are deliberately beyond a first run. They already w
 
 ### 5.1 The Apathy arc
 
-`ApathyTicks` becomes an arc: **`CYCLE_SEGMENTS` segments curved around the Evil
-medallion**, drawn as a custom SVG, replacing the row of spans beneath the strike control.
+`ApathyTicks` becomes **`ApathyArc`**: `CYCLE_SEGMENTS` segments curved around the Evil
+medallion, drawn as a custom SVG, replacing the row of spans beneath the strike control.
+The rename is not cosmetic — the naming rule is that a component is named for what it
+shows, and a file called `Ticks` drawing an arc is the kind of drift nobody fixes later.
+Its test file and stylesheet move with it.
 
 Two things this must not become. It must not go **inside the tap target** — the strike
 control is the stage's one accented thing and already carries a live number, and on a
@@ -278,8 +281,15 @@ stops the panel shoving the page down once a session.
 **The panel announces itself when souls are first owed.** This is the real fix. The
 reported failure was at a point well past the reveal threshold, with the panel already
 rendering: it sits below a deck with a tall floor height, which on a phone is a long
-scroll past the fold. A panel nobody scrolls to is not on screen. The announcement is a
-one-time, dismissible marker at the point souls first become claimable.
+scroll past the fold. A panel nobody scrolls to is not on screen.
+
+The marker shows exactly while **`prestigeGain(state, content) > 0` and
+`state.stats.prestiges === 0`**. That condition is derived wholly from state the game
+already holds, which matters more than it looks: the obvious alternative is a
+"dismissed" flag, and a flag has to be persisted or it comes back on every reload, and
+persisting it means a save migration for a piece of interface chrome. Deriving it costs
+nothing and cannot desynchronise. It also scopes the fix to the player who actually has
+the problem — after a first reset, nobody needs telling where the button is.
 
 The announcement is **not the accent**. The stage and the open deck panel each already
 carry one, and §3 of the interface rules gives a region one.
