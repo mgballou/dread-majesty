@@ -1,14 +1,19 @@
 /*
  * The deck of panels. See Deck.tsx and ui-sensibility §6, §9.
  *
- * Two component tokens, and each earns its place: the chevron point is read by the clip
- * shape, by the overlap that seats one segment into the next, and by the padding that
- * keeps a title off the tip; and the body needs a height no run of content can be
- * trusted to hold on its own.
+ * Three component tokens, and each earns its place: the chevron point is read by the
+ * clip shape, by the overlap that seats one segment into the next, and by the padding
+ * that keeps a title off the tip; the body needs a height no run of content can be
+ * trusted to hold on its own; and the mark is a disc, so one measure sets both its
+ * sides.
  */
 
 .deck {
   --deck-point: var(--space-4);
+
+  /* A disc, so the same measure sets both sides. Small enough to read as a mark rather
+     than a control. */
+  --deck-mark: 5px;
 
   /*
    * The height of the open panel. Fixed, not a floor.
@@ -185,8 +190,6 @@
  * of getting somewhere rather than a thing to do. See Deck.tsx.
  */
 .deck__mark {
-  --deck-mark: 5px;
-
   inline-size: var(--deck-mark);
   block-size: var(--deck-mark);
   border-radius: 50%;
