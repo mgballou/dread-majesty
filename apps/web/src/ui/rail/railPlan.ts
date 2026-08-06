@@ -35,7 +35,7 @@ import type { BuyQuantity } from './quantity.ts';
  * wins, and any value is a statement about how long the player intends to keep playing.
  *
  * **Two hours: the length of a run, not the length of a sitting.** The first reset worth
- * taking lands near 1h 47m.
+ * taking — the 40 to 50 souls the design spec §5.3 asks for — lands near 2h 10m.
  *
  * This was 600 for most of the project's life, on a payback-period argument that had
  * already been retracted as unmeasured. It has now been measured, and 600 was wrong.
@@ -219,7 +219,7 @@ export function spendEmphasis(
  * that tier's *whole* contribution over the horizon, not a marginal slice of it —
  * the same sum as a purchase with every owned unit counted as newly arrived. That
  * puts the two on one axis, which is the point: the harness has the Minion Overseer
- * affordable at 9m 57s and the first Warren at 10m 53s, and for that under a minute
+ * affordable at 10m 01s and the first Warren at 10m 57s, and for that under a minute
  * the appointment really is the best thing to spend on. A rail that could not lift it
  * would be lifting the wrong thing, and §3 gives it only one chance to be right.
  *
@@ -246,7 +246,8 @@ export function spendEmphasis(
  *   happens for certain while the tab is shut (§5.6).
  * - *It ignores the cycle an unappointed tier is already running.* That cycle pays
  *   out whether or not anybody is hired, so the appointment is credited with a
- *   little it did not earn. One cycle against a ten-minute horizon.
+ *   little it did not earn. One cycle against a two-hour horizon, so the credit is
+ *   small — and a twelfth of what it was when the horizon ran ten minutes.
  * - *A quicken or a swell over a tier nobody automates is scored as though the tier
  *   ran anyway.* The same blind spot as the automator's own, applied to the other two
  *   posts: an idle tier produces nothing to speed up or fatten, so the difference the
