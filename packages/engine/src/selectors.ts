@@ -1,5 +1,5 @@
 import Decimal from 'break_eternity.js';
-import type { Content, OverseerId, ProducibleId, TierId } from '@dm/content';
+import type { Content, MilestoneDef, OverseerId, ProducibleId, TierId } from '@dm/content';
 import { nextCost } from './cost.ts';
 import { effectiveCycleMs, effectiveYield, findOverseer, hasAutomator, hasPost } from './roster.ts';
 import { smiteDurationMs } from './smite.ts';
@@ -203,22 +203,43 @@ export function canAppoint(state: GameState, content: Content, overseerId: Overs
 export interface MilestoneProgress {
   /** Owned count the next threshold sits at, or null once every one is passed. */
   next: number | null;
+  /**
+   * The threshold last passed, or 0 before the first.
+   *
+   * A bar drawn from zero reads half full the instant a band opens, because the tail
+   * thresholds double — `owned / next` is 0.5 at the start of every band past the
+   * first. Progress within the band is the honest figure, and this is its floor.
+   */
+  previous: number;
   /** What passing it is worth. Null alongside `next`. */
   multiplier: number | null;
   owned: Decimal;
   remaining: Decimal | null;
 }
 
-/** Drives the "12 more for ×2" line every rail row needs. */
+/** Drives the milestone bar every rail row needs. */
 export function milestoneProgress(
   state: GameState,
   content: Content,
   tierId: TierId,
 ): MilestoneProgress {
   const owned = state.gens[tierId].owned;
-  const next = content.milestones.find((milestone) => owned.lt(milestone.at)) ?? null;
+
+  // One walk for both ends of the band. The list is ascending, so the first threshold
+  // the count has not reached is the next one, and whatever we walked past is the floor.
+  let previous = 0;
+  let next: MilestoneDef | null = null;
+  for (const milestone of content.milestones) {
+    if (owned.lt(milestone.at)) {
+      next = milestone;
+      break;
+    }
+    previous = milestone.at;
+  }
+
   return {
     next: next?.at ?? null,
+    previous,
     multiplier: next?.multiplier ?? null,
     owned,
     remaining: next === null ? null : new Decimal(next.at).sub(owned),
