@@ -250,6 +250,23 @@ describe('the reset copy', () => {
   it('names both in the confirmation', () => {
     expect(v1Copy.prestige.confirmBody('14')).toContain('stay');
   });
+
+  it('names the Overseers among what a reset takes', () => {
+    expect(v1Copy.prestige.clears).toMatch(/Overseer/i);
+  });
+
+  it('names the smite ranks among what a reset takes', () => {
+    expect(v1Copy.prestige.clears).toMatch(/rank/i);
+  });
+
+  it('does not claim a reset keeps everything you have unlocked', () => {
+    expect(v1Copy.prestige.keeps).not.toMatch(/everything you have unlocked/i);
+    expect(v1Copy.prestige.confirmBody('40')).not.toMatch(/everything you have unlocked/i);
+  });
+
+  it('says the kept ranks are the ones souls paid for', () => {
+    expect(v1Copy.prestige.keeps).toMatch(/soul/i);
+  });
 });
 
 describe('the malice panel copy', () => {
