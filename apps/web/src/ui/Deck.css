@@ -173,9 +173,24 @@
   transition: color var(--duration-fast) ease-out;
 }
 
-.deck__mark {
+.deck__shape {
   inline-size: 100%;
   block-size: 100%;
+}
+
+/*
+ * A shut panel holding something affordable.
+ *
+ * Neutral-bright, never `--accent`: the accent means *press this*, and a tab is a way
+ * of getting somewhere rather than a thing to do. See Deck.tsx.
+ */
+.deck__mark {
+  --deck-mark: 5px;
+
+  inline-size: var(--deck-mark);
+  block-size: var(--deck-mark);
+  border-radius: 50%;
+  background: var(--ink-muted);
 }
 
 .deck__tab:hover .deck__glyph {

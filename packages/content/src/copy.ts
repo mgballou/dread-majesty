@@ -269,6 +269,8 @@ export interface RailCopy {
    * for anyone reading by ear.
    */
   readonly lifted: string;
+  /** Added to a shut tab's spoken name when that panel holds something affordable. */
+  readonly waiting: string;
 }
 
 /**
