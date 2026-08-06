@@ -35,7 +35,8 @@ import type { BuyQuantity } from './quantity.ts';
  * wins, and any value is a statement about how long the player intends to keep playing.
  *
  * **Two hours: the length of a run, not the length of a sitting.** The first reset worth
- * taking — the 40 to 50 souls the design spec §5.3 asks for — lands near 2h 10m.
+ * taking — the 40 to 50 souls the 2026-08-04 economy-retune spec §5.3 asks for — lands
+ * near 2h 10m.
  *
  * This was 600 for most of the project's life, on a payback-period argument that had
  * already been retracted as unmeasured. It has now been measured, and 600 was wrong.
@@ -211,7 +212,7 @@ export function spendEmphasis(
  * Milestone crossings fall out for free: the marginal rate is measured as the tier's
  * whole output after the purchase minus its whole output before, so the buy that
  * lands on 25 units and doubles the tier scores as the doubling it is. Milestone
- * distance is on every row for exactly this reason (spec §5.3) — the rail is
+ * distance is on every row for exactly this reason (design spec §5.3) — the rail is
  * arithmetic without it.
  *
  * **An appointment is scored on the same measure.** A tier nobody oversees stops
