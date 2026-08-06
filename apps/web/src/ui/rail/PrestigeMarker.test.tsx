@@ -8,7 +8,7 @@ describe('PrestigeMarker', () => {
   it('says souls are owed', () => {
     render(<PrestigeMarker copy={CURRENT_COPY.prestige} onReveal={() => {}} />);
 
-    expect(screen.getByText('Souls are owed to you.')).toBeInTheDocument();
+    expect(screen.getByText('The realm owes you souls.')).toBeInTheDocument();
   });
 
   it('leads to the panel when pressed', async () => {
