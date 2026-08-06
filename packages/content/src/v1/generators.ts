@@ -119,12 +119,12 @@ const TAIL_MILESTONES: readonly MilestoneDef[] = (() => {
  * Two levers reach that count and both were needed.
  *
  * *The retiring tier's own curve, flattened, so the purse keeps up.* The Minion falls
- * 1.07→1.012 with its base raised 50→80. They go opposite ways on purpose: the base is
+ * 1.07→1.012 with its base raised 50→160. They go opposite ways on purpose: the base is
  * what gates the opening — the first Minion is still bought by hand at about two
  * minutes — while the rate is what decides how long the row stays worth pressing. At
  * 1.07 a Minion doubled in price every ten purchases and the ×2 rungs could not keep
  * pace, so the purse collapsed and two Warrens outran it. At 1.012 the Minion is still
- * a live purchase at forty-two Warrens.
+ * a live purchase at forty-one Warrens.
  *
  * *What one unit of the producer hands over, cut, so the count at the crossing rises.*
  * A Dark Legion takes one Warren's worth of ground every ten minutes rather than four
@@ -143,11 +143,13 @@ const TAIL_MILESTONES: readonly MilestoneDef[] = (() => {
  * row without moving a single number anywhere else in this file.
  *
  * What holds the throughput back up differs by tier, and the Dark Legion is the odd one
- * out. The Fortress and the Throne got it back from their base costs, 6e9→3e8 and
- * 5e12→8e11. The Dark Legion's base did not move at all — its curve did, 1.5→1.1, which
- * is what buys the units the cut yield gave away. And the chain did slow a little either
- * way: the first Dark Legion 33m 53s→39m 35s, the first Fortress 1h 08m→1h 14m. Both
- * still land inside their bands, which is the whole of what §5.2 asks.
+ * out. The Fortress and the Throne got it back from their base costs, cut from 6e9 to
+ * 6e8 and from 5e12 to 1.6e12. The Dark Legion's base was never cut — it only doubled,
+ * 3e7→6e7, with every other price in the file when the Evil scale did. What buys back
+ * the units its cut yield gave away is its curve, 1.5→1.1. And the chain did slow a
+ * little either way: the first Dark Legion now lands at 40m 35s and the first Fortress
+ * at 1h 22m 53s. Both still land inside their bands, which is the whole of what §5.2
+ * asks.
  *
  * *Cost curves above the Warren, flattened for the same reason from the other side.*
  * Dark Legion 1.5→1.1, Fortress 1.8→1.3, Throne 2.2→1.3. A tier whose price rockets
@@ -155,31 +157,31 @@ const TAIL_MILESTONES: readonly MilestoneDef[] = (() => {
  * boosted by a post — and a post priced off the next tier up lands long after the tier
  * below it has died. Flattening the curve is what puts the rung within reach at all.
  *
- * *Base costs, refitted to hold the five times.* Warren 1000→1500, Fortress 6e9→3e8,
- * Throne 5e12→8e11; the Dark Legion keeps 3e7. Twelve of the fifteen Overseer prices
- * moved with them. The Warren's three did not, and could not: they are priced off the
- * Dark Legion's base, which is the one base that stayed put. All fifteen still follow
- * one rule, in two equal forms: the automator sits at 0.4× the next tier's base cost,
- * and `goad` and `glut` sit at 8× and 80× of it — the same 0.4× run through the
- * ×20/×200-of-automator rule above, since 20 × 0.4 = 8 and 200 × 0.4 = 80. The Throne's
- * three extrapolate that ratio, having no tier above to price against.
+ * *Base costs, refitted to hold the five times.* Warren 1000→3000, Fortress 6e9→6e8,
+ * Throne 5e12→1.6e12, Dark Legion 3e7→6e7. All fifteen Overseer prices moved with them,
+ * because all fifteen follow one rule, in two equal forms: the automator sits at 0.4×
+ * the next tier's base cost, and `goad` and `glut` sit at 8× and 80× of it — the same
+ * 0.4× run through the ×20/×200-of-automator rule above, since 20 × 0.4 = 8 and
+ * 200 × 0.4 = 80. The Throne's three extrapolate that ratio, having no tier above to
+ * price against.
  *
- * *Souls.* `scale` stays at 5.7e13 and `k` at 150. The two are one lever, not two:
- * souls come out as `k·√(lifetime/scale)`, which is `√(lifetime / (scale/k²))`, so only
- * the ratio has any effect. The first soul lands at 41m and the 40–50 §5.3 asks for at
- * about 1h 47m, which is the first reset actually worth taking. `perSoul` stays 0.02.
+ * *Souls.* `scale` is 1.14e14 and `k` 150. The two are one lever, not two: souls come
+ * out as `k·√(lifetime/scale)`, which is `√(lifetime / (scale/k²))`, so only the ratio
+ * has any effect. The first soul lands at 41m 51s and the 40–50 §5.3 asks for at about
+ * 2h 10m, which is the first reset actually worth taking. `perSoul` stays 0.02.
  *
- * The Minion tier keeps its **rate** — 2.5 Evil every 4s, 0.625 a second — because that
- * opening pace reads well and it is the one figure the original design docs got right.
- * Only what a Minion costs moved.
+ * The Minion tier keeps its **opening pace** — 5 Evil every 4s, 1.25 a second. The yield
+ * doubled with the rest of the Evil scale, so what a Minion is worth against everything
+ * else has not moved, and that pace is the one figure the original design docs got
+ * right. Only what a Minion costs was tuned.
  *
  * **Known rough edge.** §4 of the retune spec now measures the cliff in decades an hour
  * rather than in raw jumps between checkpoints, because the checkpoints run from fifteen
  * minutes to four days apart and a raw jump mostly reports the spacing. On Evil per
  * second this build clears it: the steepest stretch after the opening quarter hour is
- * 15m→30m at 4.04 decades an hour against a target of 5, and the 4h→8h stretch that
- * reads as 6.3e4 raw is the fifth calmest hour of the run at 1.20. On lifetime Evil it
- * does not: the same stretch measures 7.59. The rule costs some of that directly — flat
+ * 15m→30m at 4.7 decades an hour against a target of 5, and the 4h→8h stretch that
+ * reads as 1.6e5 raw is among the calmest of the run at 1.3. On lifetime Evil it does
+ * not: the same 15m→30m stretch measures 8.8. The rule costs some of that directly — flat
  * cost curves mean counts climb where prices used to, and counts are what the milestone
  * ladder pays on. The lever left is still the tail rung above, and it is still a design
  * call rather than a balance one: a rung worth 5% reads as nothing on a rail row that
@@ -364,7 +366,7 @@ export const v1: Content = {
 
   prestige: {
     k: 150,
-    // First soul lands at 45m (lifetime = scale / k^2 = 2.53e9).
+    // First soul lands at 41m 51s (lifetime = scale / k² = 5.07e9).
     scale: '1.14e14',
     perSoul: 0.02,
   },
