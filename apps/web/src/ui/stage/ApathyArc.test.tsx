@@ -1,11 +1,18 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
+import { setReducedMotion } from '../../../test/setup.ts';
 import { CYCLE_SEGMENTS } from '../segments.ts';
 import { ApathyArc } from './ApathyArc.tsx';
 
 describe('ApathyArc', () => {
   it('draws one segment per cycle segment', () => {
     const { container } = render(<ApathyArc apathy={0} cap={3} />);
+
+    expect(container.querySelectorAll('.apathy__segment')).toHaveLength(CYCLE_SEGMENTS);
+  });
+
+  it('draws the same segments however high the cap is raised', () => {
+    const { container } = render(<ApathyArc apathy={0} cap={12} />);
 
     expect(container.querySelectorAll('.apathy__segment')).toHaveLength(CYCLE_SEGMENTS);
   });
@@ -68,5 +75,13 @@ describe('ApathyArc', () => {
     const { container } = render(<ApathyArc apathy={3} cap={5} />);
 
     expect(container.querySelectorAll('.apathy__segment--lit')).toHaveLength(3);
+  });
+
+  it('draws the same segments under reduced motion as under full', () => {
+    const full = render(<ApathyArc apathy={2} cap={3} />).container.innerHTML;
+    setReducedMotion(true);
+    const reduced = render(<ApathyArc apathy={2} cap={3} />).container.innerHTML;
+
+    expect(reduced).toBe(full);
   });
 });
