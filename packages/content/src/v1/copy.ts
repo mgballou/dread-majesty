@@ -246,9 +246,10 @@ export const v1Copy = {
     held: 'Souls held',
     favour: (share: string): string => `Their favour, at ${share} each`,
     reckoning: 'A reckoning now would owe',
-    clears: 'Your Evil, everything you have built, and every milestone.',
+    clears:
+      'Your Evil, everything you have built, every Overseer, every milestone, and every rank you did not buy with souls.',
     clearsTitle: 'Taken from you',
-    keeps: 'Your souls, your deeds, and everything you have unlocked.',
+    keeps: 'Your souls, your deeds, the tiers you have seen, and the ranks you bought with souls.',
     keepsTitle: 'Left to you',
     available: 'The souls are yours whenever you are done. There is no undoing it.',
     unavailable: 'You have not done enough to be owed a soul.',
@@ -259,7 +260,7 @@ export const v1Copy = {
     nextSoulUnknown: 'Beyond reckoning',
     confirmTitle: 'Claim and begin again?',
     confirmBody: (souls: string): string =>
-      `You take ${souls} Damned Souls and start from nothing. Your souls, your deeds and everything you have unlocked stay. Your Evil, every Throne, Fortress, Legion, Warren and Minion, and every milestone go.`,
+      `You take ${souls} Damned Souls and start from nothing. Your souls, your deeds, the tiers you have seen, and the ranks you bought with souls stay. Your Evil, every Throne, Fortress, Legion, Warren and Minion, every Overseer, every milestone, and every rank you did not buy with souls go.`,
     confirmAction: 'Claim and begin again',
     cancel: 'Not yet',
     claimed: (souls: string): string => `${souls} Damned Souls. The realm starts again.`,
