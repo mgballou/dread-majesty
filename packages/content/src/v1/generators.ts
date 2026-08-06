@@ -77,19 +77,20 @@ const TAIL_MILESTONES: readonly MilestoneDef[] = (() => {
  * When each Overseer first comes within reach, under the harness's policy — which is
  * what the costs below are priced against:
  *
- *   Taskmaster      9m 57s    Quartermaster   1h 01m    Steward       3h 14m
- *   Keeper of Whip 11m 05s    Marshal         1h 20m    Long Hour     3h 33m
- *   Reckoner       11m 51s    Herald          1h 31m    Chancellor    3h 58m
- *   Warden         17m 55s    Castellan       1h 56m
- *   Mistress       47m 17s    Scaffold        2h 07m
- *   Broodkeeper    1h 07m     Quarry          2h 21m
+ *   Taskmaster     10m 01s    Quartermaster   1h 04m    Steward       3h 55m
+ *   Keeper of Whip 12m 37s    Marshal         1h 49m    Long Hour     4h 40m
+ *   Reckoner       13m 49s    Herald          2h 04m    Chancellor    5h 21m
+ *   Warden         19m 07s    Castellan       2h 21m
+ *   Mistress       1h 19m     Scaffold        2h 51m
+ *   Broodkeeper    1h 49m     Quarry          3h 22m
  *
  * Each tier's automator still comes within reach before the tier above does, which is
  * the trade §5.6 wants the player weighing, and it falls out of pricing every automator
- * at 0.4× the next tier's base cost. `goad` and `glut` then sit at ×4 and ×16 of their
- * tier's automator. The gap is wider than it was at the Warren — the Warden lands 17m
- * against a first Legion at 39m — because the Legion's flattened curve buys its opening
- * unit dear and the rest cheap; see below for why that curve had to flatten.
+ * at 0.4× the next tier's base cost. `goad` and `glut` then sit at ×20 and ×200 of their
+ * tier's automator — the old ratios put every post inside the first hour, where income
+ * had already outrun them. The gap is wider than it was at the Warren — the Warden
+ * lands 19m against a first Legion at 40m — because the Legion's flattened curve buys
+ * its opening unit dear and the rest cheap; see below for why that curve had to flatten.
  *
  * **What the obsolescence rule costs, and why it reshaped the file.**
  *
@@ -193,13 +194,13 @@ export const v1: Content = {
         {
           id: 'throne-goad',
           name: 'Keeper of the Long Hour',
-          cost: '6.4e15',
+          cost: '3.2e16',
           effect: { kind: 'quicken', factor: 2 },
         },
         {
           id: 'throne-glut',
           name: 'Chancellor of Titles',
-          cost: '2.56e16',
+          cost: '3.2e17',
           effect: { kind: 'swell', factor: 2 },
         },
       ],
@@ -225,13 +226,13 @@ export const v1: Content = {
         {
           id: 'fortress-goad',
           name: 'Overseer of the Scaffold',
-          cost: '2.56e12',
+          cost: '1.28e13',
           effect: { kind: 'quicken', factor: 2 },
         },
         {
           id: 'fortress-glut',
           name: 'Master of the Quarry',
-          cost: '1.024e13',
+          cost: '1.28e14',
           effect: { kind: 'swell', factor: 2 },
         },
       ],
@@ -257,13 +258,13 @@ export const v1: Content = {
         {
           id: 'legion-goad',
           name: 'Marshal of the Forced March',
-          cost: '9.6e8',
+          cost: '4.8e9',
           effect: { kind: 'quicken', factor: 2 },
         },
         {
           id: 'legion-glut',
           name: 'Herald of the Levy',
-          cost: '3.84e9',
+          cost: '4.8e10',
           effect: { kind: 'swell', factor: 2 },
         },
       ],
@@ -289,13 +290,13 @@ export const v1: Content = {
         {
           id: 'warren-goad',
           name: 'Mistress of the Quickening',
-          cost: '9.6e7',
+          cost: '4.8e8',
           effect: { kind: 'quicken', factor: 2 },
         },
         {
           id: 'warren-glut',
           name: 'Broodkeeper',
-          cost: '3.84e8',
+          cost: '4.8e9',
           effect: { kind: 'swell', factor: 2 },
         },
       ],
@@ -321,13 +322,13 @@ export const v1: Content = {
         {
           id: 'minion-goad',
           name: 'Keeper of the Whip',
-          cost: '4800',
+          cost: '24000',
           effect: { kind: 'quicken', factor: 2 },
         },
         {
           id: 'minion-glut',
           name: 'Reckoner of the Tally',
-          cost: '19200',
+          cost: '240000',
           effect: { kind: 'swell', factor: 2 },
         },
       ],
@@ -364,6 +365,13 @@ export const v1: Content = {
     climbGrowth: 3,
     // Reach first: it is the cheapest, and uptime is the effect a player feels before
     // they have worked out what Apathy is doing.
+    //
+    // Rung prices climb ×200, not the ×12 they shipped at. Lifetime Evil spans ×3.9
+    // million between fifteen minutes and two hours, and four rungs at ×12 span ×1,728
+    // — so the ladder covered a five-hundredth of the run it lives in, and the whole
+    // tree cost thirty-two seconds of income. The slope is what fixes that; raising
+    // every price by a constant only moves which slice it covers. See the 2026-08-06
+    // post-smite-tuning spec §4.1 for the measured curve.
     upgrades: [
       {
         id: 'reach',
@@ -371,10 +379,10 @@ export const v1: Content = {
         base: 15 * SECOND,
         unit: 'seconds',
         rungs: [
-          { evil: '5000', souls: '8', value: 17 * SECOND },
-          { evil: '60000', souls: '20', value: 19 * SECOND },
-          { evil: '7.2e5', souls: '50', value: 21 * SECOND },
-          { evil: '8.6e6', souls: '120', value: 23 * SECOND },
+          { evil: '3e6', souls: '8', value: 17 * SECOND },
+          { evil: '6e8', souls: '20', value: 19 * SECOND },
+          { evil: '1.2e11', souls: '50', value: 21 * SECOND },
+          { evil: '2.4e13', souls: '120', value: 23 * SECOND },
         ],
       },
       {
@@ -383,10 +391,10 @@ export const v1: Content = {
         base: 2,
         unit: 'multiplier',
         rungs: [
-          { evil: '10000', souls: '8', value: 2.25 },
-          { evil: '1.2e5', souls: '20', value: 2.5 },
-          { evil: '1.44e6', souls: '50', value: 2.75 },
-          { evil: '1.72e7', souls: '120', value: 3 },
+          { evil: '6e6', souls: '8', value: 2.25 },
+          { evil: '1.2e9', souls: '20', value: 2.5 },
+          { evil: '2.4e11', souls: '50', value: 2.75 },
+          { evil: '4.8e13', souls: '120', value: 3 },
         ],
       },
       {
@@ -395,10 +403,10 @@ export const v1: Content = {
         base: 45 * SECOND,
         unit: 'seconds',
         rungs: [
-          { evil: '20000', souls: '8', value: 40 * SECOND },
-          { evil: '2.4e5', souls: '20', value: 36 * SECOND },
-          { evil: '2.88e6', souls: '50', value: 32 * SECOND },
-          { evil: '3.46e7', souls: '120', value: 30 * SECOND },
+          { evil: '1.2e7', souls: '8', value: 40 * SECOND },
+          { evil: '2.4e9', souls: '20', value: 36 * SECOND },
+          { evil: '4.8e11', souls: '50', value: 32 * SECOND },
+          { evil: '9.6e13', souls: '120', value: 30 * SECOND },
         ],
       },
       {
@@ -407,10 +415,10 @@ export const v1: Content = {
         base: 0.25,
         unit: 'amount',
         rungs: [
-          { evil: '30000', souls: '8', value: 0.225 },
-          { evil: '3.6e5', souls: '20', value: 0.2 },
-          { evil: '4.32e6', souls: '50', value: 0.175 },
-          { evil: '5.2e7', souls: '120', value: 0.15 },
+          { evil: '1.8e7', souls: '8', value: 0.225 },
+          { evil: '3.6e9', souls: '20', value: 0.2 },
+          { evil: '7.2e11', souls: '50', value: 0.175 },
+          { evil: '1.44e14', souls: '120', value: 0.15 },
         ],
       },
     ],
