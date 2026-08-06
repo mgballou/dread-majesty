@@ -10,7 +10,7 @@ let state: GameState;
 
 beforeEach(() => {
   state = createState(CURRENT);
-  state.resources.evil = new Decimal(5200);
+  state.resources.evil = new Decimal(50000);
 });
 
 const input = (): Parameters<typeof useRailPlan>[0] => ({
@@ -21,13 +21,13 @@ const input = (): Parameters<typeof useRailPlan>[0] => ({
 });
 
 function dearWarrens(): void {
-  state.gens.warren.owned = new Decimal(3);
-  state.gens.warren.purchased = new Decimal(3);
+  state.gens.warren.owned = new Decimal(13);
+  state.gens.warren.purchased = new Decimal(13);
 }
 
 function nearTie(): void {
-  state.gens.warren.owned = new Decimal(1);
-  state.gens.warren.purchased = new Decimal(1);
+  state.gens.warren.owned = new Decimal(12);
+  state.gens.warren.purchased = new Decimal(12);
 }
 
 describe('the plan remembers what it lifted', () => {
@@ -58,7 +58,7 @@ describe('the plan remembers what it lifted', () => {
     state.resources.evil = new Decimal(0);
     rerender({ v: 2 });
     nearTie();
-    state.resources.evil = new Decimal(5200);
+    state.resources.evil = new Decimal(50000);
     rerender({ v: 3 });
     expect(result.current.best.purchase?.tierId).toBe('minion');
   });
