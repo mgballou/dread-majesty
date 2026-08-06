@@ -167,7 +167,7 @@ export const v1Copy = {
   smite: {
     action: 'Smite',
     hint: 'Do it yourself. It is not beneath you.',
-    spoken: (amount) => `Smite. You hold ${amount} Evil.`,
+    spoken: (amount, band) => `Smite. You hold ${amount} Evil. ${band}`,
     cooling: 'Soon',
     ready: 'Enact your will',
     reigning: 'All shall kneel',
