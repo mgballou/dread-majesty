@@ -27,7 +27,7 @@ function pairWithMark(markIndex: 0 | 1 | null): DeckTab[] {
     id: index === 0 ? 'one' : 'two',
     title: index === 0 ? 'One' : 'Two',
     panel: <p>{index === 0 ? 'one' : 'two'}</p>,
-    ...(index === markIndex ? { marked: true, markedLabel: 'something to spend on' } : {}),
+    ...(index === markIndex ? { mark: { label: 'something to spend on' } } : {}),
   }));
 }
 

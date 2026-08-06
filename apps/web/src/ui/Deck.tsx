@@ -11,18 +11,16 @@ export interface DeckTab {
   /** Count or state, set to the trailing edge. */
   trailing?: ReactNode;
   /**
-   * Whether this panel holds something the player can afford right now.
+   * Set when this panel holds something the player can afford right now.
    *
    * Drawn as a dot on the tab, and **never as the accent.** The accent is spent on
    * doing, never on going, and a tab is navigation — so the dot says "something here"
    * without claiming to be the thing worth pressing.
+   *
+   * One object rather than two optionals, so a mark without its spoken label cannot be
+   * written. A dot hidden from assistive tech is a signal only sighted players get.
    */
-  marked?: boolean;
-  /**
-   * Said on a marked tab's spoken name. Required in spirit whenever `marked` is set —
-   * a dot hidden from assistive tech is a signal only sighted players get.
-   */
-  markedLabel?: string;
+  mark?: { readonly label: string };
   panel: ReactNode;
 }
 
@@ -79,39 +77,45 @@ export function Deck({ tabs }: DeckProps): ReactNode {
   return (
     <section className="deck">
       <div className="deck__strip" role="tablist" ref={strip} onKeyDown={onKeyDown}>
-        {tabs.map((tab, index) => (
-          <button
-            key={tab.id}
-            type="button"
-            role="tab"
-            id={tabId(base, tab.id)}
-            className="deck__tab"
-            aria-selected={index === open}
-            aria-controls={panelId(base, tab.id)}
-            tabIndex={index === open ? 0 : -1}
-            onClick={() => setChosen(index)}
-          >
-            <span className="deck__edge">
-              <span className="deck__field">
-                {tab.glyph !== undefined && (
-                  <span className="deck__glyph" aria-hidden="true">
-                    <DeckGlyph kind={tab.glyph} />
+        {tabs.map((tab, index) => {
+          const mark = shownMark(tab, index === open);
+
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              role="tab"
+              id={tabId(base, tab.id)}
+              className="deck__tab"
+              aria-selected={index === open}
+              aria-controls={panelId(base, tab.id)}
+              tabIndex={index === open ? 0 : -1}
+              onClick={() => setChosen(index)}
+            >
+              <span className="deck__edge">
+                <span className="deck__field">
+                  {tab.glyph !== undefined && (
+                    <span className="deck__glyph" aria-hidden="true">
+                      <DeckGlyph kind={tab.glyph} />
+                    </span>
+                  )}
+                  {mark !== null && <span className="deck__mark" aria-hidden="true" />}
+                  {/* Every tab is named to assistive technology and none of them is
+                      named on screen. The tube carries icons; the name of the open one
+                      sits on its own line beneath it.
+
+                      A dash rather than a full stop, because the label is a phrase and
+                      a full stop in front of one reads out as a sentence that starts
+                      in lower case. */}
+                  <span className="deck__name">
+                    {tab.title}
+                    {mark === null ? '' : ` — ${mark.label}`}
                   </span>
-                )}
-                {marked(tab, index === open) && <span className="deck__mark" aria-hidden="true" />}
-                {/* Every tab is named to assistive technology and none of them is
-                    named on screen. The tube carries icons; the name of the open one
-                    sits on its own line beneath it. */}
-                <span className="deck__name">
-                  {tab.title}
-                  {marked(tab, index === open) && tab.markedLabel !== undefined
-                    ? `. ${tab.markedLabel}`
-                    : ''}
                 </span>
               </span>
-            </span>
-          </button>
-        ))}
+            </button>
+          );
+        })}
       </div>
 
       {/*
@@ -151,13 +155,13 @@ export function Deck({ tabs }: DeckProps): ReactNode {
 }
 
 /**
- * Whether this tab should wear the dot.
+ * The mark this tab should wear, or null for none.
  *
  * Never the open one. Its panel is on screen, so the dot would be saying what the
  * player is already looking at.
  */
-function marked(tab: DeckTab, isOpen: boolean): boolean {
-  return tab.marked === true && !isOpen;
+function shownMark(tab: DeckTab, isOpen: boolean): { readonly label: string } | null {
+  return tab.mark !== undefined && !isOpen ? tab.mark : null;
 }
 
 function tabId(base: string, id: string): string {
