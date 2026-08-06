@@ -76,7 +76,7 @@ before shipping a content change.
 
 7200 rather than 4800 because it is the one with a reason a comment can carry: **judge a
 purchase over the length of a run, not the length of a sitting.** First prestige worth
-taking lands near 1h47m.
+taking lands near 2h 10m — the horizon now matches the length of a run almost exactly.
 
 The existing comment on the constant already retracts its ten-minute justification as
 unmeasured and says the number "stands only because nothing has shown it wrong". Something
