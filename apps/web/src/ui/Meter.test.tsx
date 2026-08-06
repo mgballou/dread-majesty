@@ -115,9 +115,9 @@ describe('Meter', () => {
   });
 
   it('carries a layout class from the caller alongside its own', () => {
-    render(<Meter label="Minion cycle" value={0} max={24_000} className="rail__cycle" />);
+    render(<Meter label="Minion cycle" value={0} max={24_000} className="rail__milestone" />);
 
-    expect(screen.getByRole('progressbar')).toHaveClass('rail__cycle');
+    expect(screen.getByRole('progressbar')).toHaveClass('rail__milestone');
   });
 
   it('reports the exact fraction under full motion', () => {

@@ -146,7 +146,7 @@
 }
 
 /* Placement only. The meter owns its own height, track and sweep. */
-.rail__cycle {
+.rail__milestone {
   margin-block: var(--space-2);
 }
 

@@ -23,7 +23,7 @@ export const ROW_ART_SIZE = 40;
 const LINE_MARK_SIZE = 16;
 
 /** What the rail and everything it renders reads out of the copy module. */
-export type RailScreenCopy = Pick<Copy, 'rail' | 'milestone' | 'overseer'>;
+export type RailScreenCopy = Pick<Copy, 'rail' | 'milestone'>;
 
 interface TierRowProps {
   tier: TierDef;
@@ -89,7 +89,7 @@ export function TierRow({
         </p>
 
         <Meter
-          className="rail__cycle"
+          className="rail__milestone"
           label={label}
           title={label}
           value={milestoneShare(progress)}
@@ -189,6 +189,12 @@ function milestoneShare(progress: MilestoneProgress): number {
   return Decimal.min(1, Decimal.max(0, owned.sub(previous).div(span))).toNumber();
 }
 
+interface MilestoneLabelInput {
+  progress: MilestoneProgress;
+  plural: string;
+  copy: MilestoneCopy;
+}
+
 /**
  * What the bar is called, and the figures the printed line used to carry.
  *
@@ -196,12 +202,6 @@ function milestoneShare(progress: MilestoneProgress): number {
  * carrying five lines of text was reading as a paragraph. Nothing is lost — this string
  * reaches a pointer through `title` and a screen reader through `aria-label`.
  */
-interface MilestoneLabelInput {
-  progress: MilestoneProgress;
-  plural: string;
-  copy: MilestoneCopy;
-}
-
 function milestoneLabel({ progress, plural, copy }: MilestoneLabelInput): string {
   const { next, remaining, multiplier } = progress;
 
