@@ -55,24 +55,32 @@ const TAIL_MILESTONES: readonly MilestoneDef[] = (() => {
  * Tuned against `pnpm harness`, which reports the numbers below. Change anything
  * here and re-run it; the whole point of the harness is that balance is measurable.
  *
- *   Warrens        10m 53s    first prestige   41m 11s
- *   Dark Legions   39m 35s    souls at 8h      7.4e6
- *   Fortresses     1h 14m     souls at 12h     9.2e7
- *   Thrones        2h 03m
+ *   Warrens        10m 57s    first prestige   41m 51s
+ *   Dark Legions   40m 35s    souls at 8h      3.6e6
+ *   Fortresses     1h 22m     souls at 12h     6.4e7
+ *   Thrones        2h 29m
  *
- * The whole chain inside two hours and a reset before the first, which is the evening
- * §5.2 asks for. Every figure lands within a fifth of its target.
+ * Thrones now land past two hours, with a reset well before the first — still the
+ * evening §5.2 asks for, but no longer the two-hour chain this section once measured.
+ * The top two tiers moved because of this task's repricing, and no generator number
+ * caused it: the harness's player pays for Overseer posts out of whatever cash the
+ * generator stack leaves behind, and the dearer `goad` and `glut` posts below hold
+ * back more of that cash, so Fortresses and Thrones both arrive later.
  *
  * **The obsolescence points, which the rest of this file is now fitted to** (§5.8.1:
  * the first moment the tier above delivers faster than the whole purse could buy):
  *
- *   Minions       retired 19m 05s at 42 Warrens        boosted 13m 33s    margin  5m 32s
- *   Warrens       retired 1h 24m at 33 Dark Legions    boosted 1h 15m     margin  9m 40s
- *   Dark Legions  retired 2h 24m at 39 Fortresses      boosted 1h 52m     margin 32m 36s
- *   Fortresses    retired 4h 31m at 44 Thrones         boosted 3h 06m     margin 84m 38s
+ *   Minions       retired 19m 18s at 41 Warrens        boosted 14m 19s    margin   4m 59s
+ *   Warrens       retired 1h 28m at 29 Dark Legions    boosted 1h 23m     margin   5m 02s
+ *   Dark Legions  retired 3h 22m at 47 Fortresses      boosted 2h 16m     margin  65m 58s
+ *   Fortresses    retired 5h 28m at 49 Thrones         boosted 3h 47m     margin 100m 46s
  *
- * Every tier is boosted before it retires the tier below, and the margin widens with
- * depth — the depth factor §5.8 asks for, read off the instrument rather than assumed.
+ * These four crossings moved from the numbers this section once carried — Minions and
+ * Warrens retire a few minutes later, Dark Legions and Fortresses close to an hour
+ * later — for the same reason the top table did: dearer `goad` and `glut` posts hold
+ * back cash the tier above needs to arrive. Every tier is still boosted before it
+ * retires the tier below, and the margin still widens with depth — the depth factor
+ * §5.8 asks for, read off the instrument rather than assumed.
  *
  * When each Overseer first comes within reach, under the harness's policy — which is
  * what the costs below are priced against:
@@ -87,10 +95,15 @@ const TAIL_MILESTONES: readonly MilestoneDef[] = (() => {
  * Each tier's automator still comes within reach before the tier above does, which is
  * the trade §5.6 wants the player weighing, and it falls out of pricing every automator
  * at 0.4× the next tier's base cost. `goad` and `glut` then sit at ×20 and ×200 of their
- * tier's automator — the old ratios put every post inside the first hour, where income
- * had already outrun them. The gap is wider than it was at the Warren — the Warden
- * lands 19m against a first Legion at 40m — because the Legion's flattened curve buys
- * its opening unit dear and the rest cheap; see below for why that curve had to flatten.
+ * tier's automator, not the old ×4 and ×16 — and the old ratios were not too cheap
+ * because they arrived early: seven of the ten landed past the first hour. They were
+ * too cheap because a flat ratio buys a shrinking share of a growing income. Income
+ * compounds; a fixed multiple of the automator does not, so the later a post came
+ * within reach, the smaller the slice of that hour's income it actually cost — and by
+ * the first hour the whole tree ran about thirty seconds of it. The gap is wider than
+ * it was at the Warren — the Warden lands 19m against a first Legion at 40m — because
+ * the Legion's flattened curve buys its opening unit dear and the rest cheap; see below
+ * for why that curve had to flatten.
  *
  * **What the obsolescence rule costs, and why it reshaped the file.**
  *
@@ -145,9 +158,11 @@ const TAIL_MILESTONES: readonly MilestoneDef[] = (() => {
  * *Base costs, refitted to hold the five times.* Warren 1000→1500, Fortress 6e9→3e8,
  * Throne 5e12→8e11; the Dark Legion keeps 3e7. Twelve of the fifteen Overseer prices
  * moved with them. The Warren's three did not, and could not: they are priced off the
- * Dark Legion's base, which is the one base that stayed put. All fifteen follow the same
- * rule as before — 0.4×, 1.6× and 6.4× the next tier's base cost, the Throne's three
- * extrapolating that ratio, having no tier above to price against.
+ * Dark Legion's base, which is the one base that stayed put. All fifteen still follow
+ * one rule, in two equal forms: the automator sits at 0.4× the next tier's base cost,
+ * and `goad` and `glut` sit at 8× and 80× of it — the same 0.4× run through the
+ * ×20/×200-of-automator rule above, since 20 × 0.4 = 8 and 200 × 0.4 = 80. The Throne's
+ * three extrapolate that ratio, having no tier above to price against.
  *
  * *Souls.* `scale` stays at 5.7e13 and `k` at 150. The two are one lever, not two:
  * souls come out as `k·√(lifetime/scale)`, which is `√(lifetime / (scale/k²))`, so only
