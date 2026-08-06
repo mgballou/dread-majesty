@@ -64,6 +64,34 @@ describe('milestoneProgress', () => {
     expect(progress.next).toBe(null);
     expect(progress.remaining).toBe(null);
   });
+
+  it('reads zero before the first threshold', () => {
+    const state = seeded(3);
+
+    expect(milestoneProgress(state, fixtureWithMilestones, 'minion').previous).toBe(0);
+  });
+
+  it('reads the threshold last passed', () => {
+    const state = seeded(60);
+
+    expect(milestoneProgress(state, fixtureWithMilestones, 'minion').previous).toBe(50);
+  });
+
+  it('reads the threshold itself when the count sits exactly on it', () => {
+    const state = seeded(50);
+
+    expect(milestoneProgress(state, fixtureWithMilestones, 'minion').previous).toBe(50);
+  });
+
+  it('reads the last threshold of all once every one is passed', () => {
+    const last = fixtureWithMilestones.milestones[fixtureWithMilestones.milestones.length - 1]!.at;
+    const state = seeded(last + 1);
+
+    const progress = milestoneProgress(state, fixtureWithMilestones, 'minion');
+
+    expect(progress.next).toBeNull();
+    expect(progress.previous).toBe(last);
+  });
 });
 
 describe('soul multiplier', () => {
