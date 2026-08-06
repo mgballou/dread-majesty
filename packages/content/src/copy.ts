@@ -70,20 +70,18 @@ export interface SmiteCopy {
   /** Shown one at a time after a smite. Never empty. */
   readonly results: readonly string[];
   /**
-   * What the gauge under the button is called.
+   * Where the realm stands, in thirds of the Apathy cap. Empty, middling, full.
    *
    * **Apathy**, and the word is the joke played straight: the realm does not fear you
    * less, it simply cannot be bothered any more. The Dark Lord's real enemy turns out
    * to be being ignored.
-   */
-  readonly apathy: string;
-  /**
-   * Where the realm stands, in thirds of the cap. Empty, middling, full.
    *
    * Three, and the length is pinned by the type, so a fourth band cannot be added
-   * without the code that picks one being made to say what it means. This is the whole
-   * of what the gauge says: the ticks show how far along it is and these say what that
-   * means, so nothing has to print a number the player would have to reason about.
+   * without the code that picks one being made to say what it means. These are the
+   * whole of what the gauge says: the arc around the medallion shows how far along the
+   * realm is and these say what that means, so nothing has to print a number the
+   * player would have to reason about. The arc itself is hidden from assistive tech,
+   * so one of these rides on the control's own name instead — see `spoken`.
    */
   readonly bands: readonly [string, string, string];
 }
@@ -122,24 +120,11 @@ export interface MilestoneCopy {
   readonly name: string;
   readonly what: string;
   /**
-   * `multiplier` and `threshold` arrive formatted, e.g. "×2" and "25", so no balance
-   * number lives here.
-   */
-  readonly next: (args: {
-    readonly remaining: string;
-    readonly plural: string;
-    readonly multiplier: string;
-    readonly threshold: string;
-  }) => string;
-  readonly done: string;
-  /** Follows `done` on a tier that has taken every milestone it has. */
-  readonly noMore: string;
-  /**
    * Names the milestone bar, and carries the figures the printed line used to.
    *
-   * Every part arrives formatted. The bar replaced a line of text, so this string is
-   * the only place those numbers still live — it is read by pointer through `title`
-   * and by ear through `aria-label`.
+   * Every part arrives formatted, e.g. "×2" and "25", so no balance number lives here.
+   * The bar replaced a line of text, so this string is the only place those numbers
+   * still live — it is read by pointer through `title` and by ear through `aria-label`.
    */
   readonly bar: (args: {
     readonly remaining: string;
@@ -240,8 +225,6 @@ export interface RailCopy {
   readonly lockedHint: string;
   /** The count on a row. `count` arrives formatted. */
   readonly held: (count: string) => string;
-  /** Names the row's cycle bar. `tier` is the singular name. */
-  readonly cycle: (tier: string) => string;
   /** The buy button, spoken in full. Every part arrives formatted. */
   readonly buy: (args: {
     readonly count: string;

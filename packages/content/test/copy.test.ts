@@ -129,8 +129,8 @@ describe('the smite rotation', () => {
 });
 
 describe('the lines that take a number', () => {
-  it('substitutes into the milestone line', () => {
-    const line = v1Copy.milestone.next({
+  it('substitutes into the milestone bar', () => {
+    const line = v1Copy.milestone.bar({
       remaining: '37',
       plural: 'Minions',
       multiplier: '×2',
@@ -140,6 +140,10 @@ describe('the lines that take a number', () => {
     expect(line).toContain('Minions');
     expect(line).toContain('×2');
     expect(line).toContain('50');
+  });
+
+  it('substitutes into the milestone bar past the last threshold', () => {
+    expect(v1Copy.milestone.barDone('Minions')).toContain('Minions');
   });
 
   it('substitutes into the prestige lines', () => {
@@ -164,7 +168,6 @@ describe('the lines that take a number', () => {
 
   it('substitutes into the rest of the rail lines', () => {
     expect(v1Copy.rail.held('12')).toContain('12');
-    expect(v1Copy.rail.cycle('Minion')).toContain('Minion');
     expect(v1Copy.rail.shortfall('2.4K')).toContain('2.4K');
     expect(v1Copy.rail.quantityOption('10')).toContain('10');
   });
@@ -199,12 +202,13 @@ describe('the lines that take a number', () => {
 
 describe('every line that takes a number', () => {
   const filled = [
-    v1Copy.milestone.next({
+    v1Copy.milestone.bar({
       remaining: '37',
       plural: 'Minions',
       multiplier: '×2',
       threshold: '50',
     }),
+    v1Copy.milestone.barDone('Minions'),
     v1Copy.prestige.worth('+2%'),
     v1Copy.prestige.nextAt('22B'),
     v1Copy.prestige.confirmBody('14'),
@@ -215,7 +219,6 @@ describe('every line that takes a number', () => {
     v1Copy.offline.capped('4h'),
     v1Copy.rail.cost('1.2M'),
     v1Copy.rail.held('12'),
-    v1Copy.rail.cycle('Minion'),
     v1Copy.rail.buy({ count: '10', tier: 'Minions', cost: '1.2M Evil' }),
     v1Copy.rail.shortfall('2.4K'),
     v1Copy.rail.quantityOption('10'),
@@ -312,10 +315,6 @@ describe('the malice panel copy', () => {
 });
 
 describe('the apathy copy', () => {
-  it('names the gauge', () => {
-    expect(v1Copy.smite.apathy).toBeTruthy();
-  });
-
   it('carries a line for each third of the gauge', () => {
     expect(v1Copy.smite.bands).toHaveLength(3);
   });
