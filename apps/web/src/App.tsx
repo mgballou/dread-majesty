@@ -87,7 +87,10 @@ export function App(): ReactNode {
 
   const prestigeSlot = useRef<HTMLDivElement>(null);
   const reducedMotion = useReducedMotion();
-  const showMarker = prestigeGain(state, content).gt(0) && state.stats.prestiges === 0;
+  // Before the first reset the notice can still arrive, so its row is held from the
+  // first frame. After one it never can, and the row goes with it. See App.css.
+  const markerAhead = state.stats.prestiges === 0;
+  const showMarker = markerAhead && prestigeGain(state, content).gt(0);
 
   // jsdom implements neither `scrollIntoView` nor smooth behaviour, so the call is
   // optional rather than guarded by a capability check — the test then exercises the
@@ -234,7 +237,17 @@ export function App(): ReactNode {
           />
 
           <div className="shell__side">
-            {showMarker && <PrestigeMarker copy={copy.prestige} onReveal={revealPrestige} />}
+            {/* The notice's row, held whether or not the notice is showing in it. Souls
+                are first owed part-way through a session, so a row that mounted at that
+                moment would shove the deck and everything under it down the page — the
+                jump `PrestigeLocked` exists to stop, one panel further down. The notice
+                is hidden rather than withheld, so the row is exactly as tall as the
+                notice at every width, including where it wraps on a phone. */}
+            {markerAhead && (
+              <div className="shell__marker" inert={!showMarker}>
+                <PrestigeMarker copy={copy.prestige} onReveal={revealPrestige} />
+              </div>
+            )}
 
             <Deck tabs={tabs} />
 

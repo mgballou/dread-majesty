@@ -33,11 +33,33 @@
  * has no business competing for the eye with the thing the player does every minute.
  * The panel itself is held back until souls are in reach; its slot is not. A
  * placeholder holds the space before then, so the deck never jumps once it fills.
+ *
+ * The notice above the deck keeps the same rule from the other side — see
+ * `.shell__marker`.
  */
 .shell__side {
   display: grid;
   gap: var(--space-4);
   align-items: start;
+}
+
+/*
+ * The row the reset notice arrives in, held from the first frame of a run.
+ *
+ * The notice is shown once, part-way through a session, so a row that mounted at that
+ * moment would push the deck and everything under it down the page. It stays mounted
+ * and is hidden instead, which keeps the row exactly as tall as the notice at every
+ * width — a measured height would have to guess where the line wraps under its own
+ * button on a phone, and guess again whenever either changes.
+ *
+ * `inert` marks the held state because it is what the state is: not reachable, not
+ * spoken, not pressable, whether or not this rule ever loads.
+ *
+ * The row itself goes at the first reset, since the notice can never come back after
+ * one. That is the only time it moves, and a reset rebuilds the page around it anyway.
+ */
+.shell__marker[inert] {
+  visibility: hidden;
 }
 
 .shell__claim {
