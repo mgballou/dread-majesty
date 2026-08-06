@@ -229,6 +229,19 @@ describe('BuyRail', () => {
     expect(bar).toHaveAttribute('aria-valuenow', '20');
   });
 
+  it('fills the bar past the last milestone, where there is no band left', () => {
+    state.gens.minion.owned = new Decimal('1e25');
+
+    draw();
+
+    const minion = CURRENT.tiers.find((tier) => tier.id === 'minion')!;
+    const bar = screen.getByRole('progressbar', {
+      name: CURRENT_COPY.milestone.barDone(minion.plural),
+    });
+
+    expect(bar).toHaveAttribute('aria-valuenow', '100');
+  });
+
   it('fires the purchase callback with the tier and the chosen quantity', async () => {
     state.resources.evil = new Decimal(5200);
 

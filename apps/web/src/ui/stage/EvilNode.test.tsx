@@ -48,6 +48,14 @@ describe('EvilNode', () => {
     expect(strike()).toHaveAccessibleName('Smite. You hold 4.88K Evil. The realm flinches.');
   });
 
+  it('speaks the middle band half way up the cap', () => {
+    const state = createState(CURRENT);
+    state.smiteApathy = CURRENT.smite.apathy.cap / 2;
+    render(evil({ state }));
+
+    expect(strike()).toHaveAccessibleName('Smite. You hold 4.88K Evil. The realm has seen worse.');
+  });
+
   it('speaks the highest band once apathy reaches the cap', () => {
     const state = createState(CURRENT);
     state.smiteApathy = CURRENT.smite.apathy.cap;
