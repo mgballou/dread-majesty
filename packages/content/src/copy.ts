@@ -203,6 +203,12 @@ export interface PrestigeCopy {
   readonly confirmAction: string;
   readonly cancel: string;
   readonly claimed: (souls: string) => string;
+  /** Held in the panel's slot before souls are anywhere in reach. */
+  readonly locked: string;
+  /** The notice that leads a first-time player to the panel. */
+  readonly owed: string;
+  /** That notice's control. */
+  readonly owedAction: string;
 }
 
 export interface OfflineCopy {

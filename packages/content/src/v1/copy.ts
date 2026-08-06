@@ -263,6 +263,9 @@ export const v1Copy = {
     confirmAction: 'Claim and begin again',
     cancel: 'Not yet',
     claimed: (souls: string): string => `${souls} Damned Souls. The realm starts again.`,
+    locked: 'Inflict further suffering.',
+    owed: 'Souls are owed to you.',
+    owedAction: 'Go and count them',
   },
 
   offline: {

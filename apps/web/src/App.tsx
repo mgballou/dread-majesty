@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { CURRENT, CURRENT_COPY, type TierId } from '@dm/content';
-import { isAppointed, isRousable, isTierUnlocked } from '@dm/engine';
+import { isAppointed, isRousable, isTierUnlocked, prestigeGain } from '@dm/engine';
 import { useSound } from './audio/useSound.ts';
 import { DevBar } from './dev/DevBar.tsx';
 import { isPrestigeWorthShowing } from './game/reveals.ts';
@@ -14,11 +14,14 @@ import { Sheet } from './ui/Sheet.tsx';
 import { Crown } from './ui/crown/Crown.tsx';
 import { BuyRail } from './ui/rail/BuyRail.tsx';
 import { Miscreants } from './ui/rail/Miscreants.tsx';
+import { PrestigeLocked } from './ui/rail/PrestigeLocked.tsx';
+import { PrestigeMarker } from './ui/rail/PrestigeMarker.tsx';
 import { PrestigePanel } from './ui/rail/PrestigePanel.tsx';
 import { useBuyQuantity } from './ui/rail/useBuyQuantity.ts';
 import { useRailPlan } from './ui/rail/useRailPlan.ts';
 import { ChainStage } from './ui/stage/ChainStage.tsx';
 import { Malice } from './ui/malice/Malice.tsx';
+import { useReducedMotion } from './ui/useReducedMotion.ts';
 import './App.css';
 
 /**
@@ -81,6 +84,20 @@ export function App(): ReactNode {
   useEffect(() => {
     if (session.justEarned.length > 0) sound.play('milestone');
   }, [session.justEarned, sound]);
+
+  const prestigeSlot = useRef<HTMLDivElement>(null);
+  const reducedMotion = useReducedMotion();
+  const showMarker = prestigeGain(state, content).gt(0) && state.stats.prestiges === 0;
+
+  // jsdom implements neither `scrollIntoView` nor smooth behaviour, so the call is
+  // optional rather than guarded by a capability check — the test then exercises the
+  // real branch everywhere the real method exists.
+  const revealPrestige = (): void => {
+    prestigeSlot.current?.scrollIntoView?.({
+      behavior: reducedMotion ? 'auto' : 'smooth',
+      block: 'center',
+    });
+  };
 
   if (!session.ready) return <BootScreen />;
 
@@ -217,20 +234,26 @@ export function App(): ReactNode {
           />
 
           <div className="shell__side">
+            {showMarker && <PrestigeMarker copy={copy.prestige} onReveal={revealPrestige} />}
+
             <Deck tabs={tabs} />
 
-            {isPrestigeWorthShowing(state, content) && (
-              <PrestigePanel
-                content={content}
-                copy={copy.prestige}
-                state={state}
-                version={session.version}
-                onPrestige={() => {
-                  dispatch({ kind: 'prestige' });
-                  sound.play('prestige');
-                }}
-              />
-            )}
+            <div ref={prestigeSlot}>
+              {isPrestigeWorthShowing(state, content) ? (
+                <PrestigePanel
+                  content={content}
+                  copy={copy.prestige}
+                  state={state}
+                  version={session.version}
+                  onPrestige={() => {
+                    dispatch({ kind: 'prestige' });
+                    sound.play('prestige');
+                  }}
+                />
+              ) : (
+                <PrestigeLocked copy={copy.prestige} />
+              )}
+            </div>
           </div>
         </main>
 
