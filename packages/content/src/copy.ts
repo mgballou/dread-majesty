@@ -40,11 +40,13 @@ export interface SmiteCopy {
   /**
    * Spoken name of the control, which is the Evil total itself.
    *
-   * The total is the tap target, so its accessible name has to carry both the verb
-   * and the figure — otherwise a screen reader hears "Smite" and the player has no
-   * way to learn what they hold. `amount` arrives formatted.
+   * The total is the tap target, so its accessible name has to carry the verb, the
+   * figure, and how tired the realm is. `band` is one of `SmiteCopy.bands`. The Apathy
+   * gauge is drawn inside this control, and a label inside a button that carries an
+   * `aria-label` is never announced — so this is the only place the band reaches
+   * anyone reading by ear. Both parts arrive formatted.
    */
-  readonly spoken: (amount: string) => string;
+  readonly spoken: (amount: string, band: string) => string;
   /**
    * What the control says while the blow is spent.
    *
