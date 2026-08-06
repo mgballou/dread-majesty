@@ -1,0 +1,7 @@
+/* The prestige slot's placeholder. See PrestigeLocked.tsx. */
+
+.prestige-locked__line {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--ink-dim);
+}
