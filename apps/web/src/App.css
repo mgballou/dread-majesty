@@ -31,8 +31,8 @@
  * of them wants the full width — the muster's rows are three columns wide on their
  * own. The prestige panel sits under it because a reset is a rare, considered act and
  * has no business competing for the eye with the thing the player does every minute.
- * It is also held back until souls are in reach, so for the first hours there is
- * nothing beneath the deck at all.
+ * The panel itself is held back until souls are in reach; its slot is not. A
+ * placeholder holds the space before then, so the deck never jumps once it fills.
  */
 .shell__side {
   display: grid;
