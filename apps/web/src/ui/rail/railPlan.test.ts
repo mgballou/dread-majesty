@@ -382,7 +382,7 @@ describe('the Malice ladders on the plan', () => {
   });
 
   it('keeps a held ladder when a challenger only just beats it', () => {
-    state.resources.evil = new Decimal('1e9');
+    state.resources.evil = new Decimal('1e15');
     state.smiteRungs.weight = 3;
     state.smiteRungs.reach = 4;
     state.smiteRungs.forgetting = 2;
