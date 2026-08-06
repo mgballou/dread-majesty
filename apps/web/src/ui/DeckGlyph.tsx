@@ -22,7 +22,7 @@ interface DeckGlyphProps {
 export function DeckGlyph({ kind }: DeckGlyphProps): ReactNode {
   return (
     <svg
-      className="deck__mark"
+      className="deck__shape"
       viewBox="0 0 48 48"
       aria-hidden="true"
       focusable="false"
