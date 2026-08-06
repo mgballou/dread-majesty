@@ -180,7 +180,6 @@ export const v1Copy = {
       'An orchard, salted.',
       'Struck. The report will follow.',
     ],
-    apathy: 'Apathy',
     bands: [
       'The realm flinches.',
       'The realm has seen worse.',
@@ -216,19 +215,6 @@ export const v1Copy = {
   milestone: {
     name: 'Milestone',
     what: 'Past a certain number, they work faster. Nobody knows why.',
-    next: ({
-      remaining,
-      plural,
-      multiplier,
-      threshold,
-    }: {
-      remaining: string;
-      plural: string;
-      multiplier: string;
-      threshold: string;
-    }): string => `${remaining} more ${plural} for ${multiplier} output at ${threshold}.`,
-    done: 'Every milestone taken.',
-    noMore: 'They will not make more than this.',
     bar: ({ remaining, plural, multiplier, threshold }): string =>
       `${remaining} more ${plural} for ${multiplier} output at ${threshold}.`,
     barDone: (plural: string): string =>
@@ -292,7 +278,6 @@ export const v1Copy = {
     locked: 'Not yet known',
     lockedHint: 'You have not come this far yet.',
     held: (count: string): string => `${count} held`,
-    cycle: (tier: string): string => `${tier} cycle`,
     buy: ({ count, tier, cost }: { count: string; tier: string; cost: string }): string =>
       `Buy ${count} ${tier} for ${cost}`,
     shortfall: (amount: string): string => `Short ${amount} Evil`,
