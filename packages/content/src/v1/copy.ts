@@ -302,6 +302,7 @@ export const v1Copy = {
       `${tier} cost ${cost}. Further than you have come.`,
     bought: (count: string): string => `${count} bought — the price follows this`,
     lifted: 'best available',
+    waiting: 'something to spend on',
   },
 
   overseer: {

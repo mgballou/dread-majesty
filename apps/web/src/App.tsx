@@ -108,6 +108,8 @@ export function App(): ReactNode {
       title: copy.rail.title,
       glyph: 'muster',
       trailing: `${met}/${rungs}`,
+      marked: plan.best.purchase !== null,
+      markedLabel: copy.rail.waiting,
       panel: (
         <BuyRail
           content={content}
@@ -129,6 +131,8 @@ export function App(): ReactNode {
       title: copy.overseer.panelTitle,
       glyph: 'miscreants',
       trailing: `${filled}/${posts}`,
+      marked: plan.best.appoint !== null,
+      markedLabel: copy.rail.waiting,
       panel: (
         <Miscreants
           content={content}
@@ -157,6 +161,8 @@ export function App(): ReactNode {
       title: copy.malice.title,
       glyph: 'malice',
       trailing: `${climbed}/${ladders}`,
+      marked: plan.best.climb !== null,
+      markedLabel: copy.rail.waiting,
       panel: (
         <Malice
           content={content}

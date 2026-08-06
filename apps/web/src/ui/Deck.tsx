@@ -10,6 +10,19 @@ export interface DeckTab {
   glyph?: DeckGlyphKind;
   /** Count or state, set to the trailing edge. */
   trailing?: ReactNode;
+  /**
+   * Whether this panel holds something the player can afford right now.
+   *
+   * Drawn as a dot on the tab, and **never as the accent.** The accent is spent on
+   * doing, never on going, and a tab is navigation — so the dot says "something here"
+   * without claiming to be the thing worth pressing.
+   */
+  marked?: boolean;
+  /**
+   * Said on a marked tab's spoken name. Required in spirit whenever `marked` is set —
+   * a dot hidden from assistive tech is a signal only sighted players get.
+   */
+  markedLabel?: string;
   panel: ReactNode;
 }
 
@@ -85,10 +98,16 @@ export function Deck({ tabs }: DeckProps): ReactNode {
                     <DeckGlyph kind={tab.glyph} />
                   </span>
                 )}
+                {marked(tab, index === open) && <span className="deck__mark" aria-hidden="true" />}
                 {/* Every tab is named to assistive technology and none of them is
                     named on screen. The tube carries icons; the name of the open one
                     sits on its own line beneath it. */}
-                <span className="deck__name">{tab.title}</span>
+                <span className="deck__name">
+                  {tab.title}
+                  {marked(tab, index === open) && tab.markedLabel !== undefined
+                    ? `. ${tab.markedLabel}`
+                    : ''}
+                </span>
               </span>
             </span>
           </button>
@@ -129,6 +148,16 @@ export function Deck({ tabs }: DeckProps): ReactNode {
       </div>
     </section>
   );
+}
+
+/**
+ * Whether this tab should wear the dot.
+ *
+ * Never the open one. Its panel is on screen, so the dot would be saying what the
+ * player is already looking at.
+ */
+function marked(tab: DeckTab, isOpen: boolean): boolean {
+  return tab.marked === true && !isOpen;
 }
 
 function tabId(base: string, id: string): string {

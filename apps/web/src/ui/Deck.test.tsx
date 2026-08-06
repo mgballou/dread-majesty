@@ -20,6 +20,17 @@ function draw() {
   return { ...render(<Deck tabs={TABS} />), user: userEvent.setup() };
 }
 
+// A pair of tabs, the first open by default. `markIndex` says which one, if
+// either, holds something affordable.
+function pairWithMark(markIndex: 0 | 1 | null): DeckTab[] {
+  return [0, 1].map((index) => ({
+    id: index === 0 ? 'one' : 'two',
+    title: index === 0 ? 'One' : 'Two',
+    panel: <p>{index === 0 ? 'one' : 'two'}</p>,
+    ...(index === markIndex ? { marked: true, markedLabel: 'something to spend on' } : {}),
+  }));
+}
+
 describe('Deck', () => {
   it('offers one tab per panel', () => {
     draw();
@@ -175,5 +186,35 @@ describe('Deck', () => {
     await user.click(screen.getAllByRole('tab')[2]!);
 
     expect(screen.getAllByRole('tab')[2]).toHaveAttribute('aria-selected', 'true');
+  });
+
+  it('marks a shut tab holding something affordable', () => {
+    const { container } = render(<Deck tabs={pairWithMark(1)} />);
+
+    expect(container.querySelectorAll('.deck__mark')).toHaveLength(1);
+  });
+
+  it('leaves an unmarked tab unmarked', () => {
+    const { container } = render(<Deck tabs={TABS} />);
+
+    expect(container.querySelectorAll('.deck__mark')).toHaveLength(0);
+  });
+
+  it('never marks the tab that is already open', () => {
+    const { container } = render(<Deck tabs={pairWithMark(0)} />);
+
+    expect(container.querySelectorAll('.deck__mark')).toHaveLength(0);
+  });
+
+  it('never lets the mark wear the accent', () => {
+    const { container } = render(<Deck tabs={pairWithMark(1)} />);
+
+    expect(container.querySelector('.deck__mark')?.className).not.toContain('accent');
+  });
+
+  it('says on a marked tab, by ear, that something there is affordable', () => {
+    render(<Deck tabs={pairWithMark(1)} />);
+
+    expect(screen.getByRole('tab', { name: /something to spend on/ })).toBeInTheDocument();
   });
 });
