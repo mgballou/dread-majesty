@@ -75,14 +75,14 @@ describe('the tiers', () => {
     }
   });
 
-  it('prices the quicken and swell posts at four and sixteen times the automator', () => {
+  it('prices the quicken and swell posts at twenty and two hundred times the automator', () => {
     for (const tier of v1.tiers) {
       const automate = Number(tier.overseers[0]?.cost ?? '0');
       const quicken = Number(tier.overseers[1]?.cost ?? '0');
       const swell = Number(tier.overseers[2]?.cost ?? '0');
 
-      expect(quicken / automate).toBeCloseTo(4, 2);
-      expect(swell / automate).toBeCloseTo(16, 2);
+      expect(quicken / automate).toBeCloseTo(20, 2);
+      expect(swell / automate).toBeCloseTo(200, 2);
     }
   });
 
@@ -205,6 +205,25 @@ describe('the smite ladders', () => {
       const prices = upgrade.rungs.map((rung) => Number(rung.evil));
       expect(prices).toEqual([...prices].sort((a, b) => a - b));
     }
+  });
+
+  it('spans a run with each ladder, at two hundred times a rung', () => {
+    for (const upgrade of v1.smite.upgrades) {
+      const prices = upgrade.rungs.map((rung) => Number(rung.evil));
+
+      for (let index = 1; index < prices.length; index += 1) {
+        expect(prices[index]! / prices[index - 1]!).toBeCloseTo(200, 2);
+      }
+    }
+  });
+
+  it('opens the shop on Reach, the cheapest first rung', () => {
+    const firsts = v1.smite.upgrades.map((upgrade) => Number(upgrade.rungs[0]?.evil ?? '0'));
+    const reach = Number(
+      v1.smite.upgrades.find((upgrade) => upgrade.id === 'reach')?.rungs[0]?.evil ?? '0',
+    );
+
+    expect(reach).toBe(Math.min(...firsts));
   });
 
   it('raises the soul price at every rung of every ladder', () => {
