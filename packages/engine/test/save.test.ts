@@ -359,3 +359,19 @@ describe('save version 8', () => {
     expect(deserialize(blob).smiteRungs.weight).toBe(0);
   });
 });
+
+describe('a save holding an achievement the build no longer ships', () => {
+  it('loads, dropping the unknown id', () => {
+    const state = createState(fixture);
+    const blob = {
+      ...serialize(state, 0),
+      earnedAchievements: ['ghost-achievement', 'prestige-1'],
+    };
+
+    // `as never`: the blob deliberately carries an id outside `AchievementId`, which is
+    // the case under test and a shape the type cannot express.
+    const loaded = deserialize(blob as never);
+
+    expect(loaded.earnedAchievements).toEqual(['prestige-1']);
+  });
+});
