@@ -170,7 +170,7 @@ const TAIL_MILESTONES: readonly MilestoneDef[] = (() => {
  * within seconds of the first Evil — raising `k` to 600 is what put it there, on
  * purpose, not an accident of the curve. What `scale` still marks is the lifetime Evil,
  * 41m 51s in, where the count passes 600 souls. A run pays roughly 600 souls at 41m,
- * 1,230 at three hours and 4,340 at twelve. `k` and `perSoul` multiply to 0.6 and only
+ * 1,230 at three hours and 4,335 at twelve. `k` and `perSoul` multiply to 0.6 and only
  * that product matters to the balance.
  *
  * The Minion tier keeps its **opening pace** — 5 Evil every 4s, 1.25 a second. The yield

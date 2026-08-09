@@ -49,6 +49,8 @@ export function PrestigePanel({
     [state, content, version],
   );
 
+  const perSoulShare = `${formatNumber(new Decimal(content.prestige.perSoul).mul(100))}%`;
+
   const owed = gain.gt(0);
 
   useEffect(() => {
@@ -71,9 +73,7 @@ export function PrestigePanel({
           <dd className="prestige__value">{formatWhole(state.souls)}</dd>
         </div>
         <div className="prestige__figure">
-          <dt className="prestige__term">
-            {copy.favour(`${formatNumber(new Decimal(content.prestige.perSoul).mul(100))}%`)}
-          </dt>
+          <dt className="prestige__term">{copy.favour(perSoulShare)}</dt>
           <dd className="prestige__value">×{formatNumber(multiplier)}</dd>
         </div>
         <div className="prestige__figure">
@@ -91,6 +91,8 @@ export function PrestigePanel({
           </dd>
         </div>
       </dl>
+
+      <p className="prestige__note prestige__worth">{copy.worth(perSoulShare)}</p>
 
       <div className="prestige__ledger">
         <section className="prestige__column">
