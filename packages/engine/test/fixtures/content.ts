@@ -121,7 +121,7 @@ export const fixture: Content = {
 
   unlockFraction: 0.5,
 
-  prestige: { k: 150, scale: '1e11', perSoul: 0.02 },
+  prestige: { k: 150, scale: '1e11', exponent: 0.5, perSoul: 0.02 },
   offlineCapMs: 4 * 60 * 60 * SECOND,
   // Round numbers, chosen so a whole Minion cycle (24s) fits inside a blow — which is
   // what makes "produced exactly twice as much" a thing a test can assert at all. The

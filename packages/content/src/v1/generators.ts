@@ -368,6 +368,7 @@ export const v1: Content = {
     k: 150,
     // First soul lands at 41m 51s (lifetime = scale / k² = 5.07e9).
     scale: '1.14e14',
+    exponent: 0.5,
     perSoul: 0.02,
   },
 
