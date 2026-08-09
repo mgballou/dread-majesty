@@ -59,10 +59,11 @@ design choice, and it lands entirely on `q`: souls become rare, and favour stays
 so `globalMultiplier` is untouched and the panel keeps saying that each soul adds a flat
 share to everything.
 
-A consequence, not a side effect: a flat exponent forces small soul counts. A large `k`
-on a curve this flat would barely move — the number would read as nearly constant. Rare
-souls are what this exponent produces, and the tone suits it. Something you file by date
-should be countable.
+A flat exponent means the soul count spans a narrow range — about tenfold across a whole
+day, where today's spans millions. That is a property of the curve and cannot be tuned
+away. What it does *not* do is force the printed number to be small: the count is scaled
+by `k`, and §3 sets `k` so souls read in the hundreds and thousands. A game of this genre
+whose prestige currency reads `2` reads as broken, whatever the arithmetic underneath.
 
 ## 2.1 Depth, and why `q` is not a constant
 
@@ -85,8 +86,10 @@ minutes cannot compound fast enough to steepen the curve it sits on. Deep tiers 
 run in time rather than making it steeper, so a ten-tier chain does not imply `a = 36`.
 
 What deeper content does do is raise the ceiling, and this curve rewards that well.
-Measured plateau at a fixed run length, four tiers against five: **×3.4 → ×6.4**, and the
-soul bank 4 → 9. The plateau goes as `s₁·M^(a·q)`, a power of what the content can reach,
+Measured plateau at a fixed run length, four tiers against five: **×3.4 → ×6.4** (both
+measured at `k = 1`, so the whole-soul flooring in §3 costs each figure a little; the
+comparison between them is what matters). The plateau goes as `s₁·M^(a·q)`, a power of
+what the content can reach,
 so each tier added is worth roughly another doubling. This is the property that makes the
 curve worth keeping: prestige pays more as the game grows, without anything being retuned.
 
@@ -120,31 +123,41 @@ That is a real dependency and it must be written down rather than discovered aga
 souls = floor(k · (lifetimeEvil / scale) ^ exponent)
 ```
 
-`{ k: 1, scale: '5.07e9', exponent: 0.055, perSoul: 0.6 }`, replacing
+`{ k: 600, scale: '5.07e9', exponent: 0.055, perSoul: 0.001 }`, replacing
 `{ k: 150, scale: '1.14e14', perSoul: 0.02 }`.
 
 `scale` is unchanged in meaning and holds the same moment it always held: 5.07e9 is the
-lifetime Evil at 41 minutes, where the first soul is tuned today and where it stays.
+lifetime Evil at 41 minutes.
 
-`perSoul` is 0.6 because that reproduces the verified sequence in §2 exactly. This is not
-a coincidence to be tidied away later: the stable curve `1 + 0.59·s_old^0.11` and the new
-`1 + 0.6·s_new` are the same function of lifetime Evil, because `150^0.11` and
-`(1.14e14 / 5.07e9)^0.055` agree to three figures. Changing `scale` or `k` without
-re-deriving `perSoul` moves the plateau.
+**`k` and `perSoul` are one lever, not two, and their product is the whole of it.**
+Favour is `1 + perSoul · k · (lifetimeEvil/scale)^exponent`, so `k · perSoul = 0.6` fixes
+the game and `k` alone fixes what the player reads. Six hundred is a display decision:
+souls in the hundreds and thousands, at a tenth of a percent each, because a soul count of
+2 is not what this genre reads like. Any pair holding the product at 0.6 plays identically.
+Changing one without the other moves the plateau, and is the mistake this paragraph exists
+to prevent.
 
-Measured arrivals on an unboosted run:
+That product, 0.6, is not free. It reproduces the verified sequence in §2 exactly: the
+stable curve `1 + 0.59·s_old^0.11` and the new `1 + 0.6·(lifetimeEvil/5.07e9)^0.055` are
+the same function of lifetime Evil, because `150^0.11` and `(1.14e14/5.07e9)^0.055` agree
+to three figures.
 
-| Soul     | 1   | 2    | 3    | 4    | 5    | 6    | 7     | 8     | 9     | 10    |
-| -------- | --- | ---- | ---- | ---- | ---- | ---- | ----- | ----- | ----- | ----- |
-| Lands at | 41m | 2h54 | 4h37 | 6h12 | 7h35 | 9h17 | 11h26 | 14h06 | 17h19 | 20h55 |
+Measured on an unboosted run:
 
-Gaps run 1h22 to 3h36 and widen gently. No dead stretch.
+| At    | 41m | 3h    | 4h37  | 6h12  | 8h    | 12h   | 21h   |
+| ----- | --- | ----- | ----- | ----- | ----- | ----- | ----- |
+| Souls | 600 | 1,230 | 1,800 | 2,400 | 3,160 | 4,200 | 6,000 |
 
-Across eight three-hour prestiges, simulated end to end with souls floored to whole
-numbers as the game will floor them, the bank runs **2 → 4 → 6 → 8 → 9 → 9** and favour
-runs **×2.2 → ×3.4 → ×4.6 → ×5.8 → ×6.4**, settling there. The continuous form of the
-same curve settles at ×7.06; the difference is what flooring costs, and the floored figure
-is the one the game will show.
+The count climbs continuously rather than in steps. This is the second reason for a large
+`k`: at `k = 1` the floored count sat unchanged for stretches of up to three and a half
+hours, and a resource that visibly stops moving reads as a bug.
+
+Across eight three-hour prestiges, favour runs **×2.21 → ×3.76 → ×5.23 → ×6.27 → ×6.68 →
+×6.96 → ×7.06**, settling there, with the bank at 1,210 → 2,760 → 4,230 → 5,270 → 5,680 →
+5,960 → 6,060 souls. These are the figures from the verified continuous run in §2, which is
+what `k = 600` approximates: at this granularity flooring costs a fraction of a percent.
+The same loop at `k = 1` settled lower, at ×6.4, purely because whole-soul flooring threw
+away up to a soul a run.
 
 **Engine.** `soulsEarned` hardcodes `.sqrt()`; it becomes `.pow(content.prestige.exponent)`.
 `msToNextSoul` inverts the same formula and moves with it — the current inverse squares,
@@ -168,20 +181,25 @@ into the content.
 ### 4.1 Keep prices
 
 Keeping a smite rung costs 8 / 20 / 50 / 120 souls. Under the new curve that is more than
-the economy will ever hold. Today rung 1 costs about 18% of a first prestige; **1 / 3 / 5
-/ 8** comes as close as whole souls allow, at roughly a quarter of a first prestige, and
-holds the shape of the ladder above it — 17 souls for a full ladder, 68 for all four,
-against a bank that reaches the low tens over many resets. Keeping everything stays a
-multi-day goal, which is what it is today. One soul is the floor: the first rung cannot
-be made to cost proportionally less without fractional souls, and fractional souls would
-undo §2.
+the economy will ever hold. Today rung 1 costs about 18% of a first prestige. **220 / 660 / 1,100 / 1,760** holds that
+share exactly — 3,740 souls for a full ladder, 14,960 for all four, against a bank that
+reaches roughly 6,000 at the plateau and climbs past it on longer runs and deeper content.
+Keeping everything stays a multi-day goal, which is what it is today.
+
+The `k = 600` scale is what makes this land cleanly. At `k = 1` the same prices rounded to
+1 / 3 / 5 / 8, and a first rung could not be priced below one whole soul — roughly a
+quarter of a first prestige rather than the intended 18%. Granularity was the constraint,
+and raising `k` removed it.
 
 ### 4.2 Achievements
 
-`souls-100` and `souls-10000` name counts nobody will reach. They become **`souls-5`** and
-**`souls-20`**, keeping `souls-1` where it is. Their ids change, so the `AchievementId`
-union and the copy entries move together. The copy keeps its jokes; "Hold 5 Damned Souls.
-You file them by date" needs no rewriting beyond the number.
+`souls-1` fires within seconds of the first Evil under the new scale, and `souls-10000`
+sits a long way past the plateau. The three become **`souls-500`**, **`souls-3000`** and
+**`souls-10000`** — the first landing just before the 41-minute mark that used to be the
+first soul, the second around seven hours, the third a genuine long-haul goal reached over
+several resets. Only two ids change, so the `AchievementId` union and the copy entries move
+together. The copy keeps its jokes; "Hold 500 Damned Souls. You file them by date" needs no
+rewriting beyond the number.
 
 An achievement id that disappears must not strand a save. `deserialize` already filters
 `earnedAchievements` against the shipping id list, so a player who earned `souls-100`
@@ -201,7 +219,7 @@ and hands the player free souls or a permanent debt. The migration must instead:
 1. Recompute the total from `lifetimeEvil` at the new exponent. This is the true new
    `soulsEarned`, and it is exact.
 2. Recompute `soulsSpent` as the sum of the **new** Keep prices for the rungs in
-   `smiteKept`. A player who bought a full ladder still owns it, and now owes 17 rather
+   `smiteKept`. A player who bought a full ladder still owns it, and now owes 3,740 rather
    than 198.
 3. Set `souls` to the remainder, floored at zero.
 
@@ -213,19 +231,26 @@ the content is next retuned. `MIGRATIONS` entries are never edited once shipped.
 `MIN_SUPPORTED_SAVE_VERSION` stays at 6.
 
 A worked case, from the reported playtest: 31,630 souls recover a lifetime Evil of
-5.07×10¹⁸, which re-evaluates to **3 souls, ×2.8**. Nothing is lost. The currency is
-re-denominated, and the ×634 was never real power — it was the fault in §1.
+5.07×10¹⁸, which re-evaluates to **1,800 souls, ×2.8**. The count barely moves; the
+multiplier falls from ×634. That is the correction, and it is the right shape for it —
+nothing the player built is lost, and the ×634 was never real power. It was the fault in
+§1.
 
 ## 5 Interface
 
 The prestige panel needs no structural change. Two strings move:
 
-- `favour` renders `perSoul` as a percentage and will read "Their favour, at 60% each".
-- `worth` reads "Each soul adds 60% to everything you make. It never goes away." The
-  sentence survives the change intact, which is the whole reason the cut landed on `q`.
+- `favour` renders `perSoul` as a percentage and will read "Their favour, at 0.1% each".
+- `worth` reads "Each soul adds 0.1% to everything you make. It never goes away." The
+  sentence survives intact, which is why the cut landed on the earning curve rather than
+  on what a soul is worth.
 
-`formatWhole` already handles single digits. The panel's `trailing` slot will now show a
-number small enough to read at a glance, which it was not before.
+A tenth of a percent is a small number to print, and it is the price of souls reading in
+the thousands. The two cannot both be round: `k · perSoul` is fixed at 0.6 by §3, so a
+larger soul count forces a smaller per-soul share. The panel leads with the total — `×2.8`
+— which is the figure the player actually acts on; the per-soul rate is the footnote.
+
+`formatWhole` already handles four-figure counts. Nothing in the panel's layout changes.
 
 ## 6 Testing
 
