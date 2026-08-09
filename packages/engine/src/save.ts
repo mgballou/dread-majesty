@@ -208,31 +208,34 @@ const MIGRATIONS: Record<number, (blob: SaveBlob) => SaveBlob> = {
   // converted from the old count at all — it is recomputed from the Evil that earned
   // it, which is exact where a rescale of the count would not be.
   //
-  // The two soul fields cannot be converted separately. `prestigeGain` is
-  // `soulsEarned − souls − soulsSpent`, and the map between denominations is not
-  // linear, so rescaling each in turn would break that invariant and hand the player
-  // either free souls or a debt they can never clear. Instead the total is
-  // recomputed, what the player already owns is priced at the new rates, and the
-  // remainder is what they hold.
+  // `soulsSpent` cannot be recomputed by re-pricing `smiteKept` at the new Keep
+  // prices. The new prices hold a fixed three-hour share of the new curve, and a
+  // save recovers whatever `lifetimeEvil` it has actually earned — for anyone who
+  // reset later than three hours in, or reset more than once, the new bank can be
+  // smaller than a full ladder's new price, and the charge wipes them. What the old
+  // blob does carry exactly is the *fraction* of their souls the player had already
+  // spent, and that fraction is a property of their play, not of either curve's
+  // prices — so it is what survives the re-denomination. `spent` is floored before
+  // `souls` is taken by subtraction, so `souls + soulsSpent` lands on exactly
+  // `floor(earned)`, not on something a hair off it.
   //
   // Every constant here is inlined and frozen. The engine may not import balance
   // data, and a shipped migration must not drift when the content is next retuned.
+  // Reading no price table at all is what makes that true: there is nothing here for
+  // the next repricing to leave stale.
   8: (blob) => {
-    const KEEP_PRICES = [220, 660, 1100, 1760] as const;
-
     const earned = new Decimal(blob.lifetimeEvil).div(new Decimal('5.07e9')).pow(0.055).mul(600);
+    const oldHeld = new Decimal(blob.souls || '0');
+    const oldSpent = new Decimal(blob.soulsSpent || '0');
+    const oldTotal = oldHeld.add(oldSpent);
 
-    let spent = new Decimal(0);
-    for (const kept of Object.values(blob.smiteKept ?? {})) {
-      for (let rung = 0; rung < kept; rung += 1) {
-        spent = spent.add(KEEP_PRICES[rung] ?? 0);
-      }
-    }
+    const spent = oldTotal.lte(0) ? new Decimal(0) : oldSpent.div(oldTotal).mul(earned).floor();
+    const souls = Decimal.max(0, earned.floor().sub(spent));
 
     return {
       ...blob,
       saveVersion: 9,
-      souls: Decimal.max(0, earned.sub(spent)).floor().toString(),
+      souls: souls.toString(),
       soulsSpent: spent.toString(),
     };
   },
