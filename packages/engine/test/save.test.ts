@@ -366,15 +366,16 @@ describe('migrating souls to the 2026-08-08 denomination', () => {
   // A real playtest save: 31,630 souls under the old curve, which recovers a
   // lifetime Evil of ~5.07e18. The new curve pays 600·(5.07e18/5.07e9)^0.055,
   // which floors to 1875 — verified directly against `break_eternity.js`, not
-  // estimated. `soulsSpent` and `smiteKept` are both zero, so nothing has been
-  // priced at the old rates yet.
+  // estimated. `soulsSpent` is zero, so nothing has been priced at the old rates
+  // yet, and `smiteKept` describes a full ladder — the migration must not read it,
+  // so what it says here does not matter to the outcome.
   const blob: SaveBlob = {
     ...serialize(createState(fixture), 0),
     saveVersion: 8,
     souls: '31630',
     soulsSpent: '0',
     lifetimeEvil: '5.07e18',
-    smiteKept: { reach: 0, weight: 0, forgetting: 0, restraint: 0 },
+    smiteKept: { reach: 4, weight: 0, forgetting: 0, restraint: 0 },
   };
 
   it('lands the reported playtest save at the new curve floor', () => {
@@ -387,25 +388,52 @@ describe('migrating souls to the 2026-08-08 denomination', () => {
     expect(migrate(blob).saveVersion).toBe(9);
   });
 
+  // The three tests below are Finding 1 from the whole-branch review: the old
+  // migration re-priced `smiteKept` at the new Keep prices, which routinely
+  // exceeded the entire new bank and wiped any player who had ever kept a rung.
+  // The fix charges the *fraction* of their old bank a player had already spent,
+  // which survives the re-denomination exactly and can never exceed what the new
+  // curve pays out. None of these blobs sets `smiteKept` at all — the migration no
+  // longer reads it, so there is nothing left to wipe a Keep-holder with.
+
+  it('does not wipe a player who kept one full ladder', () => {
+    // Old Keep prices were 8/20/50/120 souls; a full ladder cost 198. The same
+    // lifetime Evil as the base blob, with 198 of the old 31,630 souls already
+    // spent rather than held.
+    const migrated = migrate({ ...blob, souls: '31432', soulsSpent: '198' });
+
+    expect(Number(migrated.souls)).toBe(1864);
+  });
+
+  it('carries the spent fraction of one kept ladder into the new soulsSpent', () => {
+    const migrated = migrate({ ...blob, souls: '31432', soulsSpent: '198' });
+
+    expect(Number(migrated.soulsSpent)).toBe(11);
+  });
+
+  it('does not wipe a player who kept two full ladders', () => {
+    // Two full ladders at the old prices cost 396 souls.
+    const migrated = migrate({ ...blob, souls: '31234', soulsSpent: '396' });
+
+    expect(Number(migrated.souls)).toBe(1852);
+  });
+
   it('never leaves the player owing souls they cannot have', () => {
-    const migrated = migrate({ ...blob, soulsSpent: '792' });
+    // Spending everything the old bank held still leaves a non-negative remainder,
+    // because the spent fraction can never exceed one.
+    const migrated = migrate({ ...blob, souls: '0', soulsSpent: '31630' });
 
     expect(Number(migrated.souls)).toBeGreaterThanOrEqual(0);
   });
 
-  it('charges the new price for rungs already kept', () => {
-    const kept = { reach: 4, weight: 0, forgetting: 0, restraint: 0 };
-    const migrated = migrate({ ...blob, smiteKept: kept });
+  it('pays the full new total when the old blob records no souls at all', () => {
+    // A blob whose souls and soulsSpent are both zero — the old-fraction divisor
+    // would be zero too. The migration must not stall or throw; it must fall back
+    // to paying the whole new total, exactly as a player who never held a soul
+    // under the old curve should.
+    const migrated = migrate({ ...blob, souls: '0', soulsSpent: '0' });
 
-    expect(Number(migrated.soulsSpent)).toBe(3740);
-  });
-
-  it('spends past what is earned rather than go negative', () => {
-    const kept = { reach: 4, weight: 4, forgetting: 0, restraint: 0 };
-
-    const migrated = migrate({ ...blob, smiteKept: kept });
-
-    expect(Number(migrated.souls)).toBe(0);
+    expect(Number(migrated.souls)).toBe(1875);
   });
 });
 
