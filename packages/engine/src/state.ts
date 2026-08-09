@@ -15,8 +15,10 @@ import type { GameState, TierState } from './types.ts';
  * 7: adds the per-run clock.
  * 8: adds Apathy, the running blow's multiplier, the two ladder counters and the
  *    souls spent on permanence.
+ * 9: re-denominates souls. `lifetimeEvil` is untouched; `souls` and `soulsSpent` are
+ *    recomputed from it under the new curve and the new Keep prices.
  */
-export const SAVE_VERSION = 8;
+export const SAVE_VERSION = 9;
 
 /**
  * The oldest save this build will load.
