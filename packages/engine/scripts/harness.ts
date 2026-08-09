@@ -35,6 +35,7 @@ import { step, tierMultiplier } from '../src/step.ts';
 import { costOfNth, maxAffordable } from '../src/cost.ts';
 import {
   canAppoint,
+  globalMultiplier,
   isRousable,
   overseenProductionPerSecond,
   prestigeGain,
@@ -216,6 +217,10 @@ function run(content: Content): void {
   // First moment each producer tier was boosted — keyed by the producer, not the
   // tier it retires, since a boost is a fact about the producer alone.
   const firstBoostAt = new Map<TierId, number>();
+  // Lifetime Evil at each checkpoint, keyed by the same label as `rows` — read by
+  // `growthExponent` below so it need not re-run the simulation to get the 2h/4h/8h
+  // samples the soul curve was fitted against.
+  const checkpointLifetimeEvil = new Map<string, Decimal>();
   const rows: string[] = [];
   let firstPrestigeMs: number | null = null;
 
@@ -314,6 +319,7 @@ function run(content: Content): void {
     const checkpoint = CHECKPOINTS[nextCheckpoint];
     if (checkpoint && elapsed >= checkpoint[1]) {
       rows.push(snapshot(state, content, checkpoint[0]));
+      checkpointLifetimeEvil.set(checkpoint[0], state.lifetimeEvil);
       nextCheckpoint += 1;
     }
   }
@@ -370,10 +376,122 @@ function run(content: Content): void {
 
   console.log(`\n  ${'at'.padEnd(5)}${header(content)}`);
   for (const row of rows) console.log(`  ${row}`);
+
+  const evil2h = checkpointLifetimeEvil.get('2h');
+  const evil4h = checkpointLifetimeEvil.get('4h');
+  const evil8h = checkpointLifetimeEvil.get('8h');
+  if (evil2h && evil4h && evil8h) {
+    console.log('\n  growth exponent (lifetime Evil vs. time; warn above a = 18.18)');
+    console.log(`    2h -> 4h   a = ${growthExponent(evil2h, evil4h, 2).toFixed(3)}`);
+    console.log(`    4h -> 8h   a = ${growthExponent(evil4h, evil8h, 2).toFixed(3)}`);
+  }
+
   console.log(
     `\n  achievements earned: ${state.earnedAchievements.length} of ${content.achievements.length}`,
   );
   console.log();
+
+  prestigeLoop(content);
+}
+
+/**
+ * How steeply lifetime Evil grows with time, over the two windows the soul curve was
+ * fitted against. The stability condition is `a · q · p < 1`, where `q` is the
+ * exponent on lifetime Evil in the soul curve (0.055) and `p` is the exponent on
+ * souls in the favour formula (1 — favour is linear in souls). The warning line is
+ * therefore `a < 1 / q = 18.18`. An earlier draft of this comment wrongly folded
+ * `k · perSoul` (a coefficient, not an exponent) into that product and warned at
+ * `a = 1.66` — the same conflation `packages/content/test/generators.test.ts`
+ * already catches elsewhere.
+ *
+ * The shipping numbers sit on that line, not comfortably under it: `a = 16.97` over
+ * 2h→4h gives `a · q = 0.933`; `a = 18.38` over 4h→8h gives `a · q = 1.011`. Spec
+ * §2.1 says as much — the product "sits between 0.94 and 1.01, on the line" — and
+ * the loop still converges (see `prestigeLoop` below) because `a` itself falls as a
+ * run lengthens, pulling the product back under 1 rather than past it.
+ */
+function growthExponent(early: Decimal, late: Decimal, timesLonger: number): number {
+  return late.div(early).ln().toNumber() / Math.log(timesLonger);
+}
+
+/**
+ * Eight successive runs, claiming souls between each.
+ *
+ * The 2026-08-08 soul curve spec's §1 fault — favour compounding without limit — cannot
+ * be seen in any single run, and every table above this one is a single run.
+ *
+ * **Exact settling never happens, by construction.** `lifetimeEvil` survives every
+ * prestige reset, souls are a strictly increasing function of it, and favour is
+ * linear in souls (see `growthExponent` above) — so favour creeps upward forever,
+ * however slowly. A check for "the last two runs report the same favour" cannot pass
+ * on any correct build; it would only ever pass by widening its own tolerance until
+ * noise and a real problem look alike. What is measured instead is deceleration: on
+ * a converging build, each successive step ratio is smaller than the one before it.
+ * The old, divergent curve fails this hard rather than marginally — its step ratios
+ * on this same cadence went 14.7 then 3.1e7, increasing — so this is a sharper
+ * discriminator than any band on the favour value itself.
+ *
+ * Two checks, both printed on their own line so a failing run shows which one broke:
+ *   1. Every step ratio is smaller than the one before it (monotone deceleration).
+ *   2. The final step ratio is under 1.10 — a backstop for ratios that decrease but
+ *      too slowly to call the loop converged within eight runs.
+ */
+function prestigeLoop(content: Content): void {
+  const RUNS = 8;
+  const RUN_MS = 3 * HOUR;
+  const FINAL_RATIO_LIMIT = 1.1;
+  const state = createState(content);
+
+  console.log('\nPRESTIGE LOOP — eight three-hour runs');
+  console.log('run  favour going in   souls held after');
+
+  const favours: number[] = [];
+  for (let run = 1; run <= RUNS; run += 1) {
+    const favour = globalMultiplier(state, content).toNumber();
+    favours.push(favour);
+
+    for (let t = 0; t < RUN_MS; t += DT_MS) {
+      decide(state, content);
+      step(state, content, DT_MS);
+    }
+
+    if (prestigeGain(state, content).gt(0)) {
+      apply(state, content, { kind: 'prestige' });
+    }
+
+    console.log(
+      `${String(run).padStart(3)}  ${favour.toFixed(2).padStart(15)}   ${state.souls.toExponential(3).padStart(16)}`,
+    );
+  }
+
+  // ratios[i] is favours[i + 1] / favours[i] — one fewer entry than favours itself.
+  const ratios: number[] = [];
+  for (let i = 1; i < favours.length; i += 1) {
+    const previous = favours[i - 1] ?? 0;
+    const current = favours[i] ?? 0;
+    ratios.push(previous > 0 ? current / previous : Number.POSITIVE_INFINITY);
+  }
+  console.log(`\nstep ratios: ${ratios.map((ratio) => ratio.toFixed(3)).join(', ')}`);
+
+  let decelerating = true;
+  for (let i = 1; i < ratios.length; i += 1) {
+    const previous = ratios[i - 1] ?? 0;
+    const current = ratios[i] ?? 0;
+    if (current >= previous) {
+      decelerating = false;
+      break;
+    }
+  }
+  console.log(`deceleration: ${decelerating ? 'yes' : 'NO — a later step ratio rose'}`);
+
+  const finalRatio = ratios[ratios.length - 1] ?? Number.POSITIVE_INFINITY;
+  const underBackstop = finalRatio < FINAL_RATIO_LIMIT;
+  console.log(
+    `final ratio:  ${finalRatio.toFixed(3)} — ${underBackstop ? `under ${FINAL_RATIO_LIMIT}` : `NOT under ${FINAL_RATIO_LIMIT}`}`,
+  );
+
+  const settled = decelerating && underBackstop;
+  console.log(`\nsettled: ${settled ? 'yes' : 'NO — the loop is still climbing'}`);
 }
 
 function header(content: Content): string {
