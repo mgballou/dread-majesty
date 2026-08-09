@@ -191,9 +191,16 @@ export interface SmiteDef {
 }
 
 export interface PrestigeDef {
-  /** souls = floor(k * sqrt(lifetimeEvil / scale)) */
+  /** souls = floor(k * (lifetimeEvil / scale) ^ exponent) */
   readonly k: number;
   readonly scale: string;
+  /**
+   * How steeply souls follow lifetime Evil. Not a free choice: the prestige loop
+   * diverges unless `exponent * perSoul` stays under the reciprocal of how fast the
+   * generator economy grows. See §2.1 of the 2026-08-08 soul curve spec, which also
+   * says when to re-derive it.
+   */
+  readonly exponent: number;
   /** Additive share of the global multiplier granted per soul. 0.02 = +2%. */
   readonly perSoul: number;
 }

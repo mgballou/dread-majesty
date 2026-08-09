@@ -96,8 +96,8 @@ const SOUL_EPSILON = 1e-7;
  * held souls.
  */
 export function soulsEarned(state: GameState, content: Content): Decimal {
-  const { k, scale } = content.prestige;
-  const raw = state.lifetimeEvil.div(new Decimal(scale)).sqrt().mul(k);
+  const { k, scale, exponent } = content.prestige;
+  const raw = state.lifetimeEvil.div(new Decimal(scale)).pow(exponent).mul(k);
   const nearest = raw.round();
   return raw.sub(nearest).abs().lte(SOUL_EPSILON) ? nearest : raw.floor();
 }
@@ -127,17 +127,24 @@ export function prestigeGain(state: GameState, content: Content): Decimal {
  * when the gap is too large for a JS number to carry.
  */
 export function msToNextSoul(state: GameState, content: Content): number | null {
-  const { k, scale } = content.prestige;
-  const target = new Decimal(scale).mul(soulsEarned(state, content).add(1).div(k).pow(2));
+  const { k, scale, exponent } = content.prestige;
+  const target = new Decimal(scale).mul(
+    soulsEarned(state, content)
+      .add(1)
+      .div(k)
+      .pow(1 / exponent),
+  );
   const remaining = target.sub(state.lifetimeEvil);
-  // `soulsEarned` takes a square root; `target` squares back up. They are inverse
-  // operations, not the same computation, and a double mantissa cannot always carry
-  // one back through the other exactly — well past 1e30 the two paths routinely
-  // disagree about which side of an integer `lifetimeEvil` actually sits on.
-  // `remaining <= 0` there means precision has run out, not that a soul is due.
-  // Null, the existing "cannot say" contract, is the honest answer — never a false
-  // "any moment now" that would sit on the panel forever because the soul count
-  // never moves to clear it.
+  // `soulsEarned` raises lifetime Evil to `exponent`; `target` raises the soul count
+  // back by its reciprocal. They are inverse operations, not the same computation, and
+  // a double mantissa cannot always carry one back through the other exactly — well
+  // past 1e30 the two paths routinely disagree about which side of an integer
+  // `lifetimeEvil` actually sits on. A small exponent makes the reciprocal large,
+  // which widens that gap rather than narrowing it, so this branch matters more here
+  // than it did under the square root. `remaining <= 0` means precision has run out,
+  // not that a soul is due. Null, the existing "cannot say" contract, is the honest
+  // answer — never a false "any moment now" that would sit on the panel forever
+  // because the soul count never moves to clear it.
   if (remaining.lte(0)) return null;
 
   const rate = overseenProductionPerSecond(state, content, 'evil');
