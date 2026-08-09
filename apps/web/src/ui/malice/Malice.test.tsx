@@ -11,7 +11,7 @@ import { Malice } from './Malice.tsx';
 function rich(): GameState {
   const state = createState(CURRENT);
   state.resources.evil = new Decimal('1e9');
-  state.souls = new Decimal(100);
+  state.souls = new Decimal(2000);
   return state;
 }
 
