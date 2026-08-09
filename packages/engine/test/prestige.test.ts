@@ -59,3 +59,21 @@ describe('msToNextSoul', () => {
     expect(msToNextSoul(state, fixture)).toBeCloseTo(target.div(rate).mul(1000).toNumber(), -3);
   });
 });
+
+describe('soulsEarned at an exponent that is not a square root', () => {
+  it('raises lifetime Evil to the exponent the content names', () => {
+    const content = { ...fixture, prestige: { ...fixture.prestige, exponent: 1 } };
+    const state = createState(content);
+    state.lifetimeEvil = new Decimal('2e11');
+
+    expect(soulsEarned(state, content).toNumber()).toBe(300);
+  });
+
+  it('still reads as a square root when the exponent says so', () => {
+    const content = { ...fixture, prestige: { ...fixture.prestige, exponent: 0.5 } };
+    const state = createState(content);
+    state.lifetimeEvil = new Decimal('4e11');
+
+    expect(soulsEarned(state, content).toNumber()).toBe(300);
+  });
+});
