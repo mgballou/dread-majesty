@@ -202,6 +202,40 @@ const MIGRATIONS: Record<number, (blob: SaveBlob) => SaveBlob> = {
   // worth its base, every ladder at rung 0 and nothing spent. `deserialize` supplies
   // them, so this step only moves the number.
   7: (blob) => ({ ...blob, saveVersion: 8 }),
+  // 8 → 9: souls are re-denominated. The old curve paid `150·√(lifetime/1.14e14)` and
+  // each soul was worth 2%; the new one pays `600·(lifetime/5.07e9)^0.055` at a tenth
+  // of a percent. `lifetimeEvil` survives every reset, so the new total is not
+  // converted from the old count at all — it is recomputed from the Evil that earned
+  // it, which is exact where a rescale of the count would not be.
+  //
+  // The two soul fields cannot be converted separately. `prestigeGain` is
+  // `soulsEarned − souls − soulsSpent`, and the map between denominations is not
+  // linear, so rescaling each in turn would break that invariant and hand the player
+  // either free souls or a debt they can never clear. Instead the total is
+  // recomputed, what the player already owns is priced at the new rates, and the
+  // remainder is what they hold.
+  //
+  // Every constant here is inlined and frozen. The engine may not import balance
+  // data, and a shipped migration must not drift when the content is next retuned.
+  8: (blob) => {
+    const KEEP_PRICES = [220, 660, 1100, 1760] as const;
+
+    const earned = new Decimal(blob.lifetimeEvil).div(new Decimal('5.07e9')).pow(0.055).mul(600);
+
+    let spent = new Decimal(0);
+    for (const kept of Object.values(blob.smiteKept ?? {})) {
+      for (let rung = 0; rung < kept; rung += 1) {
+        spent = spent.add(KEEP_PRICES[rung] ?? 0);
+      }
+    }
+
+    return {
+      ...blob,
+      saveVersion: 9,
+      souls: Decimal.max(0, earned.sub(spent)).floor().toString(),
+      soulsSpent: spent.toString(),
+    };
+  },
 };
 
 export function migrate(blob: SaveBlob): SaveBlob {

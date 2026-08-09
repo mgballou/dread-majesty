@@ -319,9 +319,11 @@ describe('the version floor', () => {
 
 describe('save version 8', () => {
   it('migrates a version 7 blob', () => {
+    // `migrate` always runs the full chain to `SAVE_VERSION`, not one step, so a
+    // version 7 blob lands at the current version rather than stopping at 8.
     const blob = { ...serialize(createState(fixture), 0), saveVersion: 7 };
 
-    expect(migrate(blob).saveVersion).toBe(8);
+    expect(migrate(blob).saveVersion).toBe(SAVE_VERSION);
   });
 
   it('starts a migrated save with no apathy', () => {
@@ -357,6 +359,53 @@ describe('save version 8', () => {
     blob.smiteKept = { weight: 4 };
 
     expect(deserialize(blob).smiteRungs.weight).toBe(0);
+  });
+});
+
+describe('migrating souls to the 2026-08-08 denomination', () => {
+  // A real playtest save: 31,630 souls under the old curve, which recovers a
+  // lifetime Evil of ~5.07e18. The new curve pays 600·(5.07e18/5.07e9)^0.055,
+  // which floors to 1875 — verified directly against `break_eternity.js`, not
+  // estimated. `soulsSpent` and `smiteKept` are both zero, so nothing has been
+  // priced at the old rates yet.
+  const blob: SaveBlob = {
+    ...serialize(createState(fixture), 0),
+    saveVersion: 8,
+    souls: '31630',
+    soulsSpent: '0',
+    lifetimeEvil: '5.07e18',
+    smiteKept: { reach: 0, weight: 0, forgetting: 0, restraint: 0 },
+  };
+
+  it('lands the reported playtest save at the new curve floor', () => {
+    const migrated = migrate(blob);
+
+    expect(Number(migrated.souls)).toBe(1875);
+  });
+
+  it('stamps the new version', () => {
+    expect(migrate(blob).saveVersion).toBe(9);
+  });
+
+  it('never leaves the player owing souls they cannot have', () => {
+    const migrated = migrate({ ...blob, soulsSpent: '792' });
+
+    expect(Number(migrated.souls)).toBeGreaterThanOrEqual(0);
+  });
+
+  it('charges the new price for rungs already kept', () => {
+    const kept = { reach: 4, weight: 0, forgetting: 0, restraint: 0 };
+    const migrated = migrate({ ...blob, smiteKept: kept });
+
+    expect(Number(migrated.soulsSpent)).toBe(3740);
+  });
+
+  it('spends past what is earned rather than go negative', () => {
+    const kept = { reach: 4, weight: 4, forgetting: 0, restraint: 0 };
+
+    const migrated = migrate({ ...blob, smiteKept: kept });
+
+    expect(Number(migrated.souls)).toBe(0);
   });
 });
 
