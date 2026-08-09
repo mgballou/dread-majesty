@@ -55,9 +55,9 @@ const TAIL_MILESTONES: readonly MilestoneDef[] = (() => {
  * Tuned against `pnpm harness`, which reports the numbers below. Change anything
  * here and re-run it; the whole point of the harness is that balance is measurable.
  *
- *   Warrens        10m 57s    first prestige   41m 51s
- *   Dark Legions   40m 35s    souls at 8h      3.6e6
- *   Fortresses     1h 22m     souls at 12h     6.4e7
+ *   Warrens        10m 57s    first prestige   5s
+ *   Dark Legions   40m 35s    souls at 8h      3160
+ *   Fortresses     1h 22m     souls at 12h     4335
  *   Thrones        2h 29m
  *
  * Thrones now land past two hours, with a reset well before the first — still the
@@ -166,11 +166,12 @@ const TAIL_MILESTONES: readonly MilestoneDef[] = (() => {
  * price against.
  *
  * *Souls.* `scale` is 5.07e9, `k` 600, `exponent` 0.055 and `perSoul` 0.001. Souls come
- * out as `k·(lifetime/scale)^exponent`. The first soul still lands at 41m 51s, which is
- * what `scale` names; the curve past it is far flatter than the square root it replaced,
- * because the square root let each reset raise the soul count to about the ninth power.
- * A run pays roughly 600 souls at 41m, 1,230 at three hours and 4,340 at twelve. `k` and
- * `perSoul` multiply to 0.6 and only that product matters to the balance.
+ * out as `k·(lifetime/scale)^exponent`. The exponent is tiny, so the first soul lands
+ * within seconds of the first Evil — raising `k` to 600 is what put it there, on
+ * purpose, not an accident of the curve. What `scale` still marks is the lifetime Evil,
+ * 41m 51s in, where the count passes 600 souls. A run pays roughly 600 souls at 41m,
+ * 1,230 at three hours and 4,340 at twelve. `k` and `perSoul` multiply to 0.6 and only
+ * that product matters to the balance.
  *
  * The Minion tier keeps its **opening pace** — 5 Evil every 4s, 1.25 a second. The yield
  * doubled with the rest of the Evil scale, so what a Minion is worth against everything
@@ -374,7 +375,9 @@ export const v1: Content = {
     // reads as broken whatever the arithmetic underneath. Any pair holding the product
     // at 0.6 plays identically; changing one without the other moves the plateau.
     k: 600,
-    // Lifetime Evil at 41m 51s, where the first soul has always landed.
+    // Lifetime Evil at 41m 51s, where the soul count passes 600 — not where the first
+    // soul lands. The exponent is small enough that the first soul lands within
+    // seconds of the first Evil; raising `k` to 600 is what put it there, on purpose.
     scale: '5.07e9',
     // Not a free choice. The old 0.5 made each reset raise the soul count to about the
     // ninth power, so favour ran ×12, then ×634, then past anything the simulation could

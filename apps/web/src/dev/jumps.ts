@@ -90,13 +90,16 @@ function board(content: Content, spec: Board): GameState {
 /**
  * Lifetime Evil at which the prestige formula first pays out `souls`.
  *
- * Nudged a hair over the exact threshold. The formula floors a square root, so
- * landing on the boundary to the last bit would pay out one soul fewer about half
- * the time, and a jump called "1 soul owed" that owes none is worse than useless.
+ * Nudged a hair over the exact threshold. The formula floors, so landing on the
+ * boundary to the last bit would pay out one soul fewer about half the time, and a
+ * jump called "1 soul owed" that owes none is worse than useless. The exponent comes
+ * from `content.prestige` rather than a hardcoded shape, so this cannot drift from
+ * `scale`/`k`/`exponent` the way it once did — the fixed square root here used to
+ * quote a lifetime Evil the live formula no longer agreed with.
  */
 function lifetimeForSouls(content: Content, souls: number): Decimal {
-  const { k, scale } = content.prestige;
-  return new Decimal(scale).mul(new Decimal(souls).div(k).pow(2)).mul(1.000001);
+  const { k, scale, exponent } = content.prestige;
+  return new Decimal(scale).mul(new Decimal(souls).div(k).pow(1 / exponent)).mul(1.000001);
 }
 
 /**

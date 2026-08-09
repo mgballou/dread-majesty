@@ -257,9 +257,11 @@ describe('the prestige curve', () => {
   });
 
   it('keeps the exponent under the threshold the economy allows', () => {
-    // Spec §2.1: stability needs exponent * perSoul * k * a < 1, and measured `a` peaks
-    // at 18.4. The product above is 0.6, so this is the whole of the condition.
-    expect(v1.prestige.exponent * 0.6 * 18.4).toBeLessThan(1.05);
+    // Spec §2.1: stability needs a·q·p < 1, where `q` is the exponent on lifetime Evil
+    // and `p` is the exponent on souls in the favour formula. Favour is linear in
+    // souls, so p is 1 and drops out. Measured `a` peaks at 18.4, so this is the whole
+    // of the condition — `k` and `perSoul` do not belong in it.
+    expect(v1.prestige.exponent * 18.4).toBeLessThan(1.05);
   });
 
   it('anchors the scale on the lifetime Evil that first paid a soul', () => {

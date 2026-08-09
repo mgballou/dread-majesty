@@ -180,7 +180,7 @@ describe('PrestigePanel', () => {
     expect(waitMs).not.toBeNull();
 
     const term = screen.getByText(CURRENT_COPY.prestige.nextSoul);
-    expect(term.nextElementSibling).toHaveTextContent(formatDuration(waitMs ?? 0));
+    expect(term.nextElementSibling?.textContent).toBe(formatDuration(waitMs ?? 0));
   });
 
   it('says nothing definite when nothing is running', () => {
