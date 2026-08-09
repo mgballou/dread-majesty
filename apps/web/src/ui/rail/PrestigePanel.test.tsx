@@ -59,7 +59,7 @@ describe('PrestigePanel', () => {
   });
 
   it('names the multiplier the souls already grant', () => {
-    state.souls = new Decimal(10);
+    state.souls = new Decimal(200);
 
     draw();
 
@@ -178,7 +178,9 @@ describe('PrestigePanel', () => {
 
     const waitMs = msToNextSoul(state, CURRENT);
     expect(waitMs).not.toBeNull();
-    expect(screen.getByText(formatDuration(waitMs ?? 0))).toBeInTheDocument();
+
+    const term = screen.getByText(CURRENT_COPY.prestige.nextSoul);
+    expect(term.nextElementSibling).toHaveTextContent(formatDuration(waitMs ?? 0));
   });
 
   it('says nothing definite when nothing is running', () => {
