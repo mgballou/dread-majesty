@@ -181,15 +181,19 @@ into the content.
 ### 4.1 Keep prices
 
 Keeping a smite rung costs 8 / 20 / 50 / 120 souls. Under the new curve that is more than
-the economy will ever hold. Today rung 1 costs about 18% of a first prestige. **220 / 660 / 1,100 / 1,760** holds that
-share exactly — 3,740 souls for a full ladder, 14,960 for all four, against a bank that
-reaches roughly 6,000 at the plateau and climbs past it on longer runs and deeper content.
-Keeping everything stays a multi-day goal, which is what it is today.
+the economy will ever hold. Today rung 1 costs about 18% of a first prestige taken at
+three hours — the reference point the old figure was measured against, since the share a
+soul count buys is not fixed: it runs 36.6% at 41 minutes, 24.1% at 2h10m, 17.9% at three
+hours and 14.0% at four hours, falling as the run that earns the first prestige runs
+longer. **220 / 660 / 1,100 / 1,760** holds the three-hour share at that same reference
+point — 3,740 souls for a full ladder, 14,960 for all four, against a bank that reaches
+roughly 6,000 at the plateau and climbs past it on longer runs and deeper content. Keeping
+everything stays a multi-day goal, which is what it is today.
 
 The `k = 600` scale is what makes this land cleanly. At `k = 1` the same prices rounded to
 1 / 3 / 5 / 8, and a first rung could not be priced below one whole soul — roughly a
-quarter of a first prestige rather than the intended 18%. Granularity was the constraint,
-and raising `k` removed it.
+quarter of a first prestige at the three-hour reference point, well past the intended 18%.
+Granularity was the constraint, and raising `k` removed it.
 
 ### 4.2 Achievements
 

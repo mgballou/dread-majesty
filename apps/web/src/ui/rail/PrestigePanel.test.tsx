@@ -72,6 +72,12 @@ describe('PrestigePanel', () => {
     expect(screen.getByText(/0\.1% each/)).toBeInTheDocument();
   });
 
+  it('says what a soul adds, in the same share as the favour line', () => {
+    draw();
+
+    expect(screen.getByText(CURRENT_COPY.prestige.worth('0.1%'))).toBeInTheDocument();
+  });
+
   it('shows the favour a large soul count buys', () => {
     state.souls = new Decimal(1800);
 

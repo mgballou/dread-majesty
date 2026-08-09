@@ -3,7 +3,11 @@ import { CURRENT } from '@dm/content';
 import { createState } from '@dm/engine';
 import { isPrestigeWorthShowing } from './reveals.ts';
 
-const firstSoul = Number(CURRENT.prestige.scale) / CURRENT.prestige.k ** 2;
+// Mirrors the formula `isPrestigeWorthShowing` solves: souls = k * (lifetime/scale)^exponent,
+// inverted at souls = 1. Under the current curve this lands within a whisker of zero
+// lifetime Evil, which is the point — the first soul now lands almost immediately.
+const { k, scale, exponent } = CURRENT.prestige;
+const firstSoul = Number(scale) * (1 / k) ** (1 / exponent);
 
 describe('isPrestigeWorthShowing', () => {
   it('stays out of the way on a fresh save', () => {

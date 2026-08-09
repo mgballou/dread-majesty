@@ -54,7 +54,7 @@ export interface GameState {
    * `prestigeGain` is `soulsEarned(lifetimeEvil) − souls`, so without this a spent soul
    * would come straight back on the next reset and permanence would be free. Subtracting
    * it is what makes a Keep cost something. `globalMultiplier` reads `souls` alone and
-   * not this, so spending also costs the 2%-per-soul production it was granting — which
+   * not this, so spending also costs the per-soul production it was granting — which
    * is the whole price of locking a rung in.
    */
   soulsSpent: Decimal;
