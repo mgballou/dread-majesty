@@ -146,7 +146,7 @@ Measured on an unboosted run:
 
 | At    | 41m | 3h    | 4h37  | 6h12  | 8h    | 12h   | 21h   |
 | ----- | --- | ----- | ----- | ----- | ----- | ----- | ----- |
-| Souls | 600 | 1,230 | 1,800 | 2,400 | 3,160 | 4,200 | 6,000 |
+| Souls | 600 | 1,230 | 1,800 | 2,400 | 3,160 | 4,340 | 6,000 |
 
 The count climbs continuously rather than in steps. This is the second reason for a large
 `k`: at `k = 1` the floored count sat unchanged for stretches of up to three and a half
