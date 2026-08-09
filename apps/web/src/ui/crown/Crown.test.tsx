@@ -74,7 +74,7 @@ describe('Crown', () => {
   });
 
   it('names what souls bought once there are any', () => {
-    render(crown(seeded(50)));
+    render(crown(seeded(1000)));
 
     expect(screen.getByText(/×2 to everything/)).toBeInTheDocument();
   });

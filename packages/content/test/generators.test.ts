@@ -251,6 +251,36 @@ describe('the smite ladders', () => {
   });
 });
 
+describe('the prestige curve', () => {
+  it('holds the product that fixes the plateau', () => {
+    expect(v1.prestige.k * v1.prestige.perSoul).toBeCloseTo(0.6, 6);
+  });
+
+  it('keeps the exponent under the threshold the economy allows', () => {
+    // Spec §2.1: stability needs exponent * perSoul * k * a < 1, and measured `a` peaks
+    // at 18.4. The product above is 0.6, so this is the whole of the condition.
+    expect(v1.prestige.exponent * 0.6 * 18.4).toBeLessThan(1.05);
+  });
+
+  it('anchors the scale on the lifetime Evil that first paid a soul', () => {
+    const { k, scale, exponent } = v1.prestige;
+    // 5.147e9 is the measured lifetime Evil at 41m 51s.
+    const souls = k * Math.pow(5.147e9 / Number(scale), exponent);
+
+    expect(Math.round(souls)).toBe(600);
+  });
+
+  it('spans a run rather than a lifetime', () => {
+    const { k, scale, exponent } = v1.prestige;
+    // 2.394e15 and 2.1e25 are measured lifetime Evil at three and twelve hours.
+    const atThreeHours = k * Math.pow(2.394e15 / Number(scale), exponent);
+    const atTwelveHours = k * Math.pow(2.1e25 / Number(scale), exponent);
+
+    expect(Math.round(atThreeHours)).toBe(1231);
+    expect(Math.round(atTwelveHours)).toBe(4336);
+  });
+});
+
 describe('the smite upgrade ids', () => {
   it('names four ladders', () => {
     expect(SMITE_UPGRADE_IDS).toHaveLength(4);
