@@ -165,10 +165,12 @@ const TAIL_MILESTONES: readonly MilestoneDef[] = (() => {
  * 200 × 0.4 = 80. The Throne's three extrapolate that ratio, having no tier above to
  * price against.
  *
- * *Souls.* `scale` is 1.14e14 and `k` 150. The two are one lever, not two: souls come
- * out as `k·√(lifetime/scale)`, which is `√(lifetime / (scale/k²))`, so only the ratio
- * has any effect. The first soul lands at 41m 51s and the 40–50 §5.3 asks for at about
- * 2h 10m, which is the first reset actually worth taking. `perSoul` stays 0.02.
+ * *Souls.* `scale` is 5.07e9, `k` 600, `exponent` 0.055 and `perSoul` 0.001. Souls come
+ * out as `k·(lifetime/scale)^exponent`. The first soul still lands at 41m 51s, which is
+ * what `scale` names; the curve past it is far flatter than the square root it replaced,
+ * because the square root let each reset raise the soul count to about the ninth power.
+ * A run pays roughly 600 souls at 41m, 1,230 at three hours and 4,340 at twelve. `k` and
+ * `perSoul` multiply to 0.6 and only that product matters to the balance.
  *
  * The Minion tier keeps its **opening pace** — 5 Evil every 4s, 1.25 a second. The yield
  * doubled with the rest of the Evil scale, so what a Minion is worth against everything
@@ -365,11 +367,22 @@ export const v1: Content = {
   unlockFraction: 0.5,
 
   prestige: {
-    k: 150,
-    // First soul lands at 41m 51s (lifetime = scale / k² = 5.07e9).
-    scale: '1.14e14',
-    exponent: 0.5,
-    perSoul: 0.02,
+    // `k` and `perSoul` are one lever: favour is `1 + perSoul * k * (L/scale)^exponent`,
+    // so their product, 0.6, is the whole of the balance and `k` alone decides what the
+    // player reads. Six hundred is a display choice — souls in the hundreds and
+    // thousands at a tenth of a percent each, because a prestige currency reading `2`
+    // reads as broken whatever the arithmetic underneath. Any pair holding the product
+    // at 0.6 plays identically; changing one without the other moves the plateau.
+    k: 600,
+    // Lifetime Evil at 41m 51s, where the first soul has always landed.
+    scale: '5.07e9',
+    // Not a free choice. The old 0.5 made each reset raise the soul count to about the
+    // ninth power, so favour ran ×12, then ×634, then past anything the simulation could
+    // carry. See §1 and §2.1 of the 2026-08-08 soul curve spec for the measurement and
+    // for when this has to be re-derived — it is tied to how fast the generator economy
+    // grows, not to prestige.
+    exponent: 0.055,
+    perSoul: 0.001,
   },
 
   offlineCapMs: 4 * HOUR,
