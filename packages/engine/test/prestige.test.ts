@@ -97,16 +97,19 @@ describe('the soul formula and its inverse', () => {
   });
 
   it('puts the next soul strictly ahead of where the player stands', () => {
+    let checked = 0;
     for (const exponent of exponents) {
       const content = { ...fixture, prestige: { ...fixture.prestige, exponent } };
       for (const lifetime of lifetimes) {
-        const state = createState(content);
+        const state = appointed(content);
         state.lifetimeEvil = new Decimal(lifetime);
         state.gens.minion.owned = new Decimal(10);
         const wait = msToNextSoul(state, content);
         if (wait === null) continue;
         expect(wait).toBeGreaterThan(0);
+        checked++;
       }
     }
+    expect(checked).toBe(18);
   });
 });
