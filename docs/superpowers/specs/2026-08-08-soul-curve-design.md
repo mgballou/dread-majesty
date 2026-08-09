@@ -231,7 +231,7 @@ the content is next retuned. `MIGRATIONS` entries are never edited once shipped.
 `MIN_SUPPORTED_SAVE_VERSION` stays at 6.
 
 A worked case, from the reported playtest: 31,630 souls recover a lifetime Evil of
-5.07×10¹⁸, which re-evaluates to **1,800 souls, ×2.8**. The count barely moves; the
+5.069×10¹⁸, which re-evaluates to **1,875 souls, ×2.9**. The count barely moves; the
 multiplier falls from ×634. That is the correction, and it is the right shape for it —
 nothing the player built is lost, and the ×634 was never real power. It was the fault in
 §1.
