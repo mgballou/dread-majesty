@@ -77,3 +77,36 @@ describe('soulsEarned at an exponent that is not a square root', () => {
     expect(soulsEarned(state, content).toNumber()).toBe(300);
   });
 });
+
+describe('the soul formula and its inverse', () => {
+  const exponents = [0.5, 0.2, 0.055];
+  const lifetimes = ['1e10', '5e12', '3e15', '7e18', '2e22', '9e25'];
+
+  it('never pays fewer souls for more lifetime Evil', () => {
+    for (const exponent of exponents) {
+      const content = { ...fixture, prestige: { ...fixture.prestige, exponent } };
+      let previous = new Decimal(-1);
+      for (const lifetime of lifetimes) {
+        const state = createState(content);
+        state.lifetimeEvil = new Decimal(lifetime);
+        const souls = soulsEarned(state, content);
+        expect(souls.gte(previous)).toBe(true);
+        previous = souls;
+      }
+    }
+  });
+
+  it('puts the next soul strictly ahead of where the player stands', () => {
+    for (const exponent of exponents) {
+      const content = { ...fixture, prestige: { ...fixture.prestige, exponent } };
+      for (const lifetime of lifetimes) {
+        const state = createState(content);
+        state.lifetimeEvil = new Decimal(lifetime);
+        state.gens.minion.owned = new Decimal(10);
+        const wait = msToNextSoul(state, content);
+        if (wait === null) continue;
+        expect(wait).toBeGreaterThan(0);
+      }
+    }
+  });
+});
