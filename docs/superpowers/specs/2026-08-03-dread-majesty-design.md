@@ -302,6 +302,10 @@ the harness; §5.2's table is the output of that run.
 
 ### 5.4 Prestige — Damned Souls
 
+**Superseded.** The formula below diverged in play — favour ran ×12, then ×634 — and
+`docs/superpowers/specs/2026-08-08-soul-curve-design.md` replaced it. This section stays
+as a historical record of the original design and is not the shipping formula.
+
 `souls = floor(K × sqrt(lifetimeEvil / SCALE))`, tuned to `K = 150`, `SCALE = 5e14`.
 Each soul adds +2% to a global production multiplier, additively. The first soul
 lands at `SCALE / K²` lifetime Evil — about 2.2×10¹⁰, reached near the three-hour

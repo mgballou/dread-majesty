@@ -1,6 +1,6 @@
 # The Soul Curve
 
-**Status:** approved, not yet built
+**Status:** built
 **Supersedes:** §5.4 of `2026-08-03-dread-majesty-design.md` (the prestige formula only)
 
 Prestige compounds without limit. After two resets a playtest run reached ×634 to
@@ -146,7 +146,7 @@ Measured on an unboosted run:
 
 | At    | 41m | 3h    | 4h37  | 6h12  | 8h    | 12h   | 21h   |
 | ----- | --- | ----- | ----- | ----- | ----- | ----- | ----- |
-| Souls | 600 | 1,230 | 1,800 | 2,400 | 3,160 | 4,340 | 6,000 |
+| Souls | 600 | 1,230 | 1,800 | 2,400 | 3,160 | 4,335 | 6,000 |
 
 The count climbs continuously rather than in steps. This is the second reason for a large
 `k`: at `k = 1` the floored count sat unchanged for stretches of up to three and a half
@@ -202,8 +202,8 @@ sits a long way past the plateau. The three become **`souls-500`**, **`souls-300
 **`souls-10000`** — the first landing just before the 41-minute mark that used to be the
 first soul, the second around seven hours, the third a genuine long-haul goal reached over
 several resets. Only two ids change, so the `AchievementId` union and the copy entries move
-together. The copy keeps its jokes; "Hold 500 Damned Souls. You file them by date" needs no
-rewriting beyond the number.
+together. The copy keeps its jokes; "Hold 3,000 Damned Souls. You file them by date" needs
+no rewriting beyond the number.
 
 An achievement id that disappears must not strand a save. `deserialize` already filters
 `earnedAchievements` against the shipping id list, so a player who earned `souls-100`
@@ -213,32 +213,54 @@ but it does need a test, because nothing currently proves it.
 ### 4.3 Save migration
 
 `souls` and `soulsSpent` are stored in the old denomination. `lifetimeEvil` survives every
-reset, so the conversion is exact rather than approximate. Save version **8 → 9**.
+reset, so the total is not converted — it is recomputed from the Evil that earned it,
+which is exact. Save version **8 → 9**.
 
 The naive migration — rescale each field through the formula — is wrong. `prestigeGain`
 depends on the invariant `souls + soulsSpent ≈ soulsEarned(lifetimeEvil)`, and the map
 between denominations is non-linear, so transforming the two fields separately breaks it
-and hands the player free souls or a permanent debt. The migration must instead:
+and hands the player free souls or a permanent debt.
 
-1. Recompute the total from `lifetimeEvil` at the new exponent. This is the true new
+A second approach was tried and shipped, then failed review: recompute `soulsSpent` as
+the sum of the **new** Keep prices for the rungs in `smiteKept`. The new prices hold a
+fixed *three-hour* share of the new curve — 220/660/1,100/1,760 souls, a full ladder at
+3,740. A save that reset later than three hours in, or reset more than once, recovers a
+new total nowhere near that reference point, so the charge routinely exceeded the whole
+new bank. Checked against the reported playtest save: a player holding one full ladder
+was charged 3,740 against a new bank of 1,875 and left with zero — favour ×1.00 instead
+of the ×2.9 a Keep-free save of the same size gets. The game rewards buying permanence;
+this migration would have punished it by wiping the player who did.
+
+**The fix charges the share of the old bank the player had already spent, not a re-priced
+bill.** The old blob's `souls` and `soulsSpent` record exactly what the player held and
+spent under the old curve, and that spent *fraction* is a property of their play, not of
+either curve's prices — it survives the re-denomination exactly, and it can never exceed
+one, so it can never charge more than the new total pays out. The migration:
+
+1. Recomputes the total from `lifetimeEvil` at the new exponent. This is the true new
    `soulsEarned`, and it is exact.
-2. Recompute `soulsSpent` as the sum of the **new** Keep prices for the rungs in
-   `smiteKept`. A player who bought a full ladder still owns it, and now owes 3,740 rather
-   than 198.
-3. Set `souls` to the remainder, floored at zero.
+2. Takes the old spent fraction, `oldSoulsSpent / (oldSouls + oldSoulsSpent)`, floors it
+   against the new total to get the new `soulsSpent`, and sets `souls` to the remainder
+   by subtraction — not by a second, separate computation — so the two fields sum to
+   exactly `floor(soulsEarned)`.
 
-The migration inlines its constants rather than importing content. This is required —
-`packages/engine` may not import balance data — and it is also correct on its own terms:
-a shipped migration is frozen against the numbers of its moment, and must not drift when
-the content is next retuned. `MIGRATIONS` entries are never edited once shipped.
+This also removes the dependency on `smiteKept` and the new Keep prices entirely. A
+migration that reads no price table cannot drift when the content is next retuned, which
+this version could: `MIGRATIONS` entries are never edited once shipped, so the first
+attempt would have stayed wrong forever once it reached a real player.
 
 `MIN_SUPPORTED_SAVE_VERSION` stays at 6.
 
-A worked case, from the reported playtest: 31,630 souls recover a lifetime Evil of
-5.069×10¹⁸, which re-evaluates to **1,875 souls, ×2.9**. The count barely moves; the
-multiplier falls from ×634. That is the correction, and it is the right shape for it —
-nothing the player built is lost, and the ×634 was never real power. It was the fault in
-§1.
+A worked case, from the reported playtest: 31,630 souls, none spent, recover a lifetime
+Evil of 5.069×10¹⁸, which re-evaluates to **1,875 souls, ×2.9**. The count barely moves;
+the multiplier falls from ×634. That is the correction, and it is the right shape for
+it — nothing the player built is lost, and the ×634 was never real power. It was the
+fault in §1.
+
+The same save with a full ladder already kept (198 of the 31,630 souls spent under the
+old prices) lands at **1,864 souls, soulsSpent 11, ×2.86** — the Keep survives, the
+spent share is preserved, and the bank is barely dented. Two full ladders kept (396
+spent) lands at **1,852 souls, soulsSpent 23, ×2.85**. No case wipes the player.
 
 ## 5 Interface
 
@@ -276,8 +298,11 @@ The anchor is the harness, not a unit test — the fault in §1 is invisible to 
 - **The measured growth exponent, reported not asserted.** The same harness prints `a` over
   2h→4h and 4h→8h. Nobody can eyeball a divergent prestige loop, but anyone can read
   `a·q·p` off a report and see it crossing 1.
-- **Soul arrivals.** An engine test pinning the first soul at 41m ± 1m against a fixture,
-  so a future content edit cannot move it silently.
+- **Soul arrivals.** A content test pinning the lifetime Evil at which the soul count
+  passes 600 — 41m 51s, the moment `scale` marks — against shipping content, so a future
+  retune cannot move it silently. This is not the first soul: under this curve the first
+  soul lands within seconds of the first Evil, which is a side effect of a small exponent
+  rather than a figure worth pinning.
 - **The migration round trip.** A version 8 blob with known `souls`, `soulsSpent`,
   `smiteKept` and `lifetimeEvil`, asserting the invariant in §4.3 holds after migrating,
   and asserting `prestigeGain` immediately after load is not negative.
