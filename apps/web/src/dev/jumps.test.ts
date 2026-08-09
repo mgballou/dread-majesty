@@ -53,8 +53,8 @@ describe('jumps', () => {
 
   it('owes a soul at the threshold the prestige formula names', () => {
     const state = find('owed:1').build();
-    const { k, scale } = CURRENT.prestige;
-    expect(state.lifetimeEvil.div(scale).sqrt().mul(k).floor().toNumber()).toBe(1);
+    const { k, scale, exponent } = CURRENT.prestige;
+    expect(state.lifetimeEvil.div(scale).pow(exponent).mul(k).floor().toNumber()).toBe(1);
   });
 
   it('banks souls without banking Evil', () => {
