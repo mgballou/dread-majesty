@@ -66,6 +66,20 @@ describe('PrestigePanel', () => {
     expect(screen.getByText('×1.2')).toBeInTheDocument();
   });
 
+  it('names the share a soul is worth', () => {
+    draw();
+
+    expect(screen.getByText(/0\.1% each/)).toBeInTheDocument();
+  });
+
+  it('shows the favour a large soul count buys', () => {
+    state.souls = new Decimal(1800);
+
+    draw();
+
+    expect(screen.getByText('×2.8')).toBeInTheDocument();
+  });
+
   it('says the souls will wait once they are owed', () => {
     state.lifetimeEvil = new Decimal('1e16');
 
