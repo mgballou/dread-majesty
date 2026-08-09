@@ -64,6 +64,56 @@ on a curve this flat would barely move — the number would read as nearly const
 souls are what this exponent produces, and the tone suits it. Something you file by date
 should be countable.
 
+## 2.1 Depth, and why `q` is not a constant
+
+The number 0.055 is not a property of prestige. It is `1/a`, and `a` is a property of the
+generator economy. Anything that changes how steeply the economy grows moves the
+threshold, and `q` has to move with it.
+
+Adding tiers is the obvious worry and turns out to be the smaller one. Measured, by
+truncating the chain from the top — real games, no invented content:
+
+| Tiers | `a` over 2h→4h |
+| ----- | -------------- |
+| 2     | 3.7            |
+| 3     | 13.9           |
+| 4     | 17.0           |
+| 5     | 17.0           |
+
+**`a` saturates.** The fifth tier adds nothing: a Throne making one Fortress every ninety
+minutes cannot compound fast enough to steepen the curve it sits on. Deep tiers extend a
+run in time rather than making it steeper, so a ten-tier chain does not imply `a = 36`.
+
+What deeper content does do is raise the ceiling, and this curve rewards that well.
+Measured plateau at a fixed run length, four tiers against five: **×3.4 → ×6.4**, and the
+soul bank 4 → 9. The plateau goes as `s₁·M^(a·q)`, a power of what the content can reach,
+so each tier added is worth roughly another doubling. This is the property that makes the
+curve worth keeping: prestige pays more as the game grows, without anything being retuned.
+
+A logarithmic curve — `souls ∝ log(lifetimeEvil)` — was considered and rejected on this
+exact ground. It cannot diverge, which is attractive, but its plateau goes as
+`s₁ + a·log M`: content adds a fixed amount rather than a factor. Measured over the same
+four-to-five-tier step it gained ×4.5 → ×5.5, against the power curve's ×3.4 → ×6.4. It
+buys safety by giving up the expansion the game is planned around.
+
+**The real fragility is margin, not depth.** Stability needs `a·q·p < 1`. Measured `a` is
+17.0 over 2h→4h and 18.4 over 4h→8h, so at `q·p = 0.055` the product sits between 0.94 and
+1.01 — on the line. The loop converges anyway, at four tiers and at five, because `a`
+itself falls as a run lengthens (14.2 over 8h→12h) and favour dilates time into that
+calmer stretch. **The design is stable because the economy saturates, not because the
+exponent is comfortably below the threshold.**
+
+That is a real dependency and it must be written down rather than discovered again:
+
+- `q` is derived, not chosen. The rule is `q < 1/a`, where `a` is the measured growth
+  exponent of lifetime Evil over the window players actually play.
+- Any change to generator pacing — cost curves, cycle times, milestone rungs, Overseer
+  factors — can move `a` and therefore invalidate `q`. Deeper content is the case to watch
+  hardest, because it holds `a` high for longer rather than raising its peak.
+- The prestige-loop harness run in §6 is the standing guard, and it is the only thing that
+  can catch this. It must be run whenever the economy is retuned, not only when prestige
+  is touched.
+
 ## 3 The formula
 
 ```
@@ -88,8 +138,13 @@ Measured arrivals on an unboosted run:
 | -------- | --- | ---- | ---- | ---- | ---- | ---- | ----- | ----- | ----- | ----- |
 | Lands at | 41m | 2h54 | 4h37 | 6h12 | 7h35 | 9h17 | 11h26 | 14h06 | 17h19 | 20h55 |
 
-Gaps run 1h22 to 3h36 and widen gently. No dead stretch. Across eight prestiges the bank
-runs 2 → 4 → 7 → 8 → 9 → 10 while favour runs ×2.2 → ×7.
+Gaps run 1h22 to 3h36 and widen gently. No dead stretch.
+
+Across eight three-hour prestiges, simulated end to end with souls floored to whole
+numbers as the game will floor them, the bank runs **2 → 4 → 6 → 8 → 9 → 9** and favour
+runs **×2.2 → ×3.4 → ×4.6 → ×5.8 → ×6.4**, settling there. The continuous form of the
+same curve settles at ×7.06; the difference is what flooring costs, and the floored figure
+is the one the game will show.
 
 **Engine.** `soulsEarned` hardcodes `.sqrt()`; it becomes `.pow(content.prestige.exponent)`.
 `msToNextSoul` inverts the same formula and moves with it — the current inverse squares,
@@ -178,12 +233,20 @@ The anchor is the harness, not a unit test — the fault in §1 is invisible to 
 `step` assertion.
 
 - **A prestige-loop harness run.** Eight successive three-hour runs, claiming between
-  each, asserting favour ends inside ×6–×8 and that no run's favour exceeds the previous
-  by more than ×2.5 — the verified sequence's steepest step is its first, ×2.21, so a
-  tighter bound would fail on a correct build. This is the test that would have caught
-  the original fault, and it is
-  the reason the fault survived: nothing ever simulated a second run. It is a script and
-  must never gate CI, per the existing rule.
+  each. It asserts three things, and the third is the one that matters: favour ends inside
+  ×5–×8; no run's favour exceeds the previous by more than ×2.5 (the verified sequence's
+  steepest step is its first, ×2.21, so a tighter bound would fail on a correct build);
+  and **the last two runs report the same favour**, which is convergence itself rather
+  than a proxy for it. A build that has tipped back over the threshold in §2.1 fails that
+  third assertion no matter where the band was set.
+
+  This is the test that would have caught the original fault, and the reason the fault
+  survived is that nothing ever simulated a second run. It is a script and must never gate
+  CI, per the existing rule — which makes it a discipline rather than a guard rail, so
+  §2.1 names when to run it.
+- **The measured growth exponent, reported not asserted.** The same harness prints `a` over
+  2h→4h and 4h→8h. Nobody can eyeball a divergent prestige loop, but anyone can read
+  `a·q·p` off a report and see it crossing 1.
 - **Soul arrivals.** An engine test pinning the first soul at 41m ± 1m against a fixture,
   so a future content edit cannot move it silently.
 - **The migration round trip.** A version 8 blob with known `souls`, `soulsSpent`,
@@ -203,8 +266,10 @@ gains the new field.
 - **Generator cost curves.** The playtest note that ten idle minutes with one Dark Legion
   bought six Fortresses is a real complaint and a separate one. Folding it in here would
   make it impossible to tell which change moved what.
-- **Soul-bought Overseers.** Favour plateaus near ×7 by design. That means prestige stops
-  paying after roughly five resets and further progress must come from content. §10.4 of
-  the original design already parks this; it stays parked.
+- **Soul-bought Overseers.** §10.4 of the original design parks these and they stay
+  parked. They are no longer the only answer to the plateau, though: §2.1 measures the
+  plateau rising by roughly a doubling per tier added, so tiers above the Throne raise it
+  on their own without any prestige work.
 - **The plateau itself.** It is the fix, not a defect. A prestige multiplier that never
-  settles is what this spec removes.
+  settles is what this spec removes, and a plateau that lifts when content is added is the
+  behaviour §2.1 shows this curve already has.
