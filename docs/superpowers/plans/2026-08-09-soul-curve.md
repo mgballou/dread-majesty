@@ -1,5 +1,13 @@
 # Soul Curve Implementation Plan
 
+> **Executed and closed.** This is a historical record, kept as written so the path is
+> legible. Several of its figures were corrected during execution and are wrong here — most
+> notably the migration's worked example (1,800, actually 1,875), souls at twelve hours
+> (4,340 and 4,336, measured 4,335), and the stability condition, which wrongly folded
+> `k · perSoul` into a product that is `a · exponent`. **The shipped code and
+> `docs/superpowers/specs/2026-08-08-soul-curve-design.md` are the truth.** Do not re-run
+> this plan or copy figures out of it.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Replace the prestige soul formula's square root with a tunable exponent so the prestige loop settles near ×7 instead of diverging, and re-denominate everything priced in souls to match.
