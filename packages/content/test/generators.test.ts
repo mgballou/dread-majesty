@@ -265,7 +265,8 @@ describe('the soul price of permanence', () => {
       (total, rung) => total + Number(rung.souls),
       0,
     );
-    const twelveHourRun = 600 * Math.pow(2.1e25 / Number(v1.prestige.scale), v1.prestige.exponent);
+    const twelveHourRun =
+      v1.prestige.k * Math.pow(2.1e25 / Number(v1.prestige.scale), v1.prestige.exponent);
 
     expect(ladderCost).toBeLessThan(twelveHourRun);
   });
@@ -284,7 +285,7 @@ describe('the prestige curve', () => {
     expect(v1.prestige.exponent * 18.4).toBeLessThan(1.05);
   });
 
-  it('anchors the scale on the lifetime Evil that first paid a soul', () => {
+  it('anchors the scale on the lifetime Evil where the count passes 600 souls', () => {
     const { k, scale, exponent } = v1.prestige;
     // 5.147e9 is the measured lifetime Evil at 41m 51s.
     const souls = k * Math.pow(5.147e9 / Number(scale), exponent);
@@ -294,12 +295,17 @@ describe('the prestige curve', () => {
 
   it('spans a run rather than a lifetime', () => {
     const { k, scale, exponent } = v1.prestige;
-    // 2.394e15 and 2.1e25 are measured lifetime Evil at three and twelve hours.
+    // 2.394e15 is the harness's three-hour lifetime Evil, rounded for readability.
+    // 2.098729383197602e25 is its twelve-hour figure at full precision — the harness
+    // table prints it rounded to 2.1e25, which is precise enough for the table but
+    // not for this assertion: `soulsEarned` floors, and flooring the rounded figure
+    // lands on 4,336, one past what the harness actually pays out. The engine's
+    // `soulsEarned` floors rather than rounds (`selectors.ts`), so this test does too.
     const atThreeHours = k * Math.pow(2.394e15 / Number(scale), exponent);
-    const atTwelveHours = k * Math.pow(2.1e25 / Number(scale), exponent);
+    const atTwelveHours = k * Math.pow(2.098729383197602e25 / Number(scale), exponent);
 
     expect(Math.round(atThreeHours)).toBe(1231);
-    expect(Math.round(atTwelveHours)).toBe(4336);
+    expect(Math.floor(atTwelveHours)).toBe(4335);
   });
 });
 
