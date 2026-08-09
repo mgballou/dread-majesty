@@ -58,7 +58,7 @@ describe('jumps', () => {
   });
 
   it('banks souls without banking Evil', () => {
-    expect(find('banked:10').build().souls.eq(10)).toBe(true);
+    expect(find('banked:600').build().souls.eq(600)).toBe(true);
   });
 
   it('appoints everybody on the deep run', () => {
@@ -89,11 +89,11 @@ describe('jumps', () => {
   });
 
   it('keeps the free Minion on a freshly reset board', () => {
-    expect(find('banked:10').build().gens.minion.owned.toString()).toBe('1');
+    expect(find('banked:600').build().gens.minion.owned.toString()).toBe('1');
   });
 
   it('resets every post on a freshly reset board', () => {
-    const state = find('banked:10').build();
+    const state = find('banked:600').build();
     expect(TIER_IDS.every((id) => state.overseers[id].length === 0)).toBe(true);
   });
 

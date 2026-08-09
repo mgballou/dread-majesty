@@ -43,7 +43,9 @@ describe('msToNextSoul', () => {
 
     const late = appointed(fixture);
     late.gens.minion.owned = new Decimal(5);
-    late.lifetimeEvil = new Decimal(fixture.prestige.scale).div(fixture.prestige.k ** 2).div(2);
+    late.lifetimeEvil = new Decimal(fixture.prestige.scale)
+      .div(Decimal.pow(fixture.prestige.k, 1 / fixture.prestige.exponent))
+      .div(2);
 
     expect(msToNextSoul(late, fixture) ?? Infinity).toBeLessThan(msToNextSoul(early, fixture) ?? 0);
   });
@@ -54,7 +56,9 @@ describe('msToNextSoul', () => {
     state.lifetimeEvil = new Decimal(0);
 
     const rate = new Decimal(fixture.tiers[1]?.yield ?? '0').div(24);
-    const target = new Decimal(fixture.prestige.scale).div(fixture.prestige.k ** 2);
+    const target = new Decimal(fixture.prestige.scale).div(
+      Decimal.pow(fixture.prestige.k, 1 / fixture.prestige.exponent),
+    );
 
     expect(msToNextSoul(state, fixture)).toBeCloseTo(target.div(rate).mul(1000).toNumber(), -3);
   });
