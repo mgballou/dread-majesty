@@ -251,6 +251,26 @@ describe('the smite ladders', () => {
   });
 });
 
+describe('the soul price of permanence', () => {
+  it('prices every ladder the same by rung', () => {
+    for (const upgrade of v1.smite.upgrades) {
+      const prices = upgrade.rungs.map((rung) => Number(rung.souls));
+
+      expect(prices).toEqual([220, 660, 1100, 1760]);
+    }
+  });
+
+  it('keeps a full ladder inside what a long run pays', () => {
+    const ladderCost = v1.smite.upgrades[0]!.rungs.reduce(
+      (total, rung) => total + Number(rung.souls),
+      0,
+    );
+    const twelveHourRun = 600 * Math.pow(2.1e25 / Number(v1.prestige.scale), v1.prestige.exponent);
+
+    expect(ladderCost).toBeLessThan(twelveHourRun);
+  });
+});
+
 describe('the prestige curve', () => {
   it('holds the product that fixes the plateau', () => {
     expect(v1.prestige.k * v1.prestige.perSoul).toBeCloseTo(0.6, 6);
