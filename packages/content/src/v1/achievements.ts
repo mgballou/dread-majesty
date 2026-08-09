@@ -49,8 +49,8 @@ export const v1Achievements: readonly AchievementDef[] = [
   defineAchievement('evil-1e12', { kind: 'lifetime-evil', atLeast: '1e12' }),
   defineAchievement('evil-1e20', { kind: 'lifetime-evil', atLeast: '1e20' }),
 
-  defineAchievement('souls-1', { kind: 'souls', atLeast: '1' }),
-  defineAchievement('souls-100', { kind: 'souls', atLeast: '100' }),
+  defineAchievement('souls-500', { kind: 'souls', atLeast: '500' }),
+  defineAchievement('souls-3000', { kind: 'souls', atLeast: '3000' }),
   defineAchievement('souls-10000', { kind: 'souls', atLeast: '10000' }),
 
   defineAchievement('prestige-1', { kind: 'prestiges', atLeast: 1 }),
