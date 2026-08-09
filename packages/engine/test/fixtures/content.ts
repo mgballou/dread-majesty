@@ -97,7 +97,7 @@ export const fixture: Content = {
       multiplier: 1,
     },
     {
-      id: 'souls-1',
+      id: 'souls-500',
       name: 'One Soul',
       description: 'Hold a soul.',
       condition: { kind: 'souls', atLeast: '1' },

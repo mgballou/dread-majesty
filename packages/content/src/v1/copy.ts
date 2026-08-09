@@ -128,13 +128,13 @@ export const v1Copy = {
       description: 'Earn a hundred quintillion Evil in all. The clerks stopped counting.',
     },
 
-    'souls-1': {
+    'souls-500': {
       name: 'First Damnation',
-      description: 'Hold a Damned Soul. It is smaller than you expected.',
+      description: 'Hold 500 Damned Souls. They are smaller than you expected.',
     },
-    'souls-100': {
+    'souls-3000': {
       name: 'A Full Drawer',
-      description: 'Hold 100 Damned Souls. You file them by date.',
+      description: 'Hold 3,000 Damned Souls. You file them by date.',
     },
     'souls-10000': {
       name: 'A Low Sound',
