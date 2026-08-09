@@ -381,7 +381,10 @@ function run(content: Content): void {
   const evil4h = checkpointLifetimeEvil.get('4h');
   const evil8h = checkpointLifetimeEvil.get('8h');
   if (evil2h && evil4h && evil8h) {
-    console.log('\n  growth exponent (lifetime Evil vs. time; warn above a = 18.18)');
+    const warnAbove = 1 / content.prestige.exponent;
+    console.log(
+      `\n  growth exponent (lifetime Evil vs. time; warn above a = ${warnAbove.toFixed(2)})`,
+    );
     console.log(`    2h -> 4h   a = ${growthExponent(evil2h, evil4h, 2).toFixed(3)}`);
     console.log(`    4h -> 8h   a = ${growthExponent(evil4h, evil8h, 2).toFixed(3)}`);
   }
@@ -397,12 +400,13 @@ function run(content: Content): void {
 /**
  * How steeply lifetime Evil grows with time, over the two windows the soul curve was
  * fitted against. The stability condition is `a · q · p < 1`, where `q` is the
- * exponent on lifetime Evil in the soul curve (0.055) and `p` is the exponent on
- * souls in the favour formula (1 — favour is linear in souls). The warning line is
- * therefore `a < 1 / q = 18.18`. An earlier draft of this comment wrongly folded
- * `k · perSoul` (a coefficient, not an exponent) into that product and warned at
- * `a = 1.66` — the same conflation `packages/content/test/generators.test.ts`
- * already catches elsewhere.
+ * exponent on lifetime Evil in the soul curve (`content.prestige.exponent`) and `p` is
+ * the exponent on souls in the favour formula (1 — favour is linear in souls). The
+ * warning line is therefore `a < 1 / q`, which `run` computes from `content.prestige`
+ * rather than repeating as a literal, so a retuned `q` cannot leave the printed
+ * threshold wrong. An earlier draft of this comment wrongly folded `k · perSoul` (a
+ * coefficient, not an exponent) into that product and warned at `a = 1.66` — the same
+ * conflation `packages/content/test/generators.test.ts` already catches elsewhere.
  *
  * The shipping numbers sit on that line, not comfortably under it: `a = 16.97` over
  * 2h→4h gives `a · q = 0.933`; `a = 18.38` over 4h→8h gives `a · q = 1.011`. Spec
