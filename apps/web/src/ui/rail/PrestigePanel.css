@@ -68,6 +68,13 @@
   color: var(--ink-dim);
 }
 
+/* The last note before the ledger, which already carries its own top spacing
+   (`.prestige__ledger`'s `margin-top` and `padding-top`) — zeroing the bottom
+   margin here avoids stacking both. */
+.prestige__worth {
+  margin-bottom: 0;
+}
+
 .prestige__claim {
   width: 100%;
 }

@@ -35,10 +35,10 @@ describe('DevBar', () => {
   it('hands a freshly built state over when a jump is taken', async () => {
     const { onReplace, user } = mount();
 
-    await user.selectOptions(screen.getByRole('combobox', { name: /jump to/i }), 'banked:10');
+    await user.selectOptions(screen.getByRole('combobox', { name: /jump to/i }), 'banked:600');
     await user.click(screen.getByRole('button', { name: 'Go' }));
 
-    expect(onReplace.mock.calls[0]?.[0].souls.eq(10)).toBe(true);
+    expect(onReplace.mock.calls[0]?.[0].souls.eq(600)).toBe(true);
   });
 
   it('sets a resource to what was typed', async () => {

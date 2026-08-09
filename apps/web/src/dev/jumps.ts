@@ -181,7 +181,12 @@ export function jumps(content: Content): readonly Jump[] {
   const everything = stock(rungs);
   const everyId = rungs.flatMap((rung) => rung.overseers.map((post) => post.id));
 
-  for (const souls of [1, 10, 100]) {
+  // Re-denominated for the 2026-08-08 soul curve. The old ladder — 1, 10, 100 — read
+  // as early, mid and late under the square-root curve; under the flattened curve 100
+  // souls is a few seconds of lifetime Evil, not a late-run figure. 600 and 3,000
+  // instead track the first two soul achievements (`souls-500`, `souls-3000`), so each
+  // rung still means "just past a goal a player would recognize."
+  for (const souls of [1, 600, 3000]) {
     list.push({
       id: `owed:${souls}`,
       group: 'Prestige',
