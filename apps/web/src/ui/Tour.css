@@ -1,0 +1,149 @@
+/* The first-run tour. See Tour.tsx. */
+
+.tour {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  max-width: none;
+  max-height: none;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  /* The element spans the viewport so its children can be placed anywhere in it, but
+     only the bands and the card are surfaces. The hole between them stays clickable-
+     looking rather than catching the pointer on an invisible sheet. */
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* The dimming is the bands, not this. A modal dialog's own backdrop would cover the
+   region the tour is pointing at. */
+.tour::backdrop {
+  background: transparent;
+}
+
+.tour__scrim {
+  position: fixed;
+  background: var(--scrim);
+  pointer-events: auto;
+}
+
+.tour__scrim--whole {
+  inset: 0;
+}
+
+/* Line work, not an action: the ring says "here", the card's button says "do this".
+   Gold at full strength on both would be two accents on one screen. */
+.tour__ring {
+  position: fixed;
+  border: 1px solid var(--accent-line);
+  border-radius: var(--space-1);
+  pointer-events: none;
+}
+
+.tour__card {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(26rem, calc(100% - var(--space-8)));
+  padding: var(--space-6) var(--space-4) var(--space-4);
+  background: var(--surface-raised);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--space-2);
+  pointer-events: auto;
+  animation: tour-in var(--duration-base) ease-out;
+}
+
+/* The card takes focus on open so the ring does not land on Skip. It is a container,
+   not a control, so it shows no ring of its own — `:focus-visible` still reaches
+   everything inside it. */
+.tour__card:focus {
+  outline: none;
+}
+
+.tour__card--center {
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.tour__card--top {
+  top: var(--space-4);
+}
+
+.tour__card--bottom {
+  bottom: var(--space-4);
+}
+
+/* Reduced motion drops the rise and keeps the fade, as the return screen does. The
+   card still arrives; it simply does not travel. */
+@keyframes tour-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(var(--space-3));
+  }
+}
+
+.tour__card--center {
+  animation-name: tour-in-center;
+}
+
+@keyframes tour-in-center {
+  from {
+    opacity: 0;
+    transform: translate(-50%, calc(-50% + var(--space-3)));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @keyframes tour-in {
+    from {
+      opacity: 0;
+      transform: translateX(-50%);
+    }
+  }
+
+  @keyframes tour-in-center {
+    from {
+      opacity: 0;
+      transform: translate(-50%, -50%);
+    }
+  }
+}
+
+.tour__count {
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-numeric);
+  font-size: var(--text-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+
+.tour__title {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+
+.tour__body {
+  margin: 0 0 var(--space-6);
+  font-size: var(--text-base);
+  color: var(--ink-muted);
+}
+
+.tour__controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.tour__walk {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}

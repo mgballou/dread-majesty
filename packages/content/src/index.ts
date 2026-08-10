@@ -4,6 +4,7 @@ export {
   ACHIEVEMENT_IDS,
   OVERSEER_IDS,
   SMITE_UPGRADE_IDS,
+  TOUR_STEP_IDS,
   isTierId,
   isResourceId,
   isAchievementId,
@@ -17,6 +18,7 @@ export type {
   AchievementId,
   OverseerId,
   SmiteUpgradeId,
+  TourStepId,
 } from './ids.ts';
 
 export type {
@@ -51,6 +53,8 @@ export type {
   DeedsCopy,
   LedgerCopy,
   ErrorCopy,
+  TourCopy,
+  TourStepCopy,
 } from './copy.ts';
 
 export { ART } from './art.ts';

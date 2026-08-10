@@ -83,6 +83,22 @@ export type AchievementId = (typeof ACHIEVEMENT_IDS)[number];
 export const SMITE_UPGRADE_IDS = ['weight', 'reach', 'forgetting', 'restraint'] as const;
 export type SmiteUpgradeId = (typeof SMITE_UPGRADE_IDS)[number];
 
+/**
+ * The first-run tour, in the order it is walked.
+ *
+ * Ids rather than an array of strings, so the copy is a `Record` the typechecker can
+ * prove complete and the interface can anchor each step to a region of the screen
+ * without knowing what any of them say. Nothing persists these — the tour records only
+ * that it was seen — so unlike every other id set here they may be renamed freely.
+ *
+ * The order is the argument the tour makes: what a Minion is for, that nothing turns
+ * on its own, what buying the tier above does, and then the point of the whole game —
+ * that the chain moves within one interval, so a purchase at the top is felt at the
+ * bottom immediately.
+ */
+export const TOUR_STEP_IDS = ['premise', 'evil', 'rouse', 'chain', 'cascade'] as const;
+export type TourStepId = (typeof TOUR_STEP_IDS)[number];
+
 export function isTierId(id: string): id is TierId {
   return (TIER_IDS as readonly string[]).includes(id);
 }

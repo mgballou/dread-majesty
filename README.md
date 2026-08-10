@@ -7,7 +7,8 @@ Generators produce other generators, so production compounds inside a single ela
 interval. That cascade is the game, and making it visible is the point of the
 interface.
 
-Web first and free. Steam via Tauri if it finds an audience.
+Play it at [dreadmajesty.netlify.app](https://dreadmajesty.netlify.app). Web first and
+free. Steam via Tauri if it finds an audience.
 
 ## Running it
 
@@ -29,14 +30,67 @@ packages/content/   balance numbers, copy, art slots.
 apps/web/           React + Vite. renders engine state, sends intents.
 ```
 
+Dependencies flow one way: web → engine → content types.
+
+## How it works
+
+**The engine has no DOM, no React and no I/O.** Time and seeds enter as arguments at
+the boundary. That single rule buys most of what follows.
+
+**The simulation is deterministic and fixed-timestep.** Elapsed milliseconds are banked
+and spent in whole slices, so a cycle finishing depends on how much time passed, never
+on how the browser scheduled frames. Coming back after four hours runs the same `step`
+the same number of times as sitting there for four hours would have. There is no second
+code path for offline, no aggregate shortcut, no closed form.
+
+Each slice reads from a snapshot and writes into a delta, committed at the end. Nothing
+produced within a slice affects anything else within it, which is why tier order does
+not matter and why there is no tie-break rule to get wrong.
+
+**Every resource and generator count is a `Decimal`** (`break_eternity.js`), never a JS
+number. The game reaches 1e30 in a week of play and past 1e300 eventually.
+
+**Saves are versioned with a migration chain.** Ten versions so far, each a pure
+function from one blob shape to the next, applied in sequence. A shipped entry is never
+edited — a mistake gets another step appended, because there is no way to tell which
+saves already passed through the old one. Version 10 exists for exactly that reason.
+
+**Balance is measured, not guessed.** `pnpm harness` runs the real engine headless for
+seven simulated days and reports when each tier arrives, when each tier goes obsolete,
+what the growth exponent is, and whether the prestige loop converges or runs away. Every
+number in `packages/content` was fitted against it. The harness is a script and never
+gates CI — it is a measuring instrument, not a test.
+
+Because the engine is pure, its tests are plain assertions against fixtures, never
+against shipping content. A balance change cannot fail an engine test.
+
+## How it was built
+
+Roughly 157 commits over six days, agent-assisted throughout. That is what the log says
+and it is worth saying plainly rather than dressing up as months of craft.
+
+What is mine is the architecture, the scoping, and the quality gates: the layering and
+its one-way dependency rule, the five engine constraints above, the decision to measure
+balance instead of guessing, what went in each milestone and what got cut, and the
+standard every change had to clear before it landed. The specs in
+`docs/superpowers/specs/` are the record of those decisions and why each went the way it
+did.
+
+The gates are real and they caught real things. `pnpm check` is typecheck, lint and the
+full test suite, and it runs before every commit. Beyond that, the interesting failures
+were the ones only measurement found:
+a prestige curve that looked balanced and diverged to ×634 after two resets, and its
+replacement, which was correct in every figure but had lost its zero and paid 213 souls
+for thirty-four Evil. Neither was visible by reading the code. The harness found the
+first and a playtest found the second.
+
 ## Where things stand
 
 **M1 through M4 have had a first pass.** The game is playable end to end.
 
 The engine is complete and tested: fixed-timestep simulation, an exact cost curve and
 max-buy, purchases, manual cycles and Overseers, milestone and prestige multipliers,
-achievements, unlock latching, offline catch-up, and versioned saves with a migration
-chain. The worked example from the original design docs is asserted number for number.
+achievements, unlock latching, offline catch-up, and versioned saves.
 
 **A tier does not run until somebody makes it run.** Every tier starts manual: you
 rouse it from its node on the chain, it runs one cycle, pays out and stops. Appointing
@@ -48,6 +102,11 @@ rail with exactly one accented spend, the prestige panel, the deeds wall, the le
 and the offline-return screen. Saves go to IndexedDB and export as a pasteable blob.
 Sound is synthesised in code and muted until asked for.
 
+A new player gets a five-card tour on their first run: what Evil is for, that nothing
+turns until roused, and the one thing the interface cannot say on its own — that buying
+high on the chain speeds up everything under it within the same interval. It is
+skippable from the first card and never returns.
+
 There is a dev workbench at the foot of the page — jump to any point of progression,
 set any resource, appoint or dismiss every Overseer, simulate an absence. It is
 stripped from production builds and it deliberately looks nothing like the game.
@@ -55,13 +114,13 @@ stripped from production builds and it deliberately looks nothing like the game.
 Every player-facing string lives in `packages/content/src/v1/copy.ts`. Adding an
 achievement without copy fails typecheck.
 
-**Balance has had two tuned passes**, measured with `pnpm harness` rather than
-guessed. Warrens at 28 minutes, Dark Legions at 1h01m, Fortresses at 2h37m, first
-prestige at 2h29m. It is still a first answer and wants real players. Re-run the
-harness after touching any number in `packages/content`.
+**Economy tuning is ongoing.** The numbers have had several measured passes and the
+current ones are the best answer so far, not a finished one: Warrens at 11 minutes,
+Dark Legions at 41 minutes, Fortresses at 1h23m, Thrones at 2h30m, first prestige at
+42 minutes. Expect them to move. They want real players more than they want another
+harness run. Re-run `pnpm harness` after touching any number in `packages/content`.
 
-Not done: real art (every slot renders a generated SVG fallback), and everything in
-M5 and M6.
+Not done: real art — every slot renders a generated SVG fallback.
 
 ## Reading order
 
@@ -69,5 +128,5 @@ M5 and M6.
    decisions, and why each one went the way it did.
 2. `CLAUDE.md` — how to write code here.
 3. `docs/reference/` — the earlier planning documents. Still good on game design and
-   Laravel house style. Their server-authoritative architecture is superseded; the
-   spec says where and why.
+   house style. Their server-authoritative architecture is superseded; the spec says
+   where and why.
