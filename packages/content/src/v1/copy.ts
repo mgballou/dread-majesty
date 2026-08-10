@@ -406,4 +406,46 @@ export const v1Copy = {
       'This save is from an early development build and no longer loads. Starting fresh.',
     storageBlocked: 'This browser will not let the game save. Close the tab and it is gone.',
   },
+
+  /*
+   * Five cards, and the fifth is the only one that matters.
+   *
+   * A new player can work out that a button buys a thing. What they cannot see is that
+   * the tiers feed each other inside one interval, so a Fortress bought now is Minions
+   * arriving seconds later without anything else being touched. Everything before
+   * `cascade` exists to make that sentence land.
+   *
+   * Two sentences a card. The tour is skippable from the first frame and most players
+   * will use that, so nothing here may be the only place a rule is stated.
+   */
+  tour: {
+    label: 'How this works',
+    skip: 'Skip',
+    back: 'Back',
+    next: 'Next',
+    done: 'Begin',
+    progress: ({ step, of }: { step: string; of: string }): string => `${step} of ${of}`,
+    steps: {
+      premise: {
+        title: 'You are a Dark Lord',
+        body: 'You have one Minion, a shed, and a grievance. This takes about a minute and you can leave whenever you like.',
+      },
+      evil: {
+        title: 'Evil is the currency',
+        body: 'Your Minions generate it and it pays for everything else. The crown always shows what you hold and how fast it is arriving.',
+      },
+      rouse: {
+        title: 'Nothing turns on its own',
+        body: 'Tap a rung of the chain to rouse it: it runs one cycle, pays out and stops. An Overseer, hired later, keeps it turning while you are away.',
+      },
+      chain: {
+        title: 'Each rung feeds the one below',
+        body: 'Warrens breed Minions. Dark Legions take ground that becomes Warrens. Fortresses raise the Legions.',
+      },
+      cascade: {
+        title: 'This is the whole game',
+        body: 'Buy high on the chain and everything under it speeds up in the same second — the Fortress makes Legions, which make Warrens, which make Minions, which make Evil. Nothing is waiting on you.',
+      },
+    },
+  },
 } as const satisfies Copy;

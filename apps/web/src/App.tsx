@@ -5,12 +5,14 @@ import { isAppointed, isRousable, isTierUnlocked, prestigeGain } from '@dm/engin
 import { useSound } from './audio/useSound.ts';
 import { DevBar } from './dev/DevBar.tsx';
 import { isPrestigeWorthShowing } from './game/reveals.ts';
+import { hasSeenTour, markTourSeen } from './game/tour.ts';
 import { useGameSession } from './game/useGameSession.ts';
 import { Ledger } from './screens/Ledger.tsx';
 import { OfflineSummary } from './screens/OfflineSummary.tsx';
 import { Trophies } from './screens/Trophies.tsx';
 import { Deck, type DeckTab } from './ui/Deck.tsx';
 import { Sheet } from './ui/Sheet.tsx';
+import { TOUR_ANCHORS, Tour } from './ui/Tour.tsx';
 import { Crown } from './ui/crown/Crown.tsx';
 import { BuyRail } from './ui/rail/BuyRail.tsx';
 import { Miscreants } from './ui/rail/Miscreants.tsx';
@@ -65,6 +67,32 @@ export function App(): ReactNode {
   // torn down and rebuilt every render.
   const [ledgerOpen, setLedgerOpen] = useState(false);
   const closeLedger = useCallback(() => setLedgerOpen(false), []);
+
+  /**
+   * The tour, for a first run and only a first run.
+   *
+   * Two conditions, and both are needed. `fresh` is this visit: a save on disk means a
+   * returning player, whatever they have or have not been told. `hasSeenTour` is every
+   * visit before it, and it is what covers the player who arrived, skipped the tour and
+   * closed the tab before the first autosave ten seconds later — `fresh` alone would
+   * show it to them again.
+   *
+   * Latched into state rather than read on every render, so finishing it cannot be
+   * undone by a re-render and the tour cannot reappear mid-session.
+   */
+  const [tourOpen, setTourOpen] = useState(false);
+  const tourDecided = useRef(false);
+
+  useEffect(() => {
+    if (!session.ready || tourDecided.current) return;
+    tourDecided.current = true;
+    if (session.fresh && !hasSeenTour()) setTourOpen(true);
+  }, [session.ready, session.fresh]);
+
+  const finishTour = useCallback(() => {
+    markTourSeen();
+    setTourOpen(false);
+  }, []);
 
   const { state, dispatch } = session;
 
@@ -316,6 +344,10 @@ export function App(): ReactNode {
           onDismiss={session.dismissOffline}
         />
       )}
+
+      {/* Last, and never at the same time as the return summary — a save that has been
+          away is not a first run. It handles its own inertness, being a modal dialog. */}
+      {tourOpen && <Tour copy={copy.tour} anchors={TOUR_ANCHORS} onFinish={finishTour} />}
     </div>
   );
 }
