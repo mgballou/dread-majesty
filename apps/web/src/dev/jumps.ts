@@ -99,7 +99,14 @@ function board(content: Content, spec: Board): GameState {
  */
 function lifetimeForSouls(content: Content, souls: number): Decimal {
   const { k, scale, exponent } = content.prestige;
-  return new Decimal(scale).mul(new Decimal(souls).div(k).pow(1 / exponent)).mul(1.000001);
+  return new Decimal(scale)
+    .mul(
+      new Decimal(souls)
+        .div(k)
+        .add(1)
+        .pow(1 / exponent),
+    )
+    .mul(1.000001);
 }
 
 /**

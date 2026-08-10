@@ -97,7 +97,15 @@ const SOUL_EPSILON = 1e-7;
  */
 export function soulsEarned(state: GameState, content: Content): Decimal {
   const { k, scale, exponent } = content.prestige;
-  const raw = state.lifetimeEvil.div(new Decimal(scale)).pow(exponent).mul(k);
+  const raw = state.lifetimeEvil.div(new Decimal(scale)).pow(exponent).sub(1).mul(k);
+  // The `− 1` is the curve's zero and it is load-bearing. `exponent` is small enough
+  // that `(lifetime/scale)^exponent` is barely distinguishable from 1 across the whole
+  // early game: without the offset, one Evil ever earned pays `k` souls outright and
+  // thirty orders of magnitude only multiply that by forty. At `k = 1` the floor hid
+  // this — `floor(0.29)` is 0 — so raising `k` for legibility is what exposed it. The
+  // offset puts the payout back where `scale` says it is: nothing until the run has
+  // earned `scale` lifetime Evil, and a real climb after.
+  if (raw.lte(0)) return new Decimal(0);
   const nearest = raw.round();
   return raw.sub(nearest).abs().lte(SOUL_EPSILON) ? nearest : raw.floor();
 }
@@ -132,6 +140,7 @@ export function msToNextSoul(state: GameState, content: Content): number | null 
     soulsEarned(state, content)
       .add(1)
       .div(k)
+      .add(1)
       .pow(1 / exponent),
   );
   const remaining = target.sub(state.lifetimeEvil);

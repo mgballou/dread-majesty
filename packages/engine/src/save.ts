@@ -239,6 +239,45 @@ const MIGRATIONS: Record<number, (blob: SaveBlob) => SaveBlob> = {
       soulsSpent: spent.toString(),
     };
   },
+  // 9 → 10: the same curve gains its zero. Version 9 shipped
+  // `600·(lifetime/5.07e9)^0.055` with no offset, and an exponent that small keeps the
+  // bracket within a whisker of 1 across the whole early game — so it paid 175 souls
+  // for the first Evil a save ever earned and 213 for thirty-four. Subtracting 1 puts
+  // the payout back where `scale` says it starts. A version 9 save has already been
+  // credited the inflated count, so this is a correction, not a conversion: it
+  // recomputes from `lifetimeEvil` exactly as step 8 did, and for the same reason —
+  // lifetime Evil survives every reset, so it is the one field that still knows what
+  // the player actually earned.
+  //
+  // The spent fraction carries across for the reason spelled out in step 8, and
+  // matters more here: every version 9 save holds a bank inflated by up to 600 souls,
+  // and re-pricing what they bought against the corrected curve would charge them for
+  // permanence out of a purse that no longer contains it. `Decimal.max` then does real
+  // work rather than guarding an impossible case — a save under 5.07e9 lifetime Evil
+  // held souls it had not earned, and lands on zero.
+  //
+  // Constants inlined and frozen, as step 8 explains.
+  9: (blob) => {
+    const earned = new Decimal(blob.lifetimeEvil)
+      .div(new Decimal('5.07e9'))
+      .pow(0.055)
+      .sub(1)
+      .mul(600);
+    const oldHeld = new Decimal(blob.souls || '0');
+    const oldSpent = new Decimal(blob.soulsSpent || '0');
+    const oldTotal = oldHeld.add(oldSpent);
+
+    const floored = Decimal.max(0, earned).floor();
+    const spent = oldTotal.lte(0) ? new Decimal(0) : oldSpent.div(oldTotal).mul(floored).floor();
+    const souls = Decimal.max(0, floored.sub(spent));
+
+    return {
+      ...blob,
+      saveVersion: 10,
+      souls: souls.toString(),
+      soulsSpent: spent.toString(),
+    };
+  },
 };
 
 export function migrate(blob: SaveBlob): SaveBlob {

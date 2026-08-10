@@ -191,14 +191,21 @@ export interface SmiteDef {
 }
 
 export interface PrestigeDef {
-  /** souls = floor(k * (lifetimeEvil / scale) ^ exponent) */
+  /**
+   * souls = floor(k * ((lifetimeEvil / scale) ^ exponent - 1)), floored at zero.
+   *
+   * The `- 1` is what makes `scale` the moment souls begin. Drop it and the curve pays
+   * `k` souls for the first Evil ever earned, because a small `exponent` keeps
+   * `(lifetime/scale)^exponent` within a whisker of 1 for the entire early game.
+   */
   readonly k: number;
   readonly scale: string;
   /**
    * How steeply souls follow lifetime Evil. Not a free choice: the prestige loop
-   * diverges unless `exponent * perSoul` stays under the reciprocal of how fast the
-   * generator economy grows. See §2.1 of the 2026-08-08 soul curve spec, which also
-   * says when to re-derive it.
+   * diverges unless `exponent` stays under the reciprocal of how fast the generator
+   * economy grows. `perSoul` is not part of that product — it and `k` are a display
+   * pair whose own product sets the plateau's height, not whether one exists. See §2.1
+   * of the 2026-08-08 soul curve spec, which also says when to re-derive it.
    */
   readonly exponent: number;
   /** Additive share of the global multiplier granted per soul. 0.02 = +2%. */

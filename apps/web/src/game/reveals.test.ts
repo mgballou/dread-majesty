@@ -3,11 +3,12 @@ import { CURRENT } from '@dm/content';
 import { createState } from '@dm/engine';
 import { isPrestigeWorthShowing } from './reveals.ts';
 
-// Mirrors the formula `isPrestigeWorthShowing` solves: souls = k * (lifetime/scale)^exponent,
-// inverted at souls = 1. Under the current curve this lands within a whisker of zero
-// lifetime Evil, which is the point — the first soul now lands almost immediately.
+// Mirrors the formula `isPrestigeWorthShowing` solves: souls = k *
+// ((lifetime/scale)^exponent - 1), inverted at souls = 1. The offset is what puts this a
+// little past `scale` rather than a whisker above zero, so the fractions below describe a
+// road the player actually travels.
 const { k, scale, exponent } = CURRENT.prestige;
-const firstSoul = Number(scale) * (1 / k) ** (1 / exponent);
+const firstSoul = Number(scale) * (1 + 1 / k) ** (1 / exponent);
 
 describe('isPrestigeWorthShowing', () => {
   it('stays out of the way on a fresh save', () => {
