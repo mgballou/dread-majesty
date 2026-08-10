@@ -1,4 +1,4 @@
-import type { AchievementId, OverseerId, SmiteUpgradeId, TierId } from './ids.ts';
+import type { AchievementId, OverseerId, SmiteUpgradeId, TierId, TourStepId } from './ids.ts';
 
 /**
  * Every player-facing string that is not a tier name.
@@ -385,6 +385,27 @@ export interface ErrorCopy {
   readonly storageBlocked: string;
 }
 
+/** One card of the first-run tour. */
+export interface TourStepCopy {
+  readonly title: string;
+  /** Two sentences at most. A card nobody finishes reading teaches nothing. */
+  readonly body: string;
+}
+
+export interface TourCopy {
+  /** Names the tour to a screen reader, and titles its dialog. */
+  readonly label: string;
+  /** Leaves for good. Present on every step, because a tour you cannot leave is a wall. */
+  readonly skip: string;
+  readonly back: string;
+  readonly next: string;
+  /** Closes the last step. Distinct from `skip`: one finished, the other gave up. */
+  readonly done: string;
+  /** Where the player stands. Both arrive formatted. */
+  readonly progress: (args: { readonly step: string; readonly of: string }) => string;
+  readonly steps: Readonly<Record<TourStepId, TourStepCopy>>;
+}
+
 export interface Copy {
   readonly title: string;
   /** Shuts any record lifted over the game. Chrome, so plain rather than in voice. */
@@ -404,4 +425,5 @@ export interface Copy {
   readonly deeds: DeedsCopy;
   readonly ledger: LedgerCopy;
   readonly errors: ErrorCopy;
+  readonly tour: TourCopy;
 }

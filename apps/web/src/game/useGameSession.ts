@@ -48,6 +48,15 @@ export interface Session {
   version: number;
   /** The boot screen holds until the save has actually been read. */
   ready: boolean;
+  /**
+   * True when the read found nothing on disk — a genuinely new player.
+   *
+   * Meaningless until `ready`, and it never changes afterwards: abdicating starts a new
+   * realm but not a new session, and a save refused for being too old is still a save
+   * that existed. Both of those are people who have played before, and the one caller
+   * for this is the first-run tour.
+   */
+  fresh: boolean;
   /** What happened while the player was away. Null once dismissed. */
   offline: OfflineReport | null;
   dismissOffline: () => void;
@@ -93,6 +102,7 @@ export function useGameSession(content: Content): Session {
   const [offline, setOffline] = useState<OfflineReport | null>(null);
   const [justEarned, setJustEarned] = useState<readonly AchievementId[]>([]);
   const [saveRefused, setSaveRefused] = useState(false);
+  const [fresh, setFresh] = useState(false);
   const loaded = useRef(false);
 
   /**
@@ -130,6 +140,8 @@ export function useGameSession(content: Content): Session {
     loaded.current = true;
 
     void readSave().then((blob) => {
+      setFresh(blob === null);
+
       if (blob) {
         try {
           const restored = deserialize(blob);
@@ -285,6 +297,7 @@ export function useGameSession(content: Content): Session {
     state: stateRef.current,
     version,
     ready,
+    fresh,
     offline,
     dismissOffline,
     justEarned,
