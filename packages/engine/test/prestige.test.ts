@@ -10,23 +10,37 @@ describe('soulsEarned', () => {
     expect(soulsEarned(createState(fixture), fixture).toString()).toBe('0');
   });
 
-  it('pays k souls at one whole scale of lifetime Evil', () => {
+  it('pays nothing for a run far below scale', () => {
+    const state = createState(fixture);
+    state.lifetimeEvil = new Decimal(34);
+
+    expect(soulsEarned(state, fixture).toString()).toBe('0');
+  });
+
+  it('pays nothing at one whole scale of lifetime Evil, where the curve begins', () => {
     const state = createState(fixture);
     state.lifetimeEvil = new Decimal(fixture.prestige.scale);
+
+    expect(soulsEarned(state, fixture).toString()).toBe('0');
+  });
+
+  it('pays k souls at the lifetime Evil that doubles the bracket', () => {
+    const state = createState(fixture);
+    state.lifetimeEvil = new Decimal(fixture.prestige.scale).mul(4);
 
     expect(soulsEarned(state, fixture).toString()).toBe(String(fixture.prestige.k));
   });
 
   it('floors normally with a fractional part below half, outside epsilon', () => {
     const state = createState(fixture);
-    state.lifetimeEvil = new Decimal(fixture.prestige.scale).mul(0.0049);
+    state.lifetimeEvil = new Decimal(fixture.prestige.scale).mul(1.142);
 
     expect(soulsEarned(state, fixture).toString()).toBe('10');
   });
 
   it('floors normally with a fractional part above half, outside epsilon', () => {
     const state = createState(fixture);
-    state.lifetimeEvil = new Decimal(fixture.prestige.scale).mul(0.008464);
+    state.lifetimeEvil = new Decimal(fixture.prestige.scale).mul(1.191);
 
     expect(soulsEarned(state, fixture).toString()).toBe('13');
   });
@@ -44,7 +58,7 @@ describe('msToNextSoul', () => {
     const late = appointed(fixture);
     late.gens.minion.owned = new Decimal(5);
     late.lifetimeEvil = new Decimal(fixture.prestige.scale)
-      .div(Decimal.pow(fixture.prestige.k, 1 / fixture.prestige.exponent))
+      .mul(Decimal.pow(1 + 1 / fixture.prestige.k, 1 / fixture.prestige.exponent))
       .div(2);
 
     expect(msToNextSoul(late, fixture) ?? Infinity).toBeLessThan(msToNextSoul(early, fixture) ?? 0);
@@ -56,8 +70,8 @@ describe('msToNextSoul', () => {
     state.lifetimeEvil = new Decimal(0);
 
     const rate = new Decimal(fixture.tiers[1]?.yield ?? '0').div(24);
-    const target = new Decimal(fixture.prestige.scale).div(
-      Decimal.pow(fixture.prestige.k, 1 / fixture.prestige.exponent),
+    const target = new Decimal(fixture.prestige.scale).mul(
+      Decimal.pow(1 + 1 / fixture.prestige.k, 1 / fixture.prestige.exponent),
     );
 
     expect(msToNextSoul(state, fixture)).toBeCloseTo(target.div(rate).mul(1000).toNumber(), -3);
@@ -68,7 +82,7 @@ describe('soulsEarned at an exponent that is not a square root', () => {
   it('raises lifetime Evil to the exponent the content names', () => {
     const content = { ...fixture, prestige: { ...fixture.prestige, exponent: 1 } };
     const state = createState(content);
-    state.lifetimeEvil = new Decimal('2e11');
+    state.lifetimeEvil = new Decimal('3e11');
 
     expect(soulsEarned(state, content).toNumber()).toBe(300);
   });
@@ -76,7 +90,7 @@ describe('soulsEarned at an exponent that is not a square root', () => {
   it('still reads as a square root when the exponent says so', () => {
     const content = { ...fixture, prestige: { ...fixture.prestige, exponent: 0.5 } };
     const state = createState(content);
-    state.lifetimeEvil = new Decimal('4e11');
+    state.lifetimeEvil = new Decimal('9e11');
 
     expect(soulsEarned(state, content).toNumber()).toBe(300);
   });

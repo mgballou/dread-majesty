@@ -120,14 +120,31 @@ That is a real dependency and it must be written down rather than discovered aga
 ## 3 The formula
 
 ```
-souls = floor(k · (lifetimeEvil / scale) ^ exponent)
+souls = floor(k · ((lifetimeEvil / scale) ^ exponent − 1)),  floored at zero
 ```
 
 `{ k: 600, scale: '5.07e9', exponent: 0.055, perSoul: 0.001 }`, replacing
 `{ k: 150, scale: '1.14e14', perSoul: 0.02 }`.
 
 `scale` is unchanged in meaning and holds the same moment it always held: 5.07e9 is the
-lifetime Evil at 41 minutes.
+lifetime Evil at 41 minutes, and the offset is what keeps that true.
+
+**The `− 1` is not cosmetic, and leaving it out shipped a broken build.** A first pass
+wrote `k · (lifetimeEvil/scale)^exponent` and reasoned that `floor` would hold the early
+game at zero. It does at `k = 1`: the bracket is about 0.29 near the start of a run, and
+`floor(0.29)` is 0. The floor was acting as the threshold, and nobody noticed, because
+`k` was 1 and the two were indistinguishable. Raising `k` to 600 for legibility multiplied
+the bracket instead of the payout, and the gate vanished — the curve paid **175 souls for
+the first Evil a save ever earned, and 213 for thirty-four**, which is what playtesting
+found within one smite of starting a new game.
+
+The reason it is so severe is the same reason `exponent` had to be small. At 0.055 the
+bracket barely moves: it is 0.29 at one Evil and 1.0 at `scale`, thirty orders of
+magnitude later. A curve that flat has no small end. It has to be given one.
+
+Subtracting 1 costs nothing structural. It leaves `exponent` — the only term convergence
+depends on — untouched, and it lowers favour by exactly `k · perSoul = 0.6` everywhere, so
+the plateau moves from ×7.1 to ×6.5 and the stability margin widens rather than narrows.
 
 **`k` and `perSoul` are one lever, not two, and their product is the whole of it.**
 Favour is `1 + perSoul · k · (lifetimeEvil/scale)^exponent`, so `k · perSoul = 0.6` fixes
@@ -137,25 +154,28 @@ souls in the hundreds and thousands, at a tenth of a percent each, because a sou
 Changing one without the other moves the plateau, and is the mistake this paragraph exists
 to prevent.
 
-That product, 0.6, is not free. It reproduces the verified sequence in §2 exactly: the
-stable curve `1 + 0.59·s_old^0.11` and the new `1 + 0.6·(lifetimeEvil/5.07e9)^0.055` are
-the same function of lifetime Evil, because `150^0.11` and `(1.14e14/5.07e9)^0.055` agree
-to three figures.
+That product, 0.6, is not free. It reproduces the verified sequence in §2 shifted down by
+one unit of `k · perSoul`: the stable curve `1 + 0.59·s_old^0.11` and the new
+`1 + 0.6·((lifetimeEvil/5.07e9)^0.055 − 1)` are the same function of lifetime Evil less a
+constant 0.6, because `150^0.11` and `(1.14e14/5.07e9)^0.055` agree to three figures.
 
-Measured on an unboosted run:
+Measured on an unboosted harness run:
 
-| At    | 41m | 3h    | 4h37  | 6h12  | 8h    | 12h   | 21h   |
-| ----- | --- | ----- | ----- | ----- | ----- | ----- | ----- |
-| Souls | 600 | 1,230 | 1,800 | 2,400 | 3,160 | 4,335 | 6,000 |
+| At    | 30m | 1h  | 2h  | 4h  | 8h    | 12h   | 1d    |
+| ----- | --- | --- | --- | --- | ----- | ----- | ----- |
+| Souls | 0   | 38  | 221 | 968 | 2,560 | 3,735 | 5,861 |
+
+The first soul lands at **42m 13s**, which is `scale` doing its job.
 
 The count climbs continuously rather than in steps. This is the second reason for a large
 `k`: at `k = 1` the floored count sat unchanged for stretches of up to three and a half
 hours, and a resource that visibly stops moving reads as a bug.
 
-Across eight three-hour prestiges, favour runs **×2.21 → ×3.76 → ×5.23 → ×6.27 → ×6.68 →
-×6.96 → ×7.06**, settling there, with the bank at 1,210 → 2,760 → 4,230 → 5,270 → 5,680 →
-5,960 → 6,060 souls. These are the figures from the verified continuous run in §2, which is
-what `k = 600` approximates: at this granularity flooring costs a fraction of a percent.
+Across eight three-hour prestiges the harness reports favour running **×1.63 → ×2.37 →
+×3.41 → ×4.48 → ×5.18 → ×5.70 → ×6.07**, with the bank at 630 → 1,367 → 2,411 → 3,479 →
+4,184 → 4,701 → 5,071 → 5,308 souls. Step ratios fall monotonically, 1.63 down to 1.065,
+and the last is under the 1.10 the settling check demands. This is the §2 sequence less
+the constant the offset removes, and it converges for the same reason.
 The same loop at `k = 1` settled lower, at ×6.4, purely because whole-soul flooring threw
 away up to a soul a run.
 
@@ -197,11 +217,11 @@ Granularity was the constraint, and raising `k` removed it.
 
 ### 4.2 Achievements
 
-`souls-1` fires within seconds of the first Evil under the new scale, and `souls-10000`
-sits a long way past the plateau. The three become **`souls-500`**, **`souls-3000`** and
-**`souls-10000`** — the first landing just before the 41-minute mark that used to be the
-first soul, the second around seven hours, the third a genuine long-haul goal reached over
-several resets. Only two ids change, so the `AchievementId` union and the copy entries move
+`souls-1` and `souls-100` both fire in the opening minutes once souls read in the
+hundreds, and `souls-10000` sits a long way past the plateau. The three become
+**`souls-500`**, **`souls-3000`** and **`souls-10000`** — measured on the harness, the
+first lands between two and four hours, the second around ten, and the third at roughly
+three days, a genuine long-haul goal reached over several resets. Only two ids change, so the `AchievementId` union and the copy entries move
 together. The copy keeps its jokes; "Hold 3,000 Damned Souls. You file them by date" needs
 no rewriting beyond the number.
 
@@ -214,7 +234,8 @@ but it does need a test, because nothing currently proves it.
 
 `souls` and `soulsSpent` are stored in the old denomination. `lifetimeEvil` survives every
 reset, so the total is not converted — it is recomputed from the Evil that earned it,
-which is exact. Save version **8 → 9**.
+which is exact. Save versions **8 → 9 → 10**: the first step re-denominates, the second
+takes off the offset that step 9 shipped without.
 
 The naive migration — rescale each field through the formula — is wrong. `prestigeGain`
 depends on the invariant `souls + soulsSpent ≈ soulsEarned(lifetimeEvil)`, and the map
@@ -249,18 +270,31 @@ migration that reads no price table cannot drift when the content is next retune
 this version could: `MIGRATIONS` entries are never edited once shipped, so the first
 attempt would have stayed wrong forever once it reached a real player.
 
+**Step 9 → 10 corrects the missing offset.** Version 9 reached the deploy preview and
+minted banks on `600·(L/5.07e9)^0.055` with no `− 1`, so those saves hold up to 600 souls
+they never earned. `MIGRATIONS` entries are never edited once shipped, so the fix is
+appended rather than applied in place: step 10 recomputes from `lifetimeEvil` on the
+corrected curve and carries the spent fraction across, exactly as step 9 does and for the
+same reasons. A version 8 save walks both steps and lands where a version 9 save does,
+which is asserted rather than assumed.
+
+Carrying the fraction matters more here than it did at step 9. Re-pricing what a version 9
+player bought would charge them against a bank that has just shrunk by up to 600 souls,
+and the clamp at zero stops being a formality: a save under 5.07e9 lifetime Evil held
+souls the corrected curve never paid, and correctly lands on nothing.
+
 `MIN_SUPPORTED_SAVE_VERSION` stays at 6.
 
 A worked case, from the reported playtest: 31,630 souls, none spent, recover a lifetime
-Evil of 5.069×10¹⁸, which re-evaluates to **1,875 souls, ×2.9**. The count barely moves;
+Evil of 5.069×10¹⁸, which re-evaluates to **1,275 souls, ×2.28**. The count barely moves;
 the multiplier falls from ×634. That is the correction, and it is the right shape for
 it — nothing the player built is lost, and the ×634 was never real power. It was the
 fault in §1.
 
 The same save with a full ladder already kept (198 of the 31,630 souls spent under the
-old prices) lands at **1,864 souls, soulsSpent 11, ×2.86** — the Keep survives, the
+old prices) lands at **1,268 souls, soulsSpent 7, ×2.27** — the Keep survives, the
 spent share is preserved, and the bank is barely dented. Two full ladders kept (396
-spent) lands at **1,852 souls, soulsSpent 23, ×2.85**. No case wipes the player.
+spent) lands at **1,260 souls, soulsSpent 15, ×2.26**. No case wipes the player.
 
 ## 5 Interface
 
@@ -298,11 +332,13 @@ The anchor is the harness, not a unit test — the fault in §1 is invisible to 
 - **The measured growth exponent, reported not asserted.** The same harness prints `a` over
   2h→4h and 4h→8h. Nobody can eyeball a divergent prestige loop, but anyone can read
   `a·q·p` off a report and see it crossing 1.
-- **Soul arrivals.** A content test pinning the lifetime Evil at which the soul count
-  passes 600 — 41m 51s, the moment `scale` marks — against shipping content, so a future
-  retune cannot move it silently. This is not the first soul: under this curve the first
-  soul lands within seconds of the first Evil, which is a side effect of a small exponent
-  rather than a figure worth pinning.
+- **Soul arrivals.** Tests pinning both ends of the opening: that a run far below `scale`
+  earns **zero** souls, and that `scale` itself is where the first soul lands. The first
+  of those is the regression test for the missing offset, and it is the one that matters —
+  an earlier draft of this section argued the opposite, that the first soul arriving
+  "within seconds of the first Evil" was a harmless side effect of a small exponent and
+  not worth pinning. It was neither. Nothing else in the suite would have caught it,
+  because every other figure was correct.
 - **The migration round trip.** A version 8 blob with known `souls`, `soulsSpent`,
   `smiteKept` and `lifetimeEvil`, asserting the invariant in §4.3 holds after migrating,
   and asserting `prestigeGain` immediately after load is not negative.
