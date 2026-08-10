@@ -6,6 +6,7 @@ import {
   createState,
   deserialize,
   exportSave,
+  globalMultiplier,
   importSave,
   MIN_SUPPORTED_SAVE_VERSION,
   ObsoleteSave,
@@ -364,11 +365,13 @@ describe('save version 8', () => {
 
 describe('migrating souls to the 2026-08-08 denomination', () => {
   // A real playtest save: 31,630 souls under the old curve, which recovers a
-  // lifetime Evil of ~5.07e18. The new curve pays 600·(5.07e18/5.07e9)^0.055,
-  // which floors to 1875 — verified directly against `break_eternity.js`, not
-  // estimated. `soulsSpent` is zero, so nothing has been priced at the old rates
-  // yet, and `smiteKept` describes a full ladder — the migration must not read it,
-  // so what it says here does not matter to the outcome.
+  // lifetime Evil of ~5.07e18. The new curve pays 600·((5.07e18/5.07e9)^0.055 − 1),
+  // which floors to 1275 — verified directly against `break_eternity.js`, not
+  // estimated. The blob is stamped version 8, so it walks both steps: 8 → 9 mints
+  // the un-offset count, 9 → 10 corrects it. Only the end state is asserted, which
+  // is the only thing a loaded save ever sees. `soulsSpent` is zero, so nothing has
+  // been priced at the old rates yet, and `smiteKept` describes a full ladder — the
+  // migration must not read it, so what it says here does not matter to the outcome.
   const blob: SaveBlob = {
     ...serialize(createState(fixture), 0),
     saveVersion: 8,
@@ -381,11 +384,11 @@ describe('migrating souls to the 2026-08-08 denomination', () => {
   it('lands the reported playtest save at the new curve floor', () => {
     const migrated = migrate(blob);
 
-    expect(Number(migrated.souls)).toBe(1875);
+    expect(Number(migrated.souls)).toBe(1275);
   });
 
   it('stamps the new version', () => {
-    expect(migrate(blob).saveVersion).toBe(9);
+    expect(migrate(blob).saveVersion).toBe(10);
   });
 
   // The three tests below are Finding 1 from the whole-branch review: the old
@@ -402,20 +405,20 @@ describe('migrating souls to the 2026-08-08 denomination', () => {
     // spent rather than held.
     const migrated = migrate({ ...blob, souls: '31432', soulsSpent: '198' });
 
-    expect(Number(migrated.souls)).toBe(1864);
+    expect(Number(migrated.souls)).toBe(1268);
   });
 
   it('carries the spent fraction of one kept ladder into the new soulsSpent', () => {
     const migrated = migrate({ ...blob, souls: '31432', soulsSpent: '198' });
 
-    expect(Number(migrated.soulsSpent)).toBe(11);
+    expect(Number(migrated.soulsSpent)).toBe(7);
   });
 
   it('does not wipe a player who kept two full ladders', () => {
     // Two full ladders at the old prices cost 396 souls.
     const migrated = migrate({ ...blob, souls: '31234', soulsSpent: '396' });
 
-    expect(Number(migrated.souls)).toBe(1852);
+    expect(Number(migrated.souls)).toBe(1260);
   });
 
   it('never leaves the player owing souls they cannot have', () => {
@@ -433,7 +436,42 @@ describe('migrating souls to the 2026-08-08 denomination', () => {
     // under the old curve should.
     const migrated = migrate({ ...blob, souls: '0', soulsSpent: '0' });
 
-    expect(Number(migrated.souls)).toBe(1875);
+    expect(Number(migrated.souls)).toBe(1275);
+  });
+});
+
+// Version 9 shipped to the deploy preview before the offset was found, so these saves
+// exist and hold souls the corrected curve never paid. They enter the table one step
+// later than the version 8 blobs above and must land on the same figures.
+describe('correcting a version 9 save that was paid on the un-offset curve', () => {
+  const blob: SaveBlob = {
+    ...serialize(createState(fixture), 0),
+    saveVersion: 9,
+    souls: '1875',
+    soulsSpent: '0',
+    lifetimeEvil: '5.07e18',
+  };
+
+  it('takes the offset off a bank minted without it', () => {
+    expect(Number(migrate(blob).souls)).toBe(1275);
+  });
+
+  it('agrees with a version 8 save carrying the same lifetime Evil', () => {
+    const fromEight = migrate({ ...blob, saveVersion: 8, souls: '31630' });
+
+    expect(migrate(blob).souls).toBe(fromEight.souls);
+  });
+
+  it('takes back every soul from a run that never reached scale', () => {
+    const early = migrate({ ...blob, souls: '213', lifetimeEvil: '34' });
+
+    expect(Number(early.souls)).toBe(0);
+  });
+
+  it('leaves the favour multiplier at one for that run', () => {
+    const early = deserialize(migrate({ ...blob, souls: '213', lifetimeEvil: '34' }));
+
+    expect(globalMultiplier(early, fixture).toNumber()).toBe(1);
   });
 });
 

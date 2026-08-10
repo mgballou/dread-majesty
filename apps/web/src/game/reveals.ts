@@ -24,12 +24,17 @@ export function isPrestigeWorthShowing(state: GameState, content: Content): bool
   if (state.souls.gt(0) || state.stats.prestiges > 0) return true;
 
   // Lifetime Evil at which the formula first pays out one soul: souls = k *
-  // (lifetime/scale)^exponent, solved for lifetime at souls = 1. The exponent comes
-  // from `content.prestige` rather than a hardcoded shape, matching `lifetimeForSouls`
-  // in `apps/web/src/dev/jumps.ts` — a fixed square root here once quoted a lifetime
-  // Evil the live formula no longer agreed with.
+  // ((lifetime/scale)^exponent - 1), solved for lifetime at souls = 1. Every constant
+  // comes from `content.prestige` rather than a hardcoded shape, matching
+  // `lifetimeForSouls` in `apps/web/src/dev/jumps.ts` — a fixed square root here once
+  // quoted a lifetime Evil the live formula no longer agreed with.
   const { k, scale, exponent } = content.prestige;
-  const firstSoul = new Decimal(scale).mul(new Decimal(1).div(k).pow(1 / exponent));
+  const firstSoul = new Decimal(scale).mul(
+    new Decimal(1)
+      .div(k)
+      .add(1)
+      .pow(1 / exponent),
+  );
 
   return state.lifetimeEvil.gte(firstSoul.mul(SHOW_FROM));
 }

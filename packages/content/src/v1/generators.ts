@@ -55,9 +55,9 @@ const TAIL_MILESTONES: readonly MilestoneDef[] = (() => {
  * Tuned against `pnpm harness`, which reports the numbers below. Change anything
  * here and re-run it; the whole point of the harness is that balance is measurable.
  *
- *   Warrens        10m 57s    first prestige   5s
- *   Dark Legions   40m 35s    souls at 8h      3160
- *   Fortresses     1h 22m     souls at 12h     4335
+ *   Warrens        10m 57s    first prestige   42m 13s
+ *   Dark Legions   40m 35s    souls at 8h      2560
+ *   Fortresses     1h 22m     souls at 12h     3735
  *   Thrones        2h 29m
  *
  * Thrones now land past two hours, with a reset well before the first — still the
@@ -368,16 +368,20 @@ export const v1: Content = {
   unlockFraction: 0.5,
 
   prestige: {
-    // `k` and `perSoul` are one lever: favour is `1 + perSoul * k * (L/scale)^exponent`,
-    // so their product, 0.6, is the whole of the balance and `k` alone decides what the
-    // player reads. Six hundred is a display choice — souls in the hundreds and
-    // thousands at a tenth of a percent each, because a prestige currency reading `2`
-    // reads as broken whatever the arithmetic underneath. Any pair holding the product
-    // at 0.6 plays identically; changing one without the other moves the plateau.
+    // `k` and `perSoul` are one lever: favour is
+    // `1 + perSoul * k * ((L/scale)^exponent - 1)`, so their product, 0.6, is the whole
+    // of the balance and `k` alone decides what the player reads. Six hundred is a
+    // display choice — souls in the hundreds and thousands at a tenth of a percent each,
+    // because a prestige currency reading `2` reads as broken whatever the arithmetic
+    // underneath. Any pair holding the product at 0.6 plays identically; changing one
+    // without the other moves the plateau.
     k: 600,
-    // Lifetime Evil at 41m 51s, where the soul count passes 600 — not where the first
-    // soul lands. The exponent is small enough that the first soul lands within
-    // seconds of the first Evil; raising `k` to 600 is what put it there, on purpose.
+    // Lifetime Evil at 41m, where the first soul lands. It means that because the curve
+    // subtracts one before scaling by `k`. Without that subtraction it would mean
+    // nothing at all: an exponent this small keeps the bracket within a whisker of 1
+    // across the entire early game, so the curve paid 175 souls for the first Evil ever
+    // earned and 213 for thirty-four. That shipped to the preview, and the `floor` at
+    // `k = 1` is what had been hiding it. See `soulsEarned`.
     scale: '5.07e9',
     // Not a free choice. The old 0.5 made each reset raise the soul count to about the
     // ninth power, so favour ran ×12, then ×634, then past anything the simulation could
