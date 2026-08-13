@@ -99,6 +99,37 @@ export type SmiteUpgradeId = (typeof SMITE_UPGRADE_IDS)[number];
 export const TOUR_STEP_IDS = ['premise', 'evil', 'rouse', 'chain', 'cascade'] as const;
 export type TourStepId = (typeof TOUR_STEP_IDS)[number];
 
+/**
+ * The first run, in the order it is walked.
+ *
+ * Nothing persists these — the interface records only that onboarding was seen — so
+ * unlike every other id set in this file they may be renamed freely.
+ *
+ * The order is the argument the track makes: set the Minion working, learn that it
+ * stops, learn that Evil buys more of them, hand the job to somebody else, take ground
+ * of your own, start it, and then watch five Minions arrive without being asked.
+ */
+export const DOMINION_BEAT_IDS = [
+  'stir',
+  'orders',
+  'muster',
+  'appoint',
+  'warren',
+  'rouse-warren',
+  'cascade',
+] as const;
+export type DominionBeatId = (typeof DOMINION_BEAT_IDS)[number];
+
+/**
+ * Smite, taught by being tempted into misusing it.
+ *
+ * Two of these three are the narrator and the middle one is not, which is why the voice
+ * is a property of the beat rather than of the track. `apathy` follows `goad` so that
+ * "her" always has an antecedent by the time the narrator uses it.
+ */
+export const MALICE_BEAT_IDS = ['first-blow', 'goad', 'apathy'] as const;
+export type MaliceBeatId = (typeof MALICE_BEAT_IDS)[number];
+
 export function isTierId(id: string): id is TierId {
   return (TIER_IDS as readonly string[]).includes(id);
 }
