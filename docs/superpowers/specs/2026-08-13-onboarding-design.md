@@ -301,7 +301,7 @@ there to read.
 
 ---
 
-## 6 Voice and colour
+## 6 Voice and color
 
 **A new semantic token, `--tone-malice`, over a new primitive.** Not a borrow, and none
 of the existing tokens can be stretched to cover it: `--accent` means *act* and Smite
@@ -314,12 +314,12 @@ from gold and clear of every chain tone by more than 50°; measured 7.3:1 agains
 ratio and the hue distance from the stylesheet, so these two figures are checked rather
 than asserted.
 
-This puts a second colour on screen but not a second **accent**. Nothing in the prompt
+This puts a second color on screen but not a second **accent**. Nothing in the prompt
 bar is clickable during a Malice beat, because the track never gates and never offers an
 action. The rule in `ui-sensibility.md` §3 governs the one lifted action, and this does
 not take it.
 
-**Two markers beyond the colour**, because colour alone must not carry who is speaking:
+**Two markers beyond the color**, because color alone must not carry who is speaking:
 
 - Her text is italic and carries no leading marker. The narrator's is upright and led by
   `▸`.
