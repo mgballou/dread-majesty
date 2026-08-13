@@ -140,6 +140,20 @@ The timings are the existing economy, not new numbers. They put the first Warren
 roughly eleven minutes, against the 10m 57s the balance harness already measures for it.
 Nothing in this spec moves an economy value.
 
+### 3.1 One bar, two tracks
+
+Both tracks render into the same row, and both can be ready at once — `muster` waiting on
+a purchase while she starts talking. **Dominion takes the bar; Malice shows only when no
+Dominion beat is showing.** A Dominion beat is gating the interface, so hiding it would
+leave the player locked with no explanation on screen, which is the one outcome the gate
+must never produce.
+
+Nothing is lost by waiting. A Malice beat that is ready but crowded out stays ready, and
+its retirement clock does not start until it is actually shown. Dominion beats clear on
+the player's own click, so the wait is as long as they take to act. `goad` in particular
+reads better for having waited: its line is chosen from Apathy at the moment it appears,
+so a delayed entrance simply means she arrives further down her own argument.
+
 ---
 
 ## 4 The Dominion track
@@ -245,16 +259,45 @@ player who learns "ignore the voice" gets it wrong in the other direction.
 
 The punishment for caving is deliberately mild and deliberately visible: the stage
 already reports "Everything works ×1.86 as hard", so the cost of listening is shown in
-the number rather than explained. `apathy` fires only on a blow landing in a reduced
-band, which the bands put at Apathy ≥ 1 — reached on the *third* rapid strike, not the
-first. Cave once and nothing scolds you. Keep caving and the realm stops flinching, and
-then the narrator has something to say.
+the number rather than explained.
 
-### 5.4 Retirement
+`apathy` fires on **band 2** — "The realm has stopped looking" — and not before. The
+bands divide the Apathy cap of 3 into thirds, so the band index is simply the floor of
+Apathy, and the shipped numbers walk it like this for a player caving on every cooldown:
 
-`goad` is consumed by the next smite. If the player never smites again it retires
-unconsumed after two minutes, so the bar can never become permanent furniture. Retiring
-unconsumed still advances the track, so `apathy` remains reachable later.
+| Strike | Apathy before | Blow | Apathy after | Band after |
+| ------ | ------------- | ---- | ------------ | ---------- |
+| 1st | 0 | ×2.00 | 1.00 | 1 |
+| 2nd, at t = 20s | 0.56 | ×1.86 | 1.56 | 1 |
+| 3rd, at t = 40s | 1.11 | ×1.72 | 2.11 | **2** |
+
+So the beat lands on the third rapid strike. Band 1 would have fired on the second — one
+cave — and scolding a player for taking her advice exactly once is the wrong lesson. Cave
+once and nothing happens. Keep caving and the realm stops looking, and then the narrator
+has something to say.
+
+### 5.4 What clears a beat
+
+Every beat names what consumes it, and a Dominion beat's answer is always the action it
+gates. The Malice beats gate nothing, so they need their own answers:
+
+| Beat | Cleared by | Retires unconsumed after |
+| ---- | ---------- | ------------------------ |
+| `first-blow` | dismissal | 12s |
+| `goad` | the next smite | 2 min |
+| `apathy` | dismissal | 12s |
+| `cascade` | dismissal | never |
+
+`goad`'s two minutes stop the bar becoming permanent furniture for a player who strikes
+once and never again. `cascade` never retires because it is the finale of the whole track
+and the player should close it themselves.
+
+Retiring unconsumed still advances the track, so a `goad` nobody answered leaves `apathy`
+reachable later.
+
+Retirement is measured in `stats.playTimeMs`, not wall clock — the same counter the
+simulation advances — so a backgrounded tab does not quietly retire a prompt nobody was
+there to read.
 
 ---
 
@@ -314,7 +357,20 @@ of this exists.
     | { kind: 'buy'; tierId: TierId }
     | { kind: 'appoint'; overseerId: OverseerId }
     | { kind: 'none' };
+
+  interface OnboardingBeat<Id extends string> {
+    id: Id;
+    ready: BeatReady;
+    gate: BeatGate;
+    voice: 'narrator' | 'her';
+    clearedBy: 'gated-action' | 'smite' | 'dismiss';
+    /** Play-time milliseconds after showing. Null never retires. */
+    retireAfterMs: number | null;
+  }
   ```
+
+  `voice` rather than deriving it from the track, because the two narrator beats of §5.1
+  sit *inside* the Malice track. Who is speaking is a property of the beat.
 
 - **`packages/content/src/v1/onboarding.ts`** (new) — the two tracks and every threshold
   they name, so no balance number lands outside the content package.
@@ -325,7 +381,14 @@ of this exists.
 
 - **`packages/content/src/copy.ts`** and **`v1/copy.ts`** — `TourCopy` and `TourStepCopy`
   are replaced by `OnboardingCopy`, which holds one line per beat plus the four `goad`
-  lines as an ordered list with their Apathy thresholds.
+  lines as an ordered list carrying their own Apathy thresholds.
+
+  The thresholds live beside the lines rather than in `v1/onboarding.ts` because they
+  pace prose rather than the economy, and splitting a threshold from the sentence it
+  chooses is the easiest way to let the two drift. The list is **total**: entries are
+  ordered by descending threshold, selection takes the first whose threshold Apathy
+  exceeds, and the last entry's threshold is negative so it always matches. There is no
+  fallback branch to leave untested.
 
 - **`packages/content/src/index.ts`** — exported as **`CURRENT_ONBOARDING`**, a sibling of
   `CURRENT_COPY`. Deliberately **not** a field on `Content`: tutorial data must never
