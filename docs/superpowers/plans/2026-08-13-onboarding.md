@@ -70,7 +70,7 @@ Adds the onboarding types, ids and track data. Nothing consumes them yet, and th
 
 - [ ] **Step 1: Add the beat id sets**
 
-In `packages/content/src/ids.ts`, append after the existing `TOUR_STEP_IDS` block (leave that block alone — Task 6 removes it):
+In `packages/content/src/ids.ts`, append after the existing `TOUR_STEP_IDS` block (leave that block alone — Task 7 removes it):
 
 ```ts
 /**
