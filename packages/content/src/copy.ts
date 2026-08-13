@@ -1,4 +1,11 @@
-import type { AchievementId, OverseerId, SmiteUpgradeId, TierId, TourStepId } from './ids.ts';
+import type {
+  AchievementId,
+  DominionBeatId,
+  OverseerId,
+  SmiteUpgradeId,
+  TierId,
+  TourStepId,
+} from './ids.ts';
 
 /**
  * Every player-facing string that is not a tier name.
@@ -406,6 +413,47 @@ export interface TourCopy {
   readonly steps: Readonly<Record<TourStepId, TourStepCopy>>;
 }
 
+/**
+ * One of her lines, and the Apathy above which she says it.
+ *
+ * The threshold sits beside the sentence rather than in `v1/onboarding.ts` because it
+ * paces prose, not the economy, and splitting a threshold from the line it chooses is
+ * the easiest way to let the two drift.
+ *
+ * The list is **total**: entries run in descending order, selection takes the first
+ * whose threshold Apathy exceeds, and the last threshold is negative so it always
+ * matches. There is no fallback branch, and so none to leave untested.
+ */
+export interface GoadLine {
+  readonly aboveApathy: number;
+  readonly line: string;
+}
+
+/**
+ * The first run, and the voice that interrupts it.
+ *
+ * Body text only — no titles. A standing order, not a card. The one place the shipped
+ * tour's five titled cards survive is in what this replaced.
+ */
+export interface OnboardingCopy {
+  /** Leaves both tracks for good. Offered on the opening beat and nowhere else. */
+  readonly skip: string;
+  /** Opens the Musings screen, which already holds Import. */
+  readonly loadSave: string;
+  /** Closes a beat that gates nothing. */
+  readonly dismiss: string;
+  /** Names the bar to a screen reader when the narrator holds it. */
+  readonly narratorLabel: string;
+  /** And when she does. */
+  readonly herLabel: string;
+  readonly dominion: Readonly<Record<DominionBeatId, string>>;
+  readonly malice: {
+    readonly 'first-blow': string;
+    readonly apathy: string;
+  };
+  readonly goad: readonly GoadLine[];
+}
+
 export interface Copy {
   readonly title: string;
   /** Shuts any record lifted over the game. Chrome, so plain rather than in voice. */
@@ -426,4 +474,5 @@ export interface Copy {
   readonly ledger: LedgerCopy;
   readonly errors: ErrorCopy;
   readonly tour: TourCopy;
+  readonly onboarding: OnboardingCopy;
 }

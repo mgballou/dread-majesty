@@ -59,6 +59,8 @@ export type {
   ErrorCopy,
   TourCopy,
   TourStepCopy,
+  OnboardingCopy,
+  GoadLine,
 } from './copy.ts';
 
 export { ART } from './art.ts';

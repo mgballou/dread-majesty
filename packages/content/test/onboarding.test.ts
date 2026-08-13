@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DOMINION_BEAT_IDS, MALICE_BEAT_IDS, v1, v1Onboarding } from '../src/index.ts';
+import { DOMINION_BEAT_IDS, MALICE_BEAT_IDS, v1, v1Copy, v1Onboarding } from '../src/index.ts';
 import type { BeatGate, BeatReady } from '../src/index.ts';
 
 const tierIds = v1.tiers.map((tier) => tier.id);
@@ -81,5 +81,30 @@ describe('every beat names something that exists', () => {
     for (const beat of beats.filter((candidate) => candidate.gate.kind !== 'none')) {
       expect(beat.clearedBy).toBe('gated-action');
     }
+  });
+});
+
+describe('the onboarding copy', () => {
+  const copy = v1Copy.onboarding;
+
+  it('gives every Dominion beat a line', () => {
+    for (const id of DOMINION_BEAT_IDS) expect(copy.dominion[id].length).toBeGreaterThan(0);
+  });
+
+  it('orders the goad lines by descending threshold', () => {
+    const thresholds = copy.goad.map((entry) => entry.aboveApathy);
+    expect(thresholds).toEqual([...thresholds].sort((one, other) => other - one));
+  });
+
+  it('ends the goad list on a threshold that always matches', () => {
+    expect(copy.goad.at(-1)?.aboveApathy).toBeLessThan(0);
+  });
+
+  it('gives every goad entry a line', () => {
+    for (const entry of copy.goad) expect(entry.line.length).toBeGreaterThan(0);
+  });
+
+  it('offers both bail actions on the opening beat', () => {
+    expect([copy.skip, copy.loadSave].every((label) => label.length > 0)).toBe(true);
   });
 });
