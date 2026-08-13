@@ -797,23 +797,23 @@ describe('isGatedOut', () => {
 });
 
 describe('clearsBeat', () => {
-  const stir = dominion[0];
-  const goad = malice[1];
+  const stir = dominion.find((beat) => beat.id === 'stir');
+  const goad = malice.find((beat) => beat.id === 'goad');
 
   it('clears a gated beat on its own action', () => {
-    expect(clearsBeat(stir, { kind: 'rouse', tierId: 'minion' })).toBe(true);
+    expect(stir && clearsBeat(stir, { kind: 'rouse', tierId: 'minion' })).toBe(true);
   });
 
   it('leaves a gated beat alone on a different action', () => {
-    expect(clearsBeat(stir, { kind: 'buy', tierId: 'minion' })).toBe(false);
+    expect(stir && clearsBeat(stir, { kind: 'buy', tierId: 'minion' })).toBe(false);
   });
 
   it('clears goad on a blow', () => {
-    expect(clearsBeat(goad, { kind: 'smite' })).toBe(true);
+    expect(goad && clearsBeat(goad, { kind: 'smite' })).toBe(true);
   });
 
   it('leaves goad alone on a purchase', () => {
-    expect(clearsBeat(goad, { kind: 'buy', tierId: 'minion' })).toBe(false);
+    expect(goad && clearsBeat(goad, { kind: 'buy', tierId: 'minion' })).toBe(false);
   });
 });
 
@@ -1055,7 +1055,7 @@ export function forgetOnboarding(): void {
 - [ ] **Step 4: Run the test**
 
 Run: `./node_modules/.bin/vitest run apps/web/src/game/onboarding.test.ts`
-Expected: PASS, 26 tests.
+Expected: PASS, 24 tests.
 
 - [ ] **Step 5: Run the gate**
 
