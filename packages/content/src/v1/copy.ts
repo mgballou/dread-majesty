@@ -448,4 +448,50 @@ export const v1Copy = {
       },
     },
   },
+
+  onboarding: {
+    skip: 'Skip tutorial',
+    loadSave: 'Load save',
+    dismiss: 'Understood',
+    narratorLabel: 'A word of advice',
+    herLabel: 'She has something to say',
+    dominion: {
+      stir: 'One Minion, and a grievance. Set it about some wickedness.',
+      orders:
+        'Once they finish a task, they await further orders. Initiative seems a rare quality.',
+      muster: 'One is not a host. Evil buys more of them, and more of them is more Evil.',
+      appoint: 'Perhaps with enough Evil you can set someone about managing this for you.',
+      warren: 'Take ground of your own. A Warren breeds Minions without being asked.',
+      'rouse-warren': 'It will not start itself. They never do.',
+      cascade:
+        'Five Minions you did not raise, already at work. Everything above feeds what is below it, all at once. The rest is yours.',
+    },
+    malice: {
+      'first-blow':
+        'I knew it would not take long for you to take matters into your own hands. When you strike, the dark force in you runs through the ranks and everything works harder for a while. Try not to overdo it.',
+      apathy: 'You listened to her. Everyone does, once. Let them rest and the fear returns.',
+    },
+    // Descending, and the last entry always matches. She flatters, then reads the
+    // resistance and renames it weakness, then stops pushing and gets intimate — and
+    // then she is simply correct, which is the only honest thing she says and the most
+    // persuasive. See the spec §5.2.
+    goad: [
+      {
+        aboveApathy: 0.45,
+        line: 'Oh, that was good. Again — while they are still trembling. Don’t let them settle.',
+      },
+      {
+        aboveApathy: 0.2,
+        line: 'You are being careful. I do like that in you. But careful is not the same as strong.',
+      },
+      {
+        aboveApathy: 0,
+        line: 'No? Then I’ll wait with you. I have nothing else. Neither, in the end, do you.',
+      },
+      {
+        aboveApathy: -1,
+        line: 'There. They have forgotten you entirely. That is the moment — take it, and take all of it.',
+      },
+    ],
+  },
 } as const satisfies Copy;
