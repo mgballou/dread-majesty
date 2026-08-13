@@ -18,7 +18,7 @@
 - **No `any`, no default exports, no `as` casts** except where a type guard genuinely cannot express it, with a comment saying why.
 - **`as const` for every content literal and id set.** Ids are unions of literals, never `string`.
 - **Object parameters once a function takes three or more arguments.** Two or fewer stay positional.
-- **No raw colour values outside `apps/web/src/ui/tokens.css`.** Semantic token names only.
+- **No raw color values outside `apps/web/src/ui/tokens.css`.** Semantic token names only.
 - **No comments in tests** unless the test is genuinely unusual. One assertion per `expect`.
 - **Engine tests never import shipping content.** Nothing in this plan adds such an import.
 - **US English throughout.** Prose follows Orwell's rules: no long word where a short one will do, no passive where the active works, cut every word that can be cut.
@@ -213,7 +213,7 @@ import type { DominionBeatId, MaliceBeatId, OverseerId, TierId } from './ids.ts'
  * When a beat is allowed on screen.
  *
  * A discriminated union rather than a predicate function, because content is data the
- * interface reads — a function here would put behaviour in the content package and make
+ * interface reads — a function here would put behavior in the content package and make
  * the tracks impossible to check without running them.
  *
  * For every beat that gates a purchase this is *can afford the named action*, which is
@@ -1330,7 +1330,7 @@ Create `apps/web/src/ui/Prompt.css`:
  * moves when a beat arrives. See `.shell__prompt`.
  *
  * Two voices. The narrator is the reading ink, upright, led by a marker. She is
- * verdigris and italic and has no marker at all, because colour alone must not carry
+ * verdigris and italic and has no marker at all, because color alone must not carry
  * who is speaking — the distinction has to survive both a screen reader and a monitor
  * that renders the hue badly.
  */
@@ -1430,7 +1430,7 @@ All three test files already exist: `apps/web/src/ui/stage/ChainStage.test.tsx`,
 `apps/web/src/ui/rail/BuyRail.test.tsx`, `apps/web/src/ui/rail/Miscreants.test.tsx`. Each
 already builds its own props; **reuse that file's existing setup rather than inventing a
 new one**, and add only the `isGated` prop to it. The three describes below name the
-behaviour to assert — write them against whatever render arrangement that file already uses.
+behavior to assert — write them against whatever render arrangement that file already uses.
 
 In `ChainStage.test.tsx`, on a state where both the Minion and the Warren are owned and
 rousable:
