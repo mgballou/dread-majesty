@@ -22,7 +22,15 @@
 - **No comments in tests** unless the test is genuinely unusual. One assertion per `expect`.
 - **Engine tests never import shipping content.** Nothing in this plan adds such an import.
 - **US English throughout.** Prose follows Orwell's rules: no long word where a short one will do, no passive where the active works, cut every word that can be cut.
-- Run `pnpm check` before every commit. If `pnpm` is not on PATH use `npx tsc --noEmit`, `./node_modules/.bin/eslint .`, and `./node_modules/.bin/vitest run`.
+- Run `pnpm check` before every commit. If `pnpm` is not on PATH, run the three parts by hand: `./node_modules/.bin/eslint .`, `./node_modules/.bin/vitest run`, and the typecheck **once per package** —
+
+  ```bash
+  npx tsc --noEmit -p packages/content/tsconfig.json
+  npx tsc --noEmit -p packages/engine/tsconfig.json
+  npx tsc --noEmit -p apps/web/tsconfig.json
+  ```
+
+  There is no root `tsconfig.json` — only `tsconfig.base.json`, which nothing extends from the root. A bare `npx tsc --noEmit` at the repo root therefore reads **zero** project files and prints "No errors found" whatever the state of the code. Confirmed with `--listFiles`: 0 project files at the root against 260, 285 and 474 for the three packages. Never trust the bare form.
 - Commit messages: imperative, one line, **no trailers and no AI attribution**.
 - Branch is `first-run-tour`, already checked out. Never commit to `main`.
 
@@ -433,7 +441,7 @@ export const CURRENT_ONBOARDING: Onboarding = v1Onboarding;
 Run: `./node_modules/.bin/vitest run packages/content/test/onboarding.test.ts`
 Expected: PASS, 12 tests.
 
-Run: `npx tsc --noEmit && ./node_modules/.bin/eslint .`
+Run: `npx tsc --noEmit -p packages/content/tsconfig.json && npx tsc --noEmit -p packages/engine/tsconfig.json && npx tsc --noEmit -p apps/web/tsconfig.json && ./node_modules/.bin/eslint .`
 Expected: both clean.
 
 - [ ] **Step 8: Commit**
@@ -503,7 +511,7 @@ Expected: FAIL — `v1Copy.onboarding` is undefined.
 
 - [ ] **Step 3: Add the copy types**
 
-In `packages/content/src/copy.ts`, add `DominionBeatId` and `MaliceBeatId` to the existing type import from `./ids.ts`, then add before `export interface Copy`:
+In `packages/content/src/copy.ts`, add `DominionBeatId` to the existing type import from `./ids.ts` — and only that one. `OnboardingCopy.malice` names its two keys explicitly rather than keying off `MaliceBeatId`, so importing that type as well trips `noUnusedLocals`. Then add before `export interface Copy`:
 
 ```ts
 /**
@@ -615,7 +623,7 @@ In `packages/content/src/index.ts`, add `OnboardingCopy` and `GoadLine` to the t
 Run: `./node_modules/.bin/vitest run packages/content/test/onboarding.test.ts`
 Expected: PASS, 17 tests.
 
-Run: `npx tsc --noEmit && ./node_modules/.bin/eslint . && ./node_modules/.bin/prettier --check .`
+Run: `npx tsc --noEmit -p packages/content/tsconfig.json && npx tsc --noEmit -p packages/engine/tsconfig.json && npx tsc --noEmit -p apps/web/tsconfig.json && ./node_modules/.bin/eslint . && ./node_modules/.bin/prettier --check .`
 Expected: all clean.
 
 - [ ] **Step 7: Commit**
@@ -1051,7 +1059,7 @@ Expected: PASS, 26 tests.
 
 - [ ] **Step 5: Run the gate**
 
-Run: `npx tsc --noEmit && ./node_modules/.bin/eslint . && ./node_modules/.bin/vitest run`
+Run: `npx tsc --noEmit -p packages/content/tsconfig.json && npx tsc --noEmit -p packages/engine/tsconfig.json && npx tsc --noEmit -p apps/web/tsconfig.json && ./node_modules/.bin/eslint . && ./node_modules/.bin/vitest run`
 Expected: all clean, no existing test broken.
 
 - [ ] **Step 6: Commit**
@@ -1818,7 +1826,7 @@ immediately, which is the wrong move, and it argues better the longer you refuse
 
 - [ ] **Step 8: Run the whole gate**
 
-Run: `npx tsc --noEmit && ./node_modules/.bin/eslint . && ./node_modules/.bin/prettier --check . && ./node_modules/.bin/vitest run`
+Run: `npx tsc --noEmit -p packages/content/tsconfig.json && npx tsc --noEmit -p packages/engine/tsconfig.json && npx tsc --noEmit -p apps/web/tsconfig.json && ./node_modules/.bin/eslint . && ./node_modules/.bin/prettier --check . && ./node_modules/.bin/vitest run`
 Expected: all clean. Confirm no file matching `[Tt]our` remains: `git ls-files | grep -i tour` prints nothing.
 
 - [ ] **Step 9: Play it**
@@ -1839,7 +1847,7 @@ git commit -m "Replace the first-run tour with the two onboarding tracks"
 After Task 7, the whole branch:
 
 ```bash
-npx tsc --noEmit
+npx tsc --noEmit -p packages/content/tsconfig.json && npx tsc --noEmit -p packages/engine/tsconfig.json && npx tsc --noEmit -p apps/web/tsconfig.json
 ./node_modules/.bin/eslint .
 ./node_modules/.bin/prettier --check .
 ./node_modules/.bin/vitest run
