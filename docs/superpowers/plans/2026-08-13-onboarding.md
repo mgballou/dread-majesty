@@ -1685,15 +1685,22 @@ const stopOnboarding = useCallback(() => {
 After `const { state, dispatch } = session;`, work out the beat on screen. **Dominion takes the bar; Malice shows only when no Dominion beat is showing** (spec §3.1):
 
 ```tsx
+// How many bands the Apathy gauge is drawn in. Read from the copy rather than fixed at
+// three, so the beat that waits for "the realm has stopped looking" and the gauge that
+// says it can never disagree about where that band starts.
+const bandCount = copy.smite.bands.length;
+
 const dominionBeat = running
-  ? showingBeat({ track: onboarding.dominion, consumed: doneDominion, state, content })
+  ? showingBeat({ track: onboarding.dominion, consumed: doneDominion, state, content, bandCount })
   : null;
 const maliceBeat =
   running && dominionBeat === null
-    ? showingBeat({ track: onboarding.malice, consumed: doneMalice, state, content })
+    ? showingBeat({ track: onboarding.malice, consumed: doneMalice, state, content, bandCount })
     : null;
 const beat = dominionBeat ?? maliceBeat;
 ```
+
+`showingBeat` takes an object parameter with exactly these five fields — `{ track, consumed, state, content, bandCount }` — and all five are required. Its signature is in `apps/web/src/game/onboarding.ts`; read it rather than assuming.
 
 Consume a beat when the player acts. Add one helper and call it from the existing `onRouse`, `onPurchase`, `onAppoint` and `onSmite` handlers, **after** the dispatch:
 
