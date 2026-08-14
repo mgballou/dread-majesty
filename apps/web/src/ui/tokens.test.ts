@@ -118,6 +118,13 @@ function hueDistance(one: string, other: string): number {
   return Math.min(apart, 360 - apart);
 }
 
+/** The alpha percentage out of a resolved `rgb(R G B / N%)` token, as a number. */
+function alpha(name: string): number {
+  const match = /\/\s*([\d.]+)%\s*\)/.exec(resolve(name));
+  if (!match) throw new Error(`Token ${name} does not resolve to an rgb(... / N%) value`);
+  return Number(match[1]);
+}
+
 describe('token contract', () => {
   it('declares the same semantic set in every theme block', () => {
     const blocks = [...themeBlocks(tokens).values()];
@@ -134,6 +141,10 @@ describe('token contract', () => {
     for (const name of ['--ground', '--surface', '--line', '--ink', '--accent', '--well']) {
       expect(declared).toContain(name);
     }
+  });
+
+  it('keeps the narrative dim lighter than the full scrim', () => {
+    expect(alpha('--scrim-soft')).toBeLessThan(alpha('--scrim'));
   });
 });
 
