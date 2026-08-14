@@ -1,4 +1,4 @@
-import { useId, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { DeckGlyph, type DeckGlyphKind } from './DeckGlyph.tsx';
 import './Deck.css';
 
@@ -26,6 +26,17 @@ export interface DeckTab {
 
 interface DeckProps {
   tabs: readonly DeckTab[];
+  /**
+   * A tab to bring forward, named by id.
+   *
+   * The first-run tutorial uses it: a beat that points at a control inside a shut panel
+   * would otherwise be pointing at something with no size on screen. Opening happens when
+   * this *changes*, not on every render — so the player can still move to another tab
+   * afterwards and the deck will not drag them back.
+   *
+   * Absent means the deck chooses for itself, which is every state after the first run.
+   */
+  requestOpen?: string;
 }
 
 /**
@@ -45,13 +56,28 @@ interface DeckProps {
  * change (§2.7), and what stops a panel rebuilding to show it arrived (§9). The body
  * holds a floor height for the same reason: changing tab must not resize the page.
  */
-export function Deck({ tabs }: DeckProps): ReactNode {
+export function Deck({ tabs, requestOpen }: DeckProps): ReactNode {
   const base = useId();
   const [chosen, setChosen] = useState(0);
   const strip = useRef<HTMLDivElement>(null);
 
   // Clamped rather than reset, so a shrinking set of tabs keeps roughly its place.
   const open = Math.min(chosen, tabs.length - 1);
+
+  // Fires only when requestOpen changes, never on every render, so the player keeps
+  // the ability to move to another tab while a beat still names this one. Does not
+  // call move(): a request from the tutorial must not steal keyboard focus.
+  useEffect(() => {
+    if (requestOpen === undefined) {
+      return;
+    }
+
+    const index = tabs.findIndex((tab) => tab.id === requestOpen);
+
+    if (index !== -1) {
+      setChosen(index);
+    }
+  }, [requestOpen]);
 
   const move = (index: number): void => {
     setChosen(index);

@@ -16,8 +16,11 @@ const TABS: DeckTab[] = [
   { id: 'ledger', title: 'The ledger', panel: <p>What is counted</p> },
 ];
 
-function draw() {
-  return { ...render(<Deck tabs={TABS} />), user: userEvent.setup() };
+function draw(requestOpen?: string) {
+  return {
+    ...render(<Deck tabs={TABS} {...(requestOpen === undefined ? {} : { requestOpen })} />),
+    user: userEvent.setup(),
+  };
 }
 
 // A pair of tabs, the first open by default. `markIndex` says which one, if
@@ -216,5 +219,39 @@ describe('Deck', () => {
     render(<Deck tabs={pairWithMark(1)} />);
 
     expect(screen.getByRole('tab', { name: /something to spend on/ })).toBeInTheDocument();
+  });
+});
+
+describe('a requested tab', () => {
+  it('opens the panel it names', () => {
+    draw('miscreants');
+
+    expect(screen.getByRole('tabpanel', { name: /The Miscreants/ })).toBeInTheDocument();
+  });
+
+  it('leaves the player where they are when it names nothing', () => {
+    draw();
+
+    expect(screen.getByRole('tab', { name: /The Muster/ })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+  });
+
+  it('ignores a tab it does not hold', () => {
+    draw('nowhere');
+
+    expect(screen.getByRole('tab', { name: /The Muster/ })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+  });
+
+  it('does not fight the player after it has opened', async () => {
+    const { user } = draw('miscreants');
+
+    await user.click(screen.getByRole('tab', { name: /Deeds/ }));
+
+    expect(screen.getByRole('tab', { name: /Deeds/ })).toHaveAttribute('aria-selected', 'true');
   });
 });
