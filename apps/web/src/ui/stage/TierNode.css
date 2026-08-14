@@ -246,6 +246,30 @@
   }
 }
 
+/*
+ * Gated: dormant, but onboarding is holding it back.
+ *
+ * The raised surface, the tone edge and the endless breath above all say "press this
+ * now" — none of them are true while a beat is holding the rung back. The medallion
+ * drops to the plain surface and the breathing stops; it does not fall all the way to
+ * the sealed look, because this is not an error and the rung is genuinely owned and
+ * genuinely dormant, only briefly not on offer. The label is untouched — "Rouse the
+ * Warrens" stays exactly as true as it is for any other dormant tier — `aria-disabled`
+ * is what carries the fact that it cannot be pressed yet.
+ *
+ * Both rules carry higher specificity than the plain-dormant and full-motion-breathing
+ * rules above, so this wins regardless of source order.
+ */
+.stage-node[data-oversight='dormant'][data-gated='true'] .stage-node__medallion {
+  background: var(--surface);
+  box-shadow: none;
+}
+
+.stage-node[data-oversight='dormant'][data-gated='true'][data-motion='full']
+  .stage-node__medallion {
+  animation: none;
+}
+
 .stage-node[data-oversight='overseen'] .stage-node__state {
   font-style: italic;
 }

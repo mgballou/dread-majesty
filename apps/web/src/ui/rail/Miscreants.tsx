@@ -27,9 +27,9 @@ interface MiscreantsProps {
   /**
    * Whether onboarding is holding this control back.
    *
-   * A predicate of the same shape as `onAppoint`'s neighbours elsewhere on the panel,
-   * so the panel owes nothing to how onboarding decides. Absent means nothing is
-   * gated, which is every state of the game after the first run.
+   * A predicate of the same shape as the ones `ChainStage` and `BuyRail` take, so this
+   * panel owes nothing to how onboarding decides. Absent means nothing is gated, which
+   * is every state of the game after the first run.
    */
   isGated?: (control: GatedControl) => boolean;
   onAppoint: (overseerId: OverseerId) => void;
@@ -93,6 +93,8 @@ export function Miscreants({
     if (option.kind === 'appoint') offers.set(option.overseerId, option);
   }
 
+  const lifted = liftedAppointment(plan, isGated);
+
   // Chain order, climbing, so the muster and the miscreants read down the same list.
   const groups: TierPosts[] = [...content.tiers].reverse().map((tier) => ({
     tier,
@@ -105,7 +107,7 @@ export function Miscreants({
         filled: hasPost(state, tier.id, post.id),
         offer,
         price: offer?.cost ?? new Decimal(post.cost),
-        emphasis: spendEmphasis(plan, 'appoint', post.id),
+        emphasis: appointEmphasis({ plan, overseerId: post.id, lifted }),
       };
     }),
   }));
@@ -178,8 +180,9 @@ interface PostProps {
  *
  * The whole entry is the target, because there is nothing else on it to press and a
  * separate button would make the name and the note decoration beside a control. It is
- * dead once the post is filled and dead while the price is out of reach — a control
- * that opens a question it cannot answer is worse than one that plainly will not move.
+ * dead once the post is filled, dead while the price is out of reach, and dead while
+ * onboarding is holding it back — a control that opens a question it cannot answer is
+ * worse than one that plainly will not move.
  */
 function Post({ post, isGated, onAsk, copy }: PostProps): ReactNode {
   const { tier, filled, offer, price, emphasis } = post;
@@ -215,6 +218,54 @@ function Post({ post, isGated, onAsk, copy }: PostProps): ReactNode {
       </button>
     </li>
   );
+}
+
+/**
+ * Which post's appointment should carry the panel's one accent, gating folded in.
+ *
+ * Mirrors `liftedPurchase` in `BuyRail.tsx`. `railPlan`'s own `best.appoint` has no
+ * idea onboarding exists, so its pick can be the very post a beat is holding back —
+ * the thing ui-sensibility §3 forbids, a control wearing the accent that cannot be
+ * pressed. When that happens the accent falls to the next affordable, non-gated post
+ * by the same score the plan already computed, or to nothing if the gated pick was the
+ * only affordable one. `railPlan` itself is untouched; this only re-reads the ranked
+ * list it already produced.
+ */
+function liftedAppointment(
+  plan: RailPlan,
+  isGated?: (control: GatedControl) => boolean,
+): OverseerId | null {
+  const best = plan.best.appoint;
+  if (best && isGated?.({ kind: 'appoint', overseerId: best.overseerId }) !== true) {
+    return best.overseerId;
+  }
+
+  let winner: RailAppointment | null = null;
+  for (const option of plan.options) {
+    if (option.kind !== 'appoint' || !option.affordable) continue;
+    if (isGated?.({ kind: 'appoint', overseerId: option.overseerId }) === true) continue;
+    if (winner === null || option.score.gt(winner.score)) winner = option;
+  }
+
+  return winner?.overseerId ?? null;
+}
+
+/**
+ * A post's emphasis, with the gate applied. See `purchaseEmphasis` in `BuyRail.tsx`
+ * for the reasoning — this is the same shape, one panel over.
+ */
+function appointEmphasis({
+  plan,
+  overseerId,
+  lifted,
+}: {
+  plan: RailPlan;
+  overseerId: OverseerId;
+  lifted: OverseerId | null;
+}): SpendEmphasis {
+  if (overseerId === lifted) return 'best';
+  const emphasis = spendEmphasis(plan, 'appoint', overseerId);
+  return emphasis === 'best' ? 'none' : emphasis;
 }
 
 interface DiamondProps {

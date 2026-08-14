@@ -194,6 +194,28 @@ describe('TierNode', () => {
     expect(screen.getByText(CURRENT_COPY.overseer.rouse('Warrens'))).toBeInTheDocument();
   });
 
+  it('rouses nothing when the gated button is activated from the keyboard', async () => {
+    const onRouse = vi.fn();
+    render(node({ oversight: { ...OVERSIGHT, isGated: true, onRouse } }));
+
+    screen.getByRole('button').focus();
+    await userEvent.keyboard('{Enter}');
+
+    expect(onRouse).not.toHaveBeenCalled();
+  });
+
+  it('marks a gated tier with its own attribute, apart from the oversight state', () => {
+    const { container } = render(node({ oversight: { ...OVERSIGHT, isGated: true } }));
+
+    expect(container.querySelector('.stage-node')).toHaveAttribute('data-gated', 'true');
+  });
+
+  it('carries no gated marker while a rung is not held back', () => {
+    const { container } = render(node());
+
+    expect(container.querySelector('.stage-node')).not.toHaveAttribute('data-gated');
+  });
+
   it('offers no button once an Overseer is appointed', () => {
     render(node({ oversight: { ...OVERSIGHT, isAppointed: true, isRousable: false } }));
 

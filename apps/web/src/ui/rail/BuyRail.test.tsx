@@ -445,5 +445,29 @@ describe('BuyRail', () => {
 
       expect(screen.getByRole('button', { name: buyNameStart('warren', 1) })).not.toBeDisabled();
     });
+
+    function gateWarrenBuy(control: GatedControl): boolean {
+      return control.kind === 'buy' && control.tierId === 'warren';
+    }
+
+    it("never lets a gated row carry the rail's one accent", () => {
+      state.resources.evil = new Decimal(5200);
+
+      const { container } = draw(() => true, 1, gateWarrenBuy);
+
+      expect(container.querySelector('[data-tier="warren"] .button')).not.toHaveClass(
+        'button--primary',
+      );
+    });
+
+    it("lifts the next legitimate row once the plan's own pick is gated", () => {
+      state.resources.evil = new Decimal(5200);
+
+      const { container } = draw(() => true, 1, gateWarrenBuy);
+
+      expect(container.querySelector('[data-tier="minion"] .button')).toHaveClass(
+        'button--primary',
+      );
+    });
   });
 });
