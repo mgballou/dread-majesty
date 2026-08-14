@@ -91,7 +91,7 @@ export type SmiteUpgradeId = (typeof SMITE_UPGRADE_IDS)[number];
  *
  * The order is the argument the track makes: set the Minion working, learn that it
  * stops, learn that Evil buys more of them, hand the job to somebody else, take ground
- * of your own, start it, and then watch five Minions arrive without being asked.
+ * of your own, start it, and then watch Minions arrive without being asked.
  */
 export const DOMINION_BEAT_IDS = [
   'stir',
@@ -108,10 +108,10 @@ export type DominionBeatId = (typeof DOMINION_BEAT_IDS)[number];
  * Smite, taught by being tempted into misusing it.
  *
  * Two of these three are the narrator and the middle one is not, which is why the voice
- * is a property of the beat rather than of the track. `apathy` follows `goad` so that
+ * is a property of the beat rather than of the track. `verdict` follows `goad` so that
  * "her" always has an antecedent by the time the narrator uses it.
  */
-export const MALICE_BEAT_IDS = ['first-blow', 'goad', 'apathy'] as const;
+export const MALICE_BEAT_IDS = ['first-blow', 'goad', 'verdict'] as const;
 export type MaliceBeatId = (typeof MALICE_BEAT_IDS)[number];
 
 export function isTierId(id: string): id is TierId {
@@ -132,4 +132,12 @@ export function isResourceId(id: string): id is ResourceId {
 
 export function isSmiteUpgradeId(id: string): id is SmiteUpgradeId {
   return (SMITE_UPGRADE_IDS as readonly string[]).includes(id);
+}
+
+export function isDominionBeatId(id: string): id is DominionBeatId {
+  return (DOMINION_BEAT_IDS as readonly string[]).includes(id);
+}
+
+export function isMaliceBeatId(id: string): id is MaliceBeatId {
+  return (MALICE_BEAT_IDS as readonly string[]).includes(id);
 }

@@ -102,7 +102,7 @@ flowchart TD
     muster -->|one purchase| gap3 -->|can afford the Taskmaster| appoint
     appoint -->|appointed| gap4 -->|can afford a Warren| warren
     warren -->|purchased| rouseWarren
-    rouseWarren -->|dispatched| gap5 -->|five Minions arrive| cascade
+    rouseWarren -->|dispatched| gap5 -->|Minions arrive| cascade
     cascade -->|dismissed| done([Dominion complete])
 
     firstBlow["<b>first-blow</b><br/><i>the narrator</i>"]
@@ -181,11 +181,11 @@ Body text only, no titles. A standing order, not a card.
   you."
 - **`warren`** — "Take ground of your own. A Warren breeds Minions without being asked."
 - **`rouse-warren`** — "It will not start itself. They never do."
-- **`cascade`** — "Five Minions you did not raise, already at work. Everything above
+- **`cascade`** — "Minions you did not raise, already at work. Everything above
   feeds what is below it, all at once. The rest is yours."
 
 `cascade` is the answer to the fault in §1. It is not a claim that this is the whole
-game; it is a remark about five Minions that appeared thirty seconds earlier without the
+game; it is a remark about Minions that appeared thirty seconds earlier without the
 player touching anything. The lesson is a caption on an event, and it cannot be written
 any earlier because the event has not happened yet.
 

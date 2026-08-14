@@ -11,6 +11,8 @@ export {
   isAchievementId,
   isOverseerId,
   isSmiteUpgradeId,
+  isDominionBeatId,
+  isMaliceBeatId,
 } from './ids.ts';
 export type {
   TierId,
@@ -56,7 +58,7 @@ export type {
   LedgerCopy,
   ErrorCopy,
   OnboardingCopy,
-  GoadLine,
+  WaitingLine,
 } from './copy.ts';
 
 export { ART } from './art.ts';
@@ -65,6 +67,7 @@ export type { ArtSlot } from './art.ts';
 export type {
   BeatReady,
   BeatGate,
+  BeatPoints,
   BeatVoice,
   BeatClearedBy,
   OnboardingBeat,
