@@ -2,10 +2,13 @@
  * The prompt sits in a row App.css holds from the first paint, so nothing on the page
  * moves when a beat arrives. See `.shell__prompt`.
  *
- * Two voices. The narrator is the reading ink, upright, led by a marker. She is
- * verdigris and italic and has no marker at all, because color alone must not carry
- * who is speaking — the distinction has to survive both a screen reader and a monitor
- * that renders the hue badly.
+ * Two voices, two signals here, and both are visual only. The narrator is the reading
+ * ink, upright, led by a marker. She is verdigris and italic and has no marker at all.
+ * This carries the voice for anyone who cannot rely on hue — a monitor rendering it
+ * badly, or color blindness — but CSS-generated content such as `::before` is not
+ * dependable in the accessibility tree, and none of this is being asked to carry that
+ * weight. The aural signal is separate: `Prompt.tsx`'s accessible name, `aria-label`,
+ * changes with the voice, and the caller supplies the wording per beat.
  */
 .prompt {
   display: flex;

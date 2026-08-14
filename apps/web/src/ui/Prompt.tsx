@@ -37,7 +37,14 @@ interface PromptProps {
  */
 export function Prompt({ line, voice, label, bail, dismiss }: PromptProps): ReactNode {
   return (
-    <div className={`prompt prompt--${voice}`} role="status" aria-live="polite" aria-label={label}>
+    <div
+      className={`prompt prompt--${voice}`}
+      role="status"
+      // `role="status"` already implies a polite live region; this is kept explicit as
+      // belt-and-braces against assistive tech that does not infer it reliably.
+      aria-live="polite"
+      aria-label={label}
+    >
       <p className="prompt__line">{line}</p>
 
       {(bail || dismiss) && (
