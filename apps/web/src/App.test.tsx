@@ -100,6 +100,20 @@ function struckAndFundedBlob(): SaveBlob {
 }
 
 /*
+ * A blow struck and Evil enough to walk the whole Dominion track without waiting for income.
+ *
+ * Twenty thousand covers the Hand's post, a Minion, a Warren and the change, and it meets the
+ * Warren's row on the first reconcile — a tier is met at half the price of its first unit, so
+ * the row the `warren` beat points at is drawn from the opening frame.
+ */
+function struckAndRichBlob(): SaveBlob {
+  const state = createState(CURRENT);
+  state.resources.evil = new Decimal(20_000);
+  state.stats.smites = 1;
+  return serialize(state, Date.now());
+}
+
+/*
  * Every rung met, one of each held.
  *
  * The muster draws a row only for a tier the player has met, so the beats that point
@@ -515,6 +529,9 @@ describe('the malice track holds the bar', () => {
   const smiteName = new RegExp(`^${CURRENT_COPY.smite.action}\\.`);
   const appointHand = new RegExp(`^${CURRENT_COPY.overseer.names['minion-hand']}`);
   const miscreantsTab = new RegExp(`^${CURRENT_COPY.overseer.panelTitle}`);
+  const musterTab = new RegExp(`^${CURRENT_COPY.rail.title}`);
+  const warrens = CURRENT.tiers.find((tier) => tier.id === 'warren')?.plural ?? '';
+  const rouseWarrens = CURRENT_COPY.overseer.rouse(warrens);
 
   beforeEach(() => forgetOnboarding());
 
@@ -553,6 +570,10 @@ describe('the malice track holds the bar', () => {
     render(<App />);
     await screen.findByText(onboarding.malice['first-blow']);
 
+    await fillsThePost();
+  }
+
+  async function fillsThePost(): Promise<void> {
     await userEvent.click(screen.getByRole('tab', { name: miscreantsTab }));
     await userEvent.click(screen.getByRole('button', { name: appointHand }));
     // The post opens a confirmation rather than appointing on the press. The beat is
@@ -560,6 +581,39 @@ describe('the malice track holds the bar', () => {
     await userEvent.click(
       await screen.findByRole('button', { name: CURRENT_COPY.overseer.confirmAction }),
     );
+  }
+
+  /**
+   * Buys from a rail row by its tier rather than by the label the row happens to carry.
+   *
+   * The label holds the quantity and the live price, so matching it would be a second copy
+   * of `rail.buy` and of whatever the quantity chip defaults to. The row's own attribute is
+   * what the spotlight already points at.
+   */
+  async function buy(tierId: string): Promise<void> {
+    const row = document.querySelector<HTMLButtonElement>(
+      `.rail__row[data-tier="${tierId}"] button`,
+    );
+    if (row !== null) await userEvent.click(row);
+  }
+
+  /**
+   * Fills the Hand's post while a beat *earlier* than `appoint` is the Dominion candidate.
+   *
+   * The narrower stall, and the one `accomplishedBeat` exists for. `acted` rightly records
+   * nothing — `muster` gates a purchase, not an appointment — so the beat is not consumed by
+   * the click, and `can-afford-overseer` will refuse to be ready for a post that cannot be
+   * filled twice. Without a fourth answer the track simply stops when it reaches `appoint`.
+   */
+  async function appointsBeforeTheTrackAsks(): Promise<void> {
+    vi.useFakeTimers({ toFake: ['performance', 'requestAnimationFrame', 'cancelAnimationFrame'] });
+    writeOnboarding({ dominion: ['stir', 'orders'], malice: [], done: false, caved: false });
+    vi.spyOn(storage, 'readSave').mockResolvedValue(struckAndRichBlob());
+    render(<App />);
+    await screen.findByText(onboarding.malice['first-blow']);
+
+    await fillsThePost();
+    await userEvent.click(screen.getByRole('tab', { name: musterTab }));
   }
 
   async function bothTracksReady(): Promise<void> {
@@ -629,6 +683,31 @@ describe('the malice track holds the bar', () => {
 
     expect(await screen.findByText(onboarding.dominion.warren)).toBeInTheDocument();
     expect(screen.queryByText(onboarding.dominion.appoint)).not.toBeInTheDocument();
+  });
+
+  it('consumes a beat whose gated action was already done before the track reached it', async () => {
+    await appointsBeforeTheTrackAsks();
+    await buy('minion');
+
+    expect(readOnboarding()?.dominion).toContain('appoint');
+  });
+
+  /*
+   * The whole track, ending where it is written off. A beat that stalls unconsumed and unready
+   * costs the player no control — it simply stops the tutorial where it stands, `done` never
+   * written, and every later visit resumes on a beat that will never come.
+   */
+  it('walks the dominion track to its end and writes it off', async () => {
+    await appointsBeforeTheTrackAsks();
+    await buy('minion');
+    await buy('warren');
+    await userEvent.click(screen.getByRole('button', { name: rouseWarrens }));
+    await userEvent.click(screen.getByRole('button', { name: onboarding.dismiss }));
+    wind(80_000);
+    await userEvent.click(screen.getByRole('button', { name: onboarding.dismiss }));
+    await userEvent.click(screen.getByRole('button', { name: onboarding.dismiss }));
+
+    expect(readOnboarding()?.done).toBe(true);
   });
 });
 

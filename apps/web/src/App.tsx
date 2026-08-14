@@ -14,6 +14,7 @@ import type { GameState } from '@dm/engine';
 import { useSound } from './audio/useSound.ts';
 import { DevBar } from './dev/DevBar.tsx';
 import {
+  accomplishedBeat,
   clearsBeat,
   finishOnboarding,
   herLine,
@@ -261,9 +262,25 @@ export function App(): ReactNode {
     : null;
 
   /**
-   * The retirement clock, wound on the beat that is actually on screen — and the one
-   * place a handed-over beat is consumed, for the same reason: both are answers to "this
-   * beat's time is up" that a component should not decide on its own.
+   * Whether the Dominion beat standing next asks for something already done.
+   *
+   * Read from the track rather than from `dominionBeat` for the same reason `handedOver` is:
+   * this fires precisely while the beat is off the bar. A player who fills the Minion Hand's
+   * post while Malice is talking has answered a beat the track has not reached, and without
+   * this the track stops on it for good — the post cannot be filled twice, so the beat is
+   * never cleared and never ready again.
+   *
+   * Only Dominion is checked. Every Malice beat gates `none`, so there is no action for one of
+   * them to have accomplished, and checking the track anyway would be dead code.
+   */
+  const accomplished = running
+    ? accomplishedBeat({ track: onboarding.dominion, consumed: doneDominion, state, content })
+    : null;
+
+  /**
+   * The retirement clock, wound on the beat that is actually on screen — and the one place the
+   * two consumptions nobody clicked for are recorded, for the same reason: all three are
+   * answers to "this beat's time is up" that a component should not decide on its own.
    *
    * The stamp is cleared when nothing is showing and re-taken whenever the showing beat is
    * not the one recorded, so a beat that waited its turn is never handed a timestamp from
@@ -278,8 +295,17 @@ export function App(): ReactNode {
       // needs to know, and what it must not try to work out later from a value that decays.
       setDoneMalice((done) => [...done, handedOver]);
       setCaved(true);
-      return;
     }
+
+    if (accomplished) {
+      setDoneDominion((done) => [...done, accomplished]);
+    }
+
+    // Both, when a frame produces both. They are consumptions of different tracks and neither
+    // is the other's business, so an early return on the first would drop the second — the
+    // order they happen to be written in is not a rule anybody should have to know. The clock
+    // does not run on such a frame: the beat it would wind is already on its way off the bar.
+    if (handedOver || accomplished) return;
 
     if (!beat) {
       shownAt.current = null;
@@ -300,7 +326,7 @@ export function App(): ReactNode {
     ) {
       retire();
     }
-  }, [beat, handedOver, state.stats.playTimeMs, state.stats.smites, retire]);
+  }, [beat, handedOver, accomplished, state.stats.playTimeMs, state.stats.smites, retire]);
 
   /**
    * Writes the tracks down on every consumption, not once at the end.
