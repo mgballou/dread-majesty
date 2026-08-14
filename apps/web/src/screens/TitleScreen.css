@@ -41,10 +41,16 @@
   }
 }
 
+/* One component token: the box `TierArt` fills. Not a size the space scale names
+   directly, so it is composed from one rather than written as a bare pixel value.
+   `TierArt` is given no `size` here — it fills whatever box it is put in — so the
+   wrapper is the only place this figure lives and the drawing cannot drift from it. */
 .title__mark {
+  --title-mark-size: calc(var(--space-6) * 3);
+
   display: block;
-  width: 72px;
-  height: 72px;
+  inline-size: var(--title-mark-size);
+  block-size: var(--title-mark-size);
 }
 
 .title__name {
