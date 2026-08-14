@@ -66,7 +66,11 @@
 
 ### Task 1: Content — `next-ready`, the Malice retune, and the opening line
 
-Nothing consumes `'next-ready'` yet; Task 2 teaches the web app to honor it. The app still compiles and behaves as before at the end of this task, except that `first-blow` and `apathy` no longer expire and `goad` is no longer cleared by a smite — which, until Task 3, means she persists until her window closes. That intermediate state is expected.
+Nothing consumes `'next-ready'` yet; Task 2 teaches the web app to honor it. Until Task 3, `goad` is cleared by nothing the player does and nothing supersedes her, so she persists until her window closes. That intermediate state is expected.
+
+**This task changes behavior that existing `apps/web` tests pin, and greening them is part of it.** Four tests assert either that `goad` clears on a smite, or use `first-blow` for its retirement window — and after this task she clears on neither and it has no window. `goad` becomes the only beat in either track that still retires. Repoint or invert each; do not weaken an assertion to make it pass, and do not add coverage for `next-ready` itself, which Task 2 owns. The task is not done while the suite is red: a red suite handed to the next task makes its own failures indistinguishable from inherited ones.
+
+One of the four cannot be repointed as written. A test asserting that retirement moves the track on to the *next* beat is not expressible here: `goad`'s successor needs Apathy ≥ 2, and Apathy decays while her 120-second window runs, so by the time she retires her successor can never be ready. Reframe it to assert the consumption directly — retire her, then restore a world where her `ready` holds again, and assert she does not come back. That has teeth, because a retirement that wrote nothing down would bring her straight back.
 
 **Files:**
 
@@ -284,6 +288,13 @@ describe('supersededBeat', () => {
   it('supersedes nothing when no beat is showing', () => {
     expect(superseded(fresh(), ['first-blow', 'goad', 'apathy'])).toBeNull();
   });
+
+  it('hands over even while she is hidden by her own cooldown', () => {
+    const state = struck(2.1);
+    state.smiteCooldownMs = 20_000;
+    state.smiteActiveMs = 15_000;
+    expect(superseded(state, ['first-blow'])).toBe('goad');
+  });
 });
 
 describe('clearsBeat and the next-ready variant', () => {
@@ -334,9 +345,16 @@ Add below `shouldRetire` in the same file:
  * nobody acting for long enough (`shouldRetire`). This one is neither: it is one line
  * handing over to the next because the state has moved far enough to earn it.
  *
- * Deliberately narrow. It only ever reports the *showing* beat — the first unconsumed one
- * — and only when that beat asks to be cleared this way, so a beat deeper in the track
- * cannot be skipped by its successor becoming ready early.
+ * Deliberately narrow: it only ever reports the first *unconsumed* beat, and only when
+ * that beat asks to be cleared this way, so a beat deeper in the track cannot be skipped
+ * by its successor becoming ready early.
+ *
+ * **It must not require that beat to be ready, and this is load-bearing.** `goad`'s own
+ * readiness needs the smite cooldown clear, and a cave restarts that cooldown — so the
+ * very strike that pushes Apathy over the line for her successor is the strike that hides
+ * her. Ask for her to be ready here and the handover can never fire: she is only ready
+ * when the state that would supersede her has decayed away. Requiring readiness reads as
+ * the tidier rule and is a deadlock.
  */
 export function supersededBeat<Id extends string>({
   track,
