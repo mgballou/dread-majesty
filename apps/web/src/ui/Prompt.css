@@ -1,6 +1,7 @@
 /*
- * The prompt sits in a row App.css holds from the first paint, so nothing on the page
- * moves when a beat arrives. See `.shell__prompt`.
+ * The prompt sits in a bar App.css pins to the foot of the viewport, so it is in the
+ * same place whatever the player has scrolled to and nothing on the page moves when a
+ * beat arrives. See `.shell__prompt`.
  *
  * Two voices, two signals here, and both are visual only. The narrator is the reading
  * ink, upright, led by a marker. She is verdigris and italic and has no marker at all.
