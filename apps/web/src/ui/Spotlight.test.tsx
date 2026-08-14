@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { act, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setReducedMotion } from '../../test/setup.ts';
 import { Spotlight } from './Spotlight.tsx';
 
 /**
@@ -136,6 +137,82 @@ describe('Spotlight measures again when its target gains a box', () => {
     unmount();
 
     expect(built[0]?.stopped).toBe(true);
+  });
+});
+
+/*
+ * Bringing that target into view.
+ *
+ * The same one-render lag, one step further on: at the moment the selector changes the
+ * target is `display: none`, so scrolling to it then does nothing and the hole is cut
+ * wherever the player was already standing. A hole below the fold is invisible.
+ *
+ * jsdom implements no scrolling at all, so the method is stubbed on the one element under
+ * test rather than shimmed onto every element in `test/setup.ts` — the shipped code calls
+ * it optionally on purpose, and a global shim would quietly take that branch away from the
+ * other components that rely on it being absent.
+ *
+ * **What this pins is the mechanism:** that the scroll waits for a measured frame, that it
+ * happens once per target however often the box is re-measured, and that it carries the
+ * motion setting. It assumes the browser's own `scrollIntoView` does what it says.
+ */
+describe('Spotlight brings a target that was hidden into view', () => {
+  let hidden: HTMLElement;
+  let scrollTo: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    built.length = 0;
+    vi.stubGlobal('ResizeObserver', DriveableObserver);
+    scrollTo = vi.fn();
+    hidden = document.createElement('div');
+    hidden.className = 'shut-panel-target';
+    hidden.scrollIntoView = scrollTo;
+    document.body.append(hidden);
+  });
+
+  afterEach(() => {
+    hidden.remove();
+    vi.unstubAllGlobals();
+  });
+
+  function sizeAndFire(): void {
+    hidden.getBoundingClientRect = (): DOMRect => box({ top: 300, left: 40 });
+    act(() => built[0]?.fire());
+  }
+
+  it('leaves the page alone while its target has no box', () => {
+    render(<Spotlight target=".shut-panel-target" />);
+    expect(scrollTo).not.toHaveBeenCalled();
+  });
+
+  it('scrolls to the target once it has been measured', () => {
+    render(<Spotlight target=".shut-panel-target" />);
+    sizeAndFire();
+
+    expect(scrollTo).toHaveBeenCalledOnce();
+  });
+
+  it('does not scroll again when the same target is measured again', () => {
+    render(<Spotlight target=".shut-panel-target" />);
+    sizeAndFire();
+    sizeAndFire();
+
+    expect(scrollTo).toHaveBeenCalledOnce();
+  });
+
+  it('sweeps there under full motion', () => {
+    render(<Spotlight target=".shut-panel-target" />);
+    sizeAndFire();
+
+    expect(scrollTo).toHaveBeenCalledWith({ behavior: 'smooth', block: 'center' });
+  });
+
+  it('jumps there under reduced motion', () => {
+    setReducedMotion(true);
+    render(<Spotlight target=".shut-panel-target" />);
+    sizeAndFire();
+
+    expect(scrollTo).toHaveBeenCalledWith({ behavior: 'auto', block: 'center' });
   });
 });
 
