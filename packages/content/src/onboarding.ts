@@ -63,10 +63,7 @@ export type BeatVoice = 'narrator' | 'her';
  * happens to be ready, which coupled two beats through a condition neither of them stated.
  */
 export type BeatClearedBy =
-  | 'gated-action'
-  | 'smite'
-  | 'dismiss'
-  | { readonly kind: 'superseded'; readonly when: BeatReady };
+  'gated-action' | 'smite' | 'dismiss' | { readonly kind: 'superseded'; readonly when: BeatReady };
 
 export interface OnboardingBeat<Id extends string> {
   readonly id: Id;
