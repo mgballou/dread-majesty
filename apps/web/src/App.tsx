@@ -1,14 +1,22 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { CURRENT, CURRENT_COPY, CURRENT_ONBOARDING, type TierId } from '@dm/content';
+import {
+  CURRENT,
+  CURRENT_COPY,
+  CURRENT_ONBOARDING,
+  isDominionBeatId,
+  isMaliceBeatId,
+  type TierId,
+} from '@dm/content';
 import type { Copy, DominionBeatId, MaliceBeatId } from '@dm/content';
 import { isAppointed, isRousable, isTierUnlocked, prestigeGain } from '@dm/engine';
+import type { GameState } from '@dm/engine';
 import { useSound } from './audio/useSound.ts';
 import { DevBar } from './dev/DevBar.tsx';
 import {
   clearsBeat,
   finishOnboarding,
-  goadLine,
+  herLine,
   isGatedOut,
   onboardingDecision,
   readOnboarding,
@@ -100,8 +108,17 @@ export function App(): ReactNode {
   const decided = useRef(false);
   const [doneDominion, setDoneDominion] = useState<readonly DominionBeatId[]>([]);
   const [doneMalice, setDoneMalice] = useState<readonly MaliceBeatId[]>([]);
-  /** Play time at which the beat on screen appeared, for the retirement clock. */
-  const shownAt = useRef<{ id: string; atMs: number } | null>(null);
+  /** Whether she got what she asked for. Decides which line the verdict carries. */
+  const [caved, setCaved] = useState(false);
+  /**
+   * The beat on screen, when it appeared, and how many blows had landed then.
+   *
+   * The play time drives the retirement clock. The blow count restarts it: a beat asking for
+   * an action that the player then takes has been answered, and giving up on them ten seconds
+   * after they caved reads as the tutorial not watching. `goad` is the only beat this reaches
+   * — every other beat asking for an action is cleared by it rather than timed out.
+   */
+  const shownAt = useRef<{ id: string; atMs: number; smites: number } | null>(null);
 
   useEffect(() => {
     if (!session.ready || decided.current) return;
@@ -113,6 +130,7 @@ export function App(): ReactNode {
 
     setDoneDominion(decision.progress.dominion);
     setDoneMalice(decision.progress.malice);
+    setCaved(decision.progress.caved);
     setRunning(true);
   }, [session.ready, session.fresh]);
 
@@ -123,19 +141,47 @@ export function App(): ReactNode {
 
   const { state, dispatch } = session;
 
-  // How many bands the Apathy gauge is drawn in. Read from the copy rather than fixed at
-  // three, so the beat that waits for "the realm has stopped looking" and the gauge that
-  // says it can never disagree about where that band starts.
-  const bandCount = copy.smite.bands.length;
+  /**
+   * Which track holds the bar.
+   *
+   * Malice wins once it has started, and holds until it ends. Nothing is lost by making
+   * Dominion wait: no Dominion beat carries a retirement window and every one of them is ready
+   * off state that does not decay. Dominion winning is what cut into her conversation — the
+   * track began on a blow struck during the ten-minute opening, got crowded off the bar, and
+   * was interrupted by the next Dominion beat coming ready.
+   *
+   * The exception is the opening beat, which carries the only Skip tutorial and Load save
+   * buttons in the game. A player who strikes before rousing anything must not lose their way
+   * out for the next minute.
+   *
+   * `shownAt` is a ref read during render. That is deliberate and safe here: it holds what was
+   * on screen last frame, the game loop re-renders every frame, and the only reader is the
+   * latch.
+   */
+  const openingDone = doneDominion.length > 0;
+  const shownId = shownAt.current?.id ?? null;
 
-  const dominionBeat = running
-    ? showingBeat({ track: onboarding.dominion, consumed: doneDominion, state, content, bandCount })
-    : null;
   const maliceBeat =
-    running && dominionBeat === null
-      ? showingBeat({ track: onboarding.malice, consumed: doneMalice, state, content, bandCount })
+    running && openingDone
+      ? showingBeat({
+          track: onboarding.malice,
+          consumed: doneMalice,
+          state,
+          content,
+          shownId: shownId !== null && isMaliceBeatId(shownId) ? shownId : null,
+        })
       : null;
-  const beat = dominionBeat ?? maliceBeat;
+  const dominionBeat =
+    running && maliceBeat === null
+      ? showingBeat({
+          track: onboarding.dominion,
+          consumed: doneDominion,
+          state,
+          content,
+          shownId: shownId !== null && isDominionBeatId(shownId) ? shownId : null,
+        })
+      : null;
+  const beat = maliceBeat ?? dominionBeat;
 
   const acted = useCallback(
     (action: ClearingAction): void => {
@@ -171,14 +217,13 @@ export function App(): ReactNode {
    *
    * Read from the track and `doneMalice` directly, not from `maliceBeat` — the handover
    * must fire even while `goad` herself is off screen for her own cooldown, which is the
-   * same strike that pushes Apathy over the line for `apathy`. See `supersededBeat`'s
-   * note on why it does not require the beat it clears to be ready.
+   * same strike that supersedes her.
    *
-   * Only Malice is checked. Dominion carries no `'next-ready'` beat today, and checking
-   * it anyway would be dead code.
+   * Only Malice is checked. No Dominion beat declares a supersession condition today, and
+   * checking the track anyway would be dead code.
    */
   const handedOver = running
-    ? supersededBeat({ track: onboarding.malice, consumed: doneMalice, state, content, bandCount })
+    ? supersededBeat({ track: onboarding.malice, consumed: doneMalice, state, content })
     : null;
 
   /**
@@ -186,17 +231,19 @@ export function App(): ReactNode {
    * place a handed-over beat is consumed, for the same reason: both are answers to "this
    * beat's time is up" that a component should not decide on its own.
    *
-   * The stamp is cleared when nothing is showing and re-taken whenever the showing beat
-   * is not the one recorded. Both matter: Dominion takes the bar from Malice mid-track,
-   * and a stale stamp would leave the crowded-out beat holding a timestamp from minutes
-   * earlier, to be retired unread on the frame it came back.
+   * The stamp is cleared when nothing is showing and re-taken whenever the showing beat is
+   * not the one recorded, so a beat that waited its turn is never handed a timestamp from
+   * minutes earlier and retired unread on the frame it arrives. Malice holding the bar makes
+   * that queue short, but Dominion still waits behind a beat it did not raise.
    */
   useEffect(() => {
     if (handedOver) {
-      // A handover is not something the player did, so it is consumed the way
-      // `retire()` is — appended straight to the track's list — rather than through
-      // `clearsBeat`, which asks what the player did.
+      // A supersession is the state moving on rather than something the player did, so it is
+      // consumed the way `retire()` is. It also means the player took the action the beat was
+      // asking for — that is what a supersession condition reads — which is what the verdict
+      // needs to know, and what it must not try to work out later from a value that decays.
       setDoneMalice((done) => [...done, handedOver]);
+      setCaved(true);
       return;
     }
 
@@ -205,8 +252,12 @@ export function App(): ReactNode {
       return;
     }
 
-    if (shownAt.current?.id !== beat.id) {
-      shownAt.current = { id: beat.id, atMs: state.stats.playTimeMs };
+    if (shownAt.current?.id !== beat.id || shownAt.current.smites !== state.stats.smites) {
+      shownAt.current = {
+        id: beat.id,
+        atMs: state.stats.playTimeMs,
+        smites: state.stats.smites,
+      };
       return;
     }
 
@@ -215,7 +266,7 @@ export function App(): ReactNode {
     ) {
       retire();
     }
-  }, [beat, handedOver, state.stats.playTimeMs, retire]);
+  }, [beat, handedOver, state.stats.playTimeMs, state.stats.smites, retire]);
 
   /**
    * Writes the tracks down on every consumption, not once at the end.
@@ -233,9 +284,10 @@ export function App(): ReactNode {
     writeOnboarding({
       dominion: doneDominion,
       malice: doneMalice,
+      caved,
       done: doneDominion.length === onboarding.dominion.length,
     });
-  }, [running, doneDominion, doneMalice, onboarding.dominion.length]);
+  }, [running, doneDominion, doneMalice, caved, onboarding.dominion.length]);
 
   // Passed only while a beat is showing, so after onboarding the prop is absent and the
   // controls are exactly what they were.
@@ -253,7 +305,7 @@ export function App(): ReactNode {
 
   // What the dim frames, and which panel has to be open for it to be framing anything.
   // Null once onboarding is over, which is when the whole thing goes off the screen.
-  const spotlight = beat ? spotlightFor(beat.gate) : null;
+  const spotlight = beat ? spotlightFor(beat) : null;
 
   // The engine mutates in place, so the state object's identity is stable and this
   // stays the same function for the life of the session. That is what makes the plan
@@ -490,7 +542,7 @@ export function App(): ReactNode {
         {beat && (
           <div className="shell__prompt">
             <Prompt
-              line={lineFor({ copy, beatId: beat.id, apathy: state.smiteApathy })}
+              line={lineFor({ copy, beatId: beat.id, state, caved })}
               voice={beat.voice}
               label={
                 beat.voice === 'her' ? copy.onboarding.herLabel : copy.onboarding.narratorLabel
@@ -581,9 +633,9 @@ export function App(): ReactNode {
 /**
  * The line a beat says.
  *
- * `goad` is the only beat whose line is not fixed — hers is chosen from Apathy as it
- * bleeds, so the prompt mutates while the player resists and she works down her own
- * argument. Every other beat has exactly one line.
+ * Two of the ten are not fixed. `goad` is chosen from the cooldown and from Apathy, so the
+ * prompt moves while the player strikes or ignores her. `verdict` is chosen from how she was
+ * consumed, a fact recorded when it happened rather than read back off a decaying value.
  *
  * The three Malice ids are checked before the Dominion lookup, so the fall-through can
  * only be reached by a Dominion id — and because the two unions are disjoint, the
@@ -593,15 +645,25 @@ export function App(): ReactNode {
 function lineFor({
   copy,
   beatId,
-  apathy,
+  state,
+  caved,
 }: {
   copy: Copy;
   beatId: DominionBeatId | MaliceBeatId;
-  apathy: number;
+  state: GameState;
+  caved: boolean;
 }): string {
-  if (beatId === 'goad') return goadLine(copy.onboarding.goad, apathy);
+  if (beatId === 'goad') {
+    return herLine({
+      urging: copy.onboarding.urging,
+      waiting: copy.onboarding.waiting,
+      state,
+    });
+  }
   if (beatId === 'first-blow') return copy.onboarding.malice['first-blow'];
-  if (beatId === 'apathy') return copy.onboarding.malice.apathy;
+  if (beatId === 'verdict') {
+    return caved ? copy.onboarding.malice.verdict.caved : copy.onboarding.malice.verdict.resisted;
+  }
   return copy.onboarding.dominion[beatId];
 }
 
