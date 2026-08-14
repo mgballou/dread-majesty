@@ -172,6 +172,49 @@ export function shouldRetire({
 }
 
 /**
+ * The beat on screen that its successor is ready to take over from.
+ *
+ * The third answer to "what ends a beat", beside the player acting (`clearsBeat`) and
+ * nobody acting for long enough (`shouldRetire`). This one is neither: it is one line
+ * handing over to the next because the state has moved far enough to earn it.
+ *
+ * Deliberately narrow: it only ever reports the first *unconsumed* beat, and only when
+ * that beat asks to be cleared this way, so a beat deeper in the track cannot be skipped
+ * by its successor becoming ready early.
+ *
+ * **It must not require that beat to be ready, and this is load-bearing.** `goad`'s own
+ * readiness needs the smite cooldown clear, and a cave restarts that cooldown — so the
+ * very strike that pushes Apathy over the line for her successor is the strike that hides
+ * her. Ask for her to be ready here and the handover can never fire: she is only ready
+ * when the state that would supersede her has decayed away. Requiring readiness reads as
+ * the tidier rule and is a deadlock.
+ */
+export function supersededBeat<Id extends string>({
+  track,
+  consumed,
+  state,
+  content,
+  bandCount,
+}: {
+  track: readonly OnboardingBeat<Id>[];
+  consumed: readonly Id[];
+  state: GameState;
+  content: Content;
+  bandCount: number;
+}): Id | null {
+  const index = track.findIndex((beat) => !consumed.includes(beat.id));
+  if (index < 0) return null;
+
+  const showing = track[index];
+  if (!showing || showing.clearedBy !== 'next-ready') return null;
+
+  const next = track[index + 1];
+  if (!next) return null;
+
+  return isBeatReady({ ready: next.ready, state, content, bandCount }) ? showing.id : null;
+}
+
+/**
  * Which of her lines she is on.
  *
  * The list is total — its last threshold is negative — so the loop always returns for any
