@@ -49,8 +49,11 @@ export function formatNumber(value: Decimal, places = 2): string {
  * only declines to print them. It floors rather than rounds, because a currency you
  * cannot quite afford must not read as one you can.
  *
- * Rates are not this. "1.25 Evil per second" is a true thing to say and the decimal is
- * the information, so the crown's rate line stays on `formatNumber`.
+ * The crown's rate is here too, and that is a reversal. The decimal is true, but a blow
+ * multiplies the rate by `smiteBlow`, which is not a round number — so a surge turned a readable
+ * 12.5 into 23.38, and the headline changed shape exactly when the player was looking at it. The
+ * cost is that one automated Minion reads as 1 rather than 1.25; the rail still states the exact
+ * yield per tier, which is where a player checks the arithmetic.
  */
 export function formatWhole(value: Decimal): string {
   return value.lt(1000) ? value.floor().toString() : formatNumber(value, 2);
