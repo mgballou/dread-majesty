@@ -63,6 +63,9 @@
   --raw-tyrian-400: #b25aa8;
 
   --raw-scrim: rgb(8 7 10 / 78%);
+  /* Half the weight of the full scrim. What a narrative beat dims to: there is nothing
+     to point at, so the screen recedes rather than being cut through. */
+  --raw-scrim-soft: rgb(8 7 10 / 40%);
 
   --raw-step-1: 0.25rem;
   --raw-step-2: 0.5rem;
@@ -95,6 +98,7 @@
 
   /* Behind an overlay. Dark on dark, so the sheet reads as lifted, not pasted. */
   --scrim: var(--raw-scrim);
+  --scrim-soft: var(--raw-scrim-soft);
 
   --ink: var(--raw-bone-100);
   --ink-muted: var(--raw-bone-300);
