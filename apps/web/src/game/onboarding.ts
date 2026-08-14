@@ -149,9 +149,10 @@ export function clearsBeat(beat: OnboardingBeat<string>, action: ClearingAction)
  *
  * Retirement is deliberately **not** expressed through `clearsBeat`. That function asks
  * what the player did; this is the case where they did nothing, and the two must not be
- * confused. `goad` clears on a smite, so a retirement dressed up as a dismissal matches
- * nothing, leaves her line on screen for the rest of the session and blocks the beat
- * queued behind her. A retiring beat is consumed whatever would otherwise have cleared it.
+ * confused. `goad` clears when the next beat in her track is ready, so a retirement
+ * dressed up as that would match nothing until the player produced it — leaving her line
+ * on screen for the rest of the session and blocking the beat queued behind her. A
+ * retiring beat is consumed whatever would otherwise have cleared it.
  *
  * `shownAtMs` is when the beat reached the screen, not when it became ready — a beat
  * waiting behind another must not burn its window in the queue. Both figures are play
