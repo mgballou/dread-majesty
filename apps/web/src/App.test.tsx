@@ -71,6 +71,20 @@ function struckBlob(): SaveBlob {
 }
 
 /*
+ * A blow already struck and a Minion already idle, so a beat on each track is ready at once.
+ *
+ * `orders` waits on the Minion having cycled and stopped, and both Malice beats that can be
+ * first wait on a lifetime blow. This is the contention the two tracks are arbitrated over.
+ */
+function struckMidRunBlob(): SaveBlob {
+  const state = createState(CURRENT);
+  state.gens.minion.lifetimeProduced = new Decimal(5);
+  state.stats.smites = 1;
+  state.smiteApathy = 1;
+  return serialize(state, Date.now());
+}
+
+/*
  * Every rung met, one of each held.
  *
  * The muster draws a row only for a tier the player has met, so the beats that point
@@ -176,7 +190,7 @@ describe('first-run onboarding', () => {
   });
 
   it('resumes mid-track for a player who reloaded during the tutorial', async () => {
-    writeOnboarding({ dominion: ['stir'], malice: [], done: false });
+    writeOnboarding({ dominion: ['stir'], malice: [], done: false, caved: false });
     vi.spyOn(storage, 'readSave').mockResolvedValue(midRunBlob());
     render(<App />);
 
@@ -184,7 +198,7 @@ describe('first-run onboarding', () => {
   });
 
   it('leaves the resumed beat off the bar once it has been consumed', async () => {
-    writeOnboarding({ dominion: ['stir'], malice: [], done: false });
+    writeOnboarding({ dominion: ['stir'], malice: [], done: false, caved: false });
     vi.spyOn(storage, 'readSave').mockResolvedValue(midRunBlob());
     render(<App />);
     await screen.findByText(CURRENT_COPY.onboarding.dominion.orders);
@@ -229,7 +243,12 @@ describe('a refused action consumes nothing', () => {
   const minions = CURRENT.tiers.find((tier) => tier.id === 'minion')?.plural ?? '';
   const rouseMinions = CURRENT_COPY.overseer.rouse(minions);
   const smiteName = new RegExp(`^${CURRENT_COPY.smite.action}\\.`);
-  const herFirstLine = onboarding.goad[0]?.line ?? '';
+  /* Her two lists. `struckBlob` leaves the cooldown clear and Apathy at 1, so she opens on
+     the calmest waiting line; a second blow starts a cooldown and moves her to the urging
+     line for two lifetime blows. No blow consumes a beat any more, so the line she is on is
+     what reports whether the dispatch ran. */
+  const herWaitingLine = onboarding.waiting[0]?.line ?? '';
+  const herUrgingLine = onboarding.urging[1] ?? '';
 
   beforeEach(() => forgetOnboarding());
 
@@ -257,25 +276,25 @@ describe('a refused action consumes nothing', () => {
     expect(readOnboarding()?.dominion).toEqual([]);
   });
 
-  it('leaves her line on the bar when the blow is turned down', async () => {
+  it('leaves her on the same line when the blow is turned down', async () => {
     refusal.refuses = { kind: 'smite', reason: 'smite-cooling' };
-    writeOnboarding({ dominion: ['stir'], malice: ['first-blow'], done: false });
+    writeOnboarding({ dominion: ['stir'], malice: ['first-blow'], done: false, caved: false });
     vi.spyOn(storage, 'readSave').mockResolvedValue(struckBlob());
     render(<App />);
-    await screen.findByText(herFirstLine);
+    await screen.findByText(herWaitingLine);
     await userEvent.click(screen.getByRole('button', { name: smiteName }));
 
-    expect(screen.getByText(herFirstLine)).toBeInTheDocument();
+    expect(screen.getByText(herWaitingLine)).toBeInTheDocument();
   });
 
-  it('consumes her beat when the blow lands', async () => {
-    writeOnboarding({ dominion: ['stir'], malice: ['first-blow'], done: false });
+  it('moves her to her next line when the blow lands', async () => {
+    writeOnboarding({ dominion: ['stir'], malice: ['first-blow'], done: false, caved: false });
     vi.spyOn(storage, 'readSave').mockResolvedValue(struckBlob());
     render(<App />);
-    await screen.findByText(herFirstLine);
+    await screen.findByText(herWaitingLine);
     await userEvent.click(screen.getByRole('button', { name: smiteName }));
 
-    expect(screen.queryByText(herFirstLine)).not.toBeInTheDocument();
+    expect(await screen.findByText(herUrgingLine)).toBeInTheDocument();
   });
 });
 
@@ -407,7 +426,14 @@ describe('onboarding retires a beat nobody answered', () => {
     });
   }
 
-  async function struckAndCrowdedOut(): Promise<void> {
+  /**
+   * Strikes during the Dominion track and winds until the next Dominion beat is ready.
+   *
+   * Rousing consumes `stir`, so the opening beat's hold on the bar is released; the blow
+   * starts the Malice track; the fifteen seconds let the Minion cycle and stop, which is
+   * `orders`. That is a beat waiting on each track at once.
+   */
+  async function struckDuringDominion(): Promise<void> {
     vi.useFakeTimers({ toFake: ['performance', 'requestAnimationFrame', 'cancelAnimationFrame'] });
     vi.spyOn(storage, 'readSave').mockResolvedValue(null);
     render(<App />);
@@ -421,64 +447,125 @@ describe('onboarding retires a beat nobody answered', () => {
   }
 
   /**
-   * Consumes `first-blow` by dismissal and winds to the moment `goad` takes the bar.
+   * Consumes `first-blow` by dismissal, which is the moment `goad` takes the bar.
    *
-   * She is the only Malice beat left carrying a retirement window, so any test that
-   * needs one to close now needs her on screen first. `first-blow` no longer retires,
-   * so a dismissal is the only way past it.
+   * She is the only beat in either track carrying a retirement window, so any test that
+   * needs one to close needs her on screen first. `first-blow` does not retire, so a
+   * dismissal is the only way past it — and she is ready on the same blow he was, so
+   * there is nothing to wait for.
    */
   async function revealsGoad(): Promise<void> {
-    await struckAndCrowdedOut();
-    await userEvent.click(screen.getByRole('button', { name: rouseMinions }));
+    await struckDuringDominion();
     await userEvent.click(screen.getByRole('button', { name: onboarding.dismiss }));
-    wind(6_000);
     await screen.findByRole('status', { name: onboarding.herLabel });
   }
 
-  it('gives the bar to dominion when a beat comes due mid-malice', async () => {
-    await struckAndCrowdedOut();
-
-    expect(screen.getByText(onboarding.dominion.orders)).toBeInTheDocument();
-  });
-
-  it('brings a crowded-out beat back rather than retiring it on a stale clock', async () => {
-    await struckAndCrowdedOut();
-    await userEvent.click(screen.getByRole('button', { name: rouseMinions }));
-
-    expect(screen.getByText(onboarding.malice['first-blow'])).toBeInTheDocument();
-  });
-
   it('retires the beat once its own window closes', async () => {
     await revealsGoad();
-    wind(121_000);
+    wind(76_000);
 
     expect(screen.queryByRole('status', { name: onboarding.herLabel })).not.toBeInTheDocument();
   });
 
   it('does not bring a retired beat back when it becomes ready again', async () => {
     await revealsGoad();
-    wind(121_000);
+    wind(76_000);
     await userEvent.click(screen.getByRole('button', { name: smiteName }));
     wind(21_000);
 
     expect(screen.queryByRole('status', { name: onboarding.herLabel })).not.toBeInTheDocument();
   });
+
+  it('restarts her window when the player strikes', async () => {
+    await revealsGoad();
+    wind(70_000);
+    await userEvent.click(screen.getByRole('button', { name: smiteName }));
+    wind(30_000);
+
+    expect(screen.getByRole('status', { name: onboarding.herLabel })).toBeInTheDocument();
+  });
 });
 
 /*
- * The Malice track's two endings, per the 2026-08-14 design spec §2.1: caving twice
- * hands the bar to the narrator, and resisting lets her walk down to her window and
- * give up. Neither could be reached before this task — she was consumed by the first
- * strike, which put the narrator's reply permanently out of reach.
+ * One bar, and who holds it, per the 2026-08-14 design spec §6.
  *
- * `struckBlob` starts with the opening strike already behind it — one smite, Apathy at
- * 1 — which is exactly `first-blow`'s own readiness. With `first-blow` marked consumed,
- * `goad` is showing from the first render. Each cooldown wait bleeds some of that
- * Apathy away (twenty seconds against a forty-five-second point), so a second cave from
- * there lands short of band 2 and a third is what crosses it — matching §2.2's own
- * account of the ordering. Waiting a full cooldown between clicks, rather than reasoning
- * about an exact number, is also what keeps these tests honest against the small
- * real-time catch-up the save-load path always runs.
+ * Malice takes the bar as soon as it has something to say and holds it until it ends. It
+ * losing to Dominion is what cut into her conversation: the track began on a blow struck
+ * during the ten-minute opening, was crowded off the bar, and was then interrupted by the
+ * next Dominion beat coming ready. Nothing is lost by making Dominion wait — none of its
+ * beats carries a window and none of them is ready off anything that decays.
+ */
+describe('the malice track holds the bar', () => {
+  const onboarding = CURRENT_COPY.onboarding;
+  const smiteName = new RegExp(`^${CURRENT_COPY.smite.action}\\.`);
+
+  beforeEach(() => forgetOnboarding());
+
+  afterEach(() => {
+    forgetOnboarding();
+    vi.restoreAllMocks();
+  });
+
+  async function firstRun(): Promise<void> {
+    vi.spyOn(storage, 'readSave').mockResolvedValue(null);
+    render(<App />);
+    await screen.findByText(onboarding.dominion.stir);
+  }
+
+  async function bothTracksReady(): Promise<void> {
+    writeOnboarding({ dominion: ['stir'], malice: [], done: false, caved: false });
+    vi.spyOn(storage, 'readSave').mockResolvedValue(struckMidRunBlob());
+    render(<App />);
+    await screen.findAllByRole('tab');
+  }
+
+  it('carries the malice line when a beat on each track is ready', async () => {
+    await bothTracksReady();
+
+    expect(await screen.findByText(onboarding.malice['first-blow'])).toBeInTheDocument();
+  });
+
+  it('keeps the waiting dominion beat off the bar', async () => {
+    await bothTracksReady();
+    await screen.findByText(onboarding.malice['first-blow']);
+
+    expect(screen.queryByText(onboarding.dominion.orders)).not.toBeInTheDocument();
+  });
+
+  it('does not take the bar from the opening beat when the player strikes', async () => {
+    await firstRun();
+    await userEvent.click(screen.getByRole('button', { name: smiteName }));
+
+    expect(screen.getByText(onboarding.dominion.stir)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: onboarding.skip })).toBeInTheDocument();
+  });
+
+  it('gives the bar back to dominion once the verdict is dismissed', async () => {
+    writeOnboarding({
+      dominion: ['stir'],
+      malice: ['first-blow', 'goad'],
+      done: false,
+      caved: true,
+    });
+    vi.spyOn(storage, 'readSave').mockResolvedValue(struckMidRunBlob());
+    render(<App />);
+    await screen.findByText(onboarding.malice.verdict.caved);
+    await userEvent.click(screen.getByRole('button', { name: onboarding.dismiss }));
+
+    expect(await screen.findByText(onboarding.dominion.orders)).toBeInTheDocument();
+  });
+});
+
+/*
+ * The Malice track's two endings, per the 2026-08-14 design spec §5: caving twice hands
+ * the bar to the narrator saying the player listened, and outlasting her window hands it
+ * to him saying they did not. Neither could be reached before this task — the verdict
+ * waited on an Apathy band it held for five seconds, so it withdrew unread and came back
+ * on the next blow.
+ *
+ * `struckBlob` starts with the opening strike already behind it — one smite, Apathy at 1 —
+ * which is exactly `first-blow`'s own readiness. With `first-blow` marked consumed, `goad`
+ * is showing from the first render, and two more blows end her.
  */
 describe('the Malice conversation resolves', () => {
   const onboarding = CURRENT_COPY.onboarding;
@@ -500,36 +587,71 @@ describe('the Malice conversation resolves', () => {
 
   async function findsHer(): Promise<void> {
     vi.useFakeTimers({ toFake: ['performance', 'requestAnimationFrame', 'cancelAnimationFrame'] });
-    writeOnboarding({ dominion: ['stir'], malice: ['first-blow'], done: false });
+    writeOnboarding({ dominion: ['stir'], malice: ['first-blow'], done: false, caved: false });
     vi.spyOn(storage, 'readSave').mockResolvedValue(struckBlob());
     render(<App />);
     await screen.findByRole('status', { name: onboarding.herLabel });
   }
 
+  async function strike(): Promise<void> {
+    await userEvent.click(screen.getByRole('button', { name: smiteName }));
+  }
+
   it('keeps her on the bar after a single strike', async () => {
     await findsHer();
     wind(10_000);
-    await userEvent.click(screen.getByRole('button', { name: smiteName }));
+    await strike();
     wind(21_000);
 
     expect(screen.getByRole('status', { name: onboarding.herLabel })).toBeInTheDocument();
   });
 
-  it('hands the bar to the narrator once the realm stops looking', async () => {
+  it('hands the bar to the narrator once the player has caved twice', async () => {
     await findsHer();
-    await userEvent.click(screen.getByRole('button', { name: smiteName }));
+    await strike();
     wind(21_000);
-    await userEvent.click(screen.getByRole('button', { name: smiteName }));
+    await strike();
 
-    expect(await screen.findByText(onboarding.malice.apathy)).toBeInTheDocument();
+    expect(await screen.findByText(onboarding.malice.verdict.caved)).toBeInTheDocument();
   });
 
-  it('lets her give up when the player resists', async () => {
+  /*
+   * The §2 defect, and the case that fails on the shipped code. Sixty seconds between
+   * blows is longer than the forty-five Apathy takes to bleed a whole point away, so the
+   * gauge is back at zero before each cave and the old band-2 condition could never come
+   * true however many times the player gave in.
+   */
+  it('reaches the caved ending however far apart the blows are spaced', async () => {
     await findsHer();
-    wind(121_000);
+    wind(60_000);
+    await strike();
+    wind(60_000);
+    await strike();
 
-    expect(screen.queryByRole('status', { name: onboarding.herLabel })).not.toBeInTheDocument();
-    expect(screen.queryByText(onboarding.malice.apathy)).not.toBeInTheDocument();
+    expect(await screen.findByText(onboarding.malice.verdict.caved)).toBeInTheDocument();
+  });
+
+  it('hands the bar to the narrator when the player outlasts her', async () => {
+    await findsHer();
+    wind(80_000);
+
+    expect(await screen.findByText(onboarding.malice.verdict.resisted)).toBeInTheDocument();
+  });
+
+  /*
+   * The five-second regression. The verdict latches, so once it is up it stays up whatever
+   * Apathy does — and sixty seconds is more than the bleed needs to carry the gauge back
+   * under the band the shipped beat waited on.
+   */
+  it('keeps the verdict on the bar long after its old condition would have lapsed', async () => {
+    await findsHer();
+    await strike();
+    wind(21_000);
+    await strike();
+    await screen.findByText(onboarding.malice.verdict.caved);
+    wind(60_000);
+
+    expect(screen.getByText(onboarding.malice.verdict.caved)).toBeInTheDocument();
   });
 });
 
@@ -593,12 +715,31 @@ describe('the spotlight follows the beat', () => {
   });
 
   it('dims at the lighter weight for a beat that names nothing', async () => {
-    writeOnboarding({ dominion: ['stir'], malice: [], done: false });
+    writeOnboarding({ dominion: ['stir'], malice: [], done: false, caved: false });
     vi.spyOn(storage, 'readSave').mockResolvedValue(struckBlob());
     render(<App />);
     await screen.findByText(onboarding.malice['first-blow']);
 
     expect(screen.getByTestId('spotlight')).toHaveClass('spotlight--soft');
+  });
+
+  /*
+   * She points at the strike, which is the one beat naming a control it does not gate.
+   * Smite has no `GatedControl` case and never will — the player refusing her is one of the
+   * two ways her conversation ends — so pointing is the only way the dim can reach it.
+   */
+  it('names the strike while she is on the bar', async () => {
+    writeOnboarding({ dominion: ['stir'], malice: ['first-blow'], done: false, caved: false });
+    vi.spyOn(storage, 'readSave').mockResolvedValue(struckBlob());
+    render(<App />);
+    await screen.findByRole('status', { name: onboarding.herLabel });
+
+    const targets = CURRENT_ONBOARDING.malice
+      .filter((beat) => beat.id === 'goad')
+      .map((beat) => spotlightFor(beat).target);
+
+    expect(targets).toEqual(['.evil-node']);
+    expect(document.querySelector('.evil-node')).toBeInTheDocument();
   });
 
   it('brings the muster forward when the beat points into it', async () => {
@@ -637,13 +778,13 @@ describe('the spotlight follows the beat', () => {
    * covered the day it is written; a hand-listed set of selectors would not be.
    */
   it('names a control that is on screen for every beat of the shipped tracks', async () => {
-    writeOnboarding({ dominion: [], malice: [], done: false });
+    writeOnboarding({ dominion: [], malice: [], done: false, caved: false });
     vi.spyOn(storage, 'readSave').mockResolvedValue(metEveryTierBlob());
     render(<App />);
     await screen.findByText(onboarding.dominion.stir);
 
     for (const beat of [...CURRENT_ONBOARDING.dominion, ...CURRENT_ONBOARDING.malice]) {
-      const { target, panel } = spotlightFor(beat.gate);
+      const { target, panel } = spotlightFor(beat);
       if (target === undefined) continue;
       if (panel !== undefined) await openPanel(panel);
 
