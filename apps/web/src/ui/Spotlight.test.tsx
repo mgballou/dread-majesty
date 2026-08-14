@@ -148,9 +148,10 @@ describe('Spotlight measures again when its target gains a box', () => {
  * wherever the player was already standing. A hole below the fold is invisible.
  *
  * jsdom implements no scrolling at all, so the method is stubbed on the one element under
- * test rather than shimmed onto every element in `test/setup.ts` — the shipped code calls
- * it optionally on purpose, and a global shim would quietly take that branch away from the
- * other components that rely on it being absent.
+ * test rather than shimmed onto every element in `test/setup.ts`. `App` reveals the
+ * prestige panel through the same optional `scrollIntoView?.()` and says in as many words
+ * that the optional call is there so the real branch runs wherever the method exists — a
+ * global shim would quietly take that branch away from it.
  *
  * **What this pins is the mechanism:** that the scroll waits for a measured frame, that it
  * happens once per target however often the box is re-measured, and that it carries the
