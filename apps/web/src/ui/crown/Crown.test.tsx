@@ -1,3 +1,5 @@
+import { existsSync, readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import Decimal from 'break_eternity.js';
 import { render, screen } from '@testing-library/react';
 import { CURRENT, CURRENT_COPY } from '@dm/content';
@@ -83,5 +85,67 @@ describe('Crown', () => {
     render(crown());
 
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
+  });
+
+  it('marks the rate figure as active while a blow runs', () => {
+    const { container } = render(crown(struck()));
+
+    expect(container.querySelector('.crown__figure')).toHaveAttribute('data-smite', 'active');
+  });
+
+  it('marks the rate figure as ready while a blow is ready', () => {
+    const { container } = render(crown());
+
+    expect(container.querySelector('.crown__figure')).toHaveAttribute('data-smite', 'ready');
+  });
+
+  it('marks the rate figure as cooling once the surge is spent', () => {
+    const state = struck();
+    step(state, CURRENT, smiteDurationMs(state, CURRENT));
+    const { container } = render(crown(state));
+
+    expect(container.querySelector('.crown__figure')).toHaveAttribute('data-smite', 'cooling');
+  });
+
+  it('keeps the standing outside the figure the surge lights', () => {
+    const { container } = render(crown(struck()));
+    const figure = container.querySelector('.crown__figure');
+    const standing = container.querySelector('.crown__standing');
+
+    expect(figure?.contains(standing)).toBe(false);
+  });
+});
+
+/**
+ * Walks up from the working directory rather than reading `import.meta.url`, which
+ * under jsdom is an http URL and cannot be turned into a path. Mirrors `tokens.test.ts`.
+ */
+function locate(relative: string): string {
+  let dir = process.cwd();
+  while (!existsSync(join(dir, relative))) {
+    const parent = dirname(dir);
+    if (parent === dir) throw new Error(`Could not find ${relative} above ${process.cwd()}`);
+    dir = parent;
+  }
+  return join(dir, relative);
+}
+
+const css = readFileSync(locate(join('apps', 'web', 'src', 'ui', 'crown', 'Crown.css')), 'utf8');
+
+function escapeForPattern(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/** The declaration body of a single CSS rule, found by its selector text. */
+function rule(selector: string): string {
+  const pattern = new RegExp(`${escapeForPattern(selector)}\\s*\\{([^}]*)\\}`);
+  const match = pattern.exec(css);
+  if (!match) throw new Error(`No rule found in Crown.css for selector "${selector}"`);
+  return match[1] ?? '';
+}
+
+describe('the stylesheet contract', () => {
+  it('lights the active rate with the same tone the Evil node uses', () => {
+    expect(rule(".crown__figure[data-smite='active']")).toMatch(/var\(--tone-resource\)/);
   });
 });
