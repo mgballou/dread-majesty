@@ -1,0 +1,70 @@
+/* The title screen. See TitleScreen.tsx. It sits on the return summary's layer. */
+
+.title {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  padding: var(--space-4);
+  background: var(--scrim);
+}
+
+.title__sheet {
+  width: min(26rem, 100%);
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: var(--space-8) var(--space-6) var(--space-6);
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+  text-align: center;
+  background: var(--surface-raised);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--space-2);
+  animation: title-in var(--duration-base) ease-out;
+}
+
+/* Reduced motion drops the rise, keeps the fade. Nothing goes missing. */
+@keyframes title-in {
+  from {
+    opacity: 0;
+    transform: translateY(var(--space-3));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @keyframes title-in {
+    from {
+      opacity: 0;
+    }
+  }
+}
+
+.title__mark {
+  display: block;
+  width: 72px;
+  height: 72px;
+}
+
+.title__name {
+  margin: 0;
+  font-size: var(--text-xl);
+  font-weight: 600;
+}
+
+.title__lede {
+  margin: 0;
+  font-size: var(--text-base);
+  color: var(--ink);
+}
+
+.title__premise {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--ink-muted);
+}
+
+.title__start {
+  width: 100%;
+}
