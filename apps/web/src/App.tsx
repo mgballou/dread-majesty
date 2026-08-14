@@ -33,6 +33,7 @@ import { spotlightFor } from './game/spotlight.ts';
 import { useGameSession } from './game/useGameSession.ts';
 import { Ledger } from './screens/Ledger.tsx';
 import { OfflineSummary } from './screens/OfflineSummary.tsx';
+import { TitleScreen } from './screens/TitleScreen.tsx';
 import { Trophies } from './screens/Trophies.tsx';
 import { Deck, type DeckTab } from './ui/Deck.tsx';
 import { Prompt } from './ui/Prompt.tsx';
@@ -107,6 +108,13 @@ export function App(): ReactNode {
    */
   const [running, setRunning] = useState(false);
   const decided = useRef(false);
+  /**
+   * Whether the player has pressed Start Game this session.
+   *
+   * Latched rather than derived, because `session.fresh` stays true for the whole session — a
+   * reset later must not put the title screen back in front of a player who is mid-run.
+   */
+  const [started, setStarted] = useState(false);
   const [doneDominion, setDoneDominion] = useState<readonly DominionBeatId[]>([]);
   const [doneMalice, setDoneMalice] = useState<readonly MaliceBeatId[]>([]);
   /** Whether she got what she asked for. Decides which line the verdict carries. */
@@ -470,10 +478,16 @@ export function App(): ReactNode {
 
   if (!session.ready) return <BootScreen />;
 
-  // While the return summary is up it is the screen. Everything behind it goes
-  // inert, so nobody moving through the interface by keyboard lands on a rail they
-  // cannot see, and the one primary action is the one on the sheet.
-  const behindTheSummary = session.offline !== null;
+  // The return summary and the title screen are the two things that take the whole screen, and
+  // they are mutually exclusive: a session fresh enough for the title screen cannot have an
+  // offline report. The summary is checked first anyway, so the rule is enforced rather than
+  // trusted — two stacked scrims are darker than either was drawn to be.
+  const showTitle = session.fresh && !started && session.offline === null;
+
+  // While either screen is up it *is* the screen. Everything behind it goes inert, so nobody
+  // moving through the interface by keyboard lands on a rail they cannot see, and the one
+  // primary action is the one on the sheet.
+  const screenTaken = session.offline !== null || showTitle;
 
   const rungs = content.tiers.length;
   const met = content.tiers.filter((tier) => unlocked(tier.id)).length;
@@ -577,7 +591,7 @@ export function App(): ReactNode {
        is latched, so it changes at most once a session — and only while nothing is
        pinned and the room is below the fold anyway. See App.css. */
     <div className={running ? 'shell shell--onboarding' : 'shell'}>
-      <div className="shell__frame" inert={behindTheSummary}>
+      <div className="shell__frame" inert={screenTaken}>
         {session.saveRefused && (
           <p className="shell__refusal" role="status">
             {copy.errors.obsoleteSave}
@@ -652,12 +666,12 @@ export function App(): ReactNode {
         {/* Before the prompt's row, so the layer that dims is also earlier in the
             document than the layer that explains it. See App.css.
 
-            Withheld while the return summary is up. That screen carries a scrim of its
-            own, and two stacked scrims are darker than either was drawn to be — it also
-            leaves the prompt bar dimmed behind a summary that has already taken the
-            screen. A player coming back to an unfinished tutorial gets the lesson back
-            the moment they dismiss it. */}
-        {spotlight && !behindTheSummary && (
+            Withheld while either screen has taken the whole screen — the return summary
+            or the title screen. Both carry a scrim of their own, and two stacked scrims
+            are darker than either was drawn to be — it also leaves the prompt bar dimmed
+            behind a sheet that has already taken the screen. The lesson comes back the
+            moment the sheet goes. */}
+        {spotlight && !screenTaken && (
           <Spotlight {...(spotlight.target ? { target: spotlight.target } : {})} />
         )}
 
@@ -762,6 +776,10 @@ export function App(): ReactNode {
           copy={copy.offline}
           onDismiss={session.dismissOffline}
         />
+      )}
+
+      {showTitle && (
+        <TitleScreen title={copy.title} copy={copy.start} onStart={() => setStarted(true)} />
       )}
     </div>
   );
