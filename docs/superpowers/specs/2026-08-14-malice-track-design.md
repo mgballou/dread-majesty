@@ -214,7 +214,8 @@ export type BeatClearedBy =
   | { readonly kind: 'superseded'; readonly when: BeatReady };
 ```
 
-`goad` declares `{ kind: 'superseded', when: { kind: 'smites-at-least', count: 3 } }`.
+`goad` declares `{ kind: 'superseded', when: { kind: 'smites-since-shown', count: 2 } }` — two
+caves after she arrives. See §2.1 for why a lifetime count was wrong.
 
 This is a simplification, not an addition. `supersededBeat` currently asks whether the *next*
 beat is ready, which coupled two beats through a condition neither of them stated and forced the
