@@ -8,21 +8,25 @@ import {
   clearsBeat,
   finishOnboarding,
   forgetOnboarding,
-  goadLine,
+  herLine,
   isBeatReady,
   isGatedOut,
+  latches,
   onboardingDecision,
   readOnboarding,
   shouldRetire,
   showingBeat,
   supersededBeat,
+  urgingLine,
+  waitingLine,
   writeOnboarding,
 } from './onboarding.ts';
+import type { ClearingAction } from './onboarding.ts';
+import { spotlightFor } from './spotlight.ts';
 
 const content = CURRENT;
 const dominion = CURRENT_ONBOARDING.dominion;
 const malice = CURRENT_ONBOARDING.malice;
-const bandCount = v1Copy.smite.bands.length;
 
 function fresh(): GameState {
   return createState(content);
@@ -31,8 +35,23 @@ function fresh(): GameState {
 function showing(
   state: GameState,
   consumed: readonly DominionBeatId[],
+  shownId: DominionBeatId | null = null,
 ): OnboardingBeat<DominionBeatId> | null {
-  return showingBeat({ track: dominion, consumed, state, content, bandCount });
+  return showingBeat({ track: dominion, consumed, state, content, shownId });
+}
+
+/** A minimal beat for tests exercising generic track logic rather than shipped content. */
+function testBeat(
+  overrides: Partial<OnboardingBeat<string>> & { id: string },
+): OnboardingBeat<string> {
+  return {
+    ready: { kind: 'always' },
+    gate: { kind: 'none' },
+    voice: 'narrator',
+    clearedBy: 'dismiss',
+    retireAfterMs: null,
+    ...overrides,
+  };
 }
 
 function affordable(state: GameState, tierId: TierId): boolean {
@@ -82,12 +101,7 @@ describe('isBeatReady', () => {
     const state = fresh();
     state.gens.minion.owned = new Decimal(1);
     expect(
-      isBeatReady({
-        ready: { kind: 'owned-and-idle', tierId: 'minion' },
-        state,
-        content,
-        bandCount,
-      }),
+      isBeatReady({ ready: { kind: 'owned-and-idle', tierId: 'minion' }, state, content }),
     ).toBe(true);
   });
 
@@ -96,28 +110,21 @@ describe('isBeatReady', () => {
     state.gens.minion.owned = new Decimal(1);
     state.gens.minion.running = true;
     expect(
-      isBeatReady({
-        ready: { kind: 'owned-and-idle', tierId: 'minion' },
-        state,
-        content,
-        bandCount,
-      }),
+      isBeatReady({ ready: { kind: 'owned-and-idle', tierId: 'minion' }, state, content }),
     ).toBe(false);
   });
 
   it('is ready once a tier has cycled', () => {
     const state = fresh();
     state.gens.minion.lifetimeProduced = new Decimal(1);
-    expect(
-      isBeatReady({ ready: { kind: 'cycled', tierId: 'minion' }, state, content, bandCount }),
-    ).toBe(true);
+    expect(isBeatReady({ ready: { kind: 'cycled', tierId: 'minion' }, state, content })).toBe(true);
   });
 
   it('withholds cycled before a tier has ever paid out', () => {
     const state = fresh();
-    expect(
-      isBeatReady({ ready: { kind: 'cycled', tierId: 'minion' }, state, content, bandCount }),
-    ).toBe(false);
+    expect(isBeatReady({ ready: { kind: 'cycled', tierId: 'minion' }, state, content })).toBe(
+      false,
+    );
   });
 
   it('withholds can-afford-overseer until the post is affordable', () => {
@@ -128,7 +135,6 @@ describe('isBeatReady', () => {
         ready: { kind: 'can-afford-overseer', overseerId: 'minion-hand' },
         state,
         content,
-        bandCount,
       }),
     ).toBe(false);
   });
@@ -141,7 +147,6 @@ describe('isBeatReady', () => {
         ready: { kind: 'can-afford-overseer', overseerId: 'minion-hand' },
         state,
         content,
-        bandCount,
       }),
     ).toBe(true);
   });
@@ -149,24 +154,22 @@ describe('isBeatReady', () => {
   it('withholds smites-at-least below the count', () => {
     const state = fresh();
     state.stats.smites = 2;
-    expect(
-      isBeatReady({ ready: { kind: 'smites-at-least', count: 3 }, state, content, bandCount }),
-    ).toBe(false);
+    expect(isBeatReady({ ready: { kind: 'smites-at-least', count: 3 }, state, content })).toBe(
+      false,
+    );
   });
 
   it('is ready at smites-at-least the count', () => {
     const state = fresh();
     state.stats.smites = 3;
-    expect(
-      isBeatReady({ ready: { kind: 'smites-at-least', count: 3 }, state, content, bandCount }),
-    ).toBe(true);
+    expect(isBeatReady({ ready: { kind: 'smites-at-least', count: 3 }, state, content })).toBe(
+      true,
+    );
   });
 
   it('withholds blow-ready-after-first before a first blow lands', () => {
     const state = fresh();
-    expect(
-      isBeatReady({ ready: { kind: 'blow-ready-after-first' }, state, content, bandCount }),
-    ).toBe(false);
+    expect(isBeatReady({ ready: { kind: 'blow-ready-after-first' }, state, content })).toBe(false);
   });
 
   it('is ready for the next blow once the first has cleared its cooldown', () => {
@@ -174,33 +177,7 @@ describe('isBeatReady', () => {
     state.stats.smites = 1;
     state.smiteActiveMs = 0;
     state.smiteCooldownMs = 0;
-    expect(
-      isBeatReady({ ready: { kind: 'blow-ready-after-first' }, state, content, bandCount }),
-    ).toBe(true);
-  });
-
-  it('withholds band-at-least just under the band', () => {
-    const state = fresh();
-    state.smiteApathy = 1.999;
-    expect(
-      isBeatReady({ ready: { kind: 'band-at-least', band: 2 }, state, content, bandCount }),
-    ).toBe(false);
-  });
-
-  it('is ready for band-at-least exactly at the band', () => {
-    const state = fresh();
-    state.smiteApathy = 2.0;
-    expect(
-      isBeatReady({ ready: { kind: 'band-at-least', band: 2 }, state, content, bandCount }),
-    ).toBe(true);
-  });
-
-  it('stays ready for band-at-least at the cap', () => {
-    const state = fresh();
-    state.smiteApathy = 3.0;
-    expect(
-      isBeatReady({ ready: { kind: 'band-at-least', band: 2 }, state, content, bandCount }),
-    ).toBe(true);
+    expect(isBeatReady({ ready: { kind: 'blow-ready-after-first' }, state, content })).toBe(true);
   });
 });
 
@@ -301,6 +278,80 @@ describe('clearsBeat', () => {
   it('leaves goad alone on a dismissal', () => {
     expect(goad && clearsBeat(goad, { kind: 'dismiss' })).toBe(false);
   });
+
+  it('never clears a superseded beat, for every action kind', () => {
+    const her = testBeat({
+      id: 'her',
+      clearedBy: { kind: 'superseded', when: { kind: 'smites-at-least', count: 3 } },
+    });
+    const actions: readonly ClearingAction[] = [
+      { kind: 'smite' },
+      { kind: 'dismiss' },
+      { kind: 'rouse', tierId: 'minion' },
+      { kind: 'buy', tierId: 'minion' },
+      { kind: 'appoint', overseerId: 'minion-hand' },
+    ];
+    for (const action of actions) {
+      expect(clearsBeat(her, action)).toBe(false);
+    }
+  });
+});
+
+describe('latches', () => {
+  it('is true for a dismiss-only beat that gates nothing', () => {
+    expect(latches(testBeat({ id: 'a', gate: { kind: 'none' }, clearedBy: 'dismiss' }))).toBe(true);
+  });
+
+  it('is false for a gated beat', () => {
+    expect(
+      latches(
+        testBeat({
+          id: 'b',
+          gate: { kind: 'rouse', tierId: 'minion' },
+          clearedBy: 'gated-action',
+        }),
+      ),
+    ).toBe(false);
+  });
+});
+
+describe('showingBeat latching', () => {
+  it('keeps a latching beat showing once its ready no longer holds', () => {
+    const state = fresh();
+    const stuck = testBeat({
+      id: 'stuck',
+      ready: { kind: 'smites-at-least', count: 99 },
+      gate: { kind: 'none' },
+      clearedBy: 'dismiss',
+    });
+    expect(showingBeat({ track: [stuck], consumed: [], state, content, shownId: stuck.id })).toBe(
+      stuck,
+    );
+  });
+
+  it('shows nothing for the same beat when it was not the one on screen', () => {
+    const state = fresh();
+    const stuck = testBeat({
+      id: 'stuck',
+      ready: { kind: 'smites-at-least', count: 99 },
+      gate: { kind: 'none' },
+      clearedBy: 'dismiss',
+    });
+    expect(showingBeat({ track: [stuck], consumed: [], state, content, shownId: null })).toBeNull();
+  });
+
+  it('does not let latching reach a gated beat', () => {
+    const state = fresh();
+    const gated = testBeat({
+      id: 'gated',
+      ready: { kind: 'smites-at-least', count: 99 },
+      gate: { kind: 'rouse', tierId: 'minion' },
+      clearedBy: 'gated-action',
+    });
+    expect(
+      showingBeat({ track: [gated], consumed: [], state, content, shownId: gated.id }),
+    ).toBeNull();
+  });
 });
 
 describe('shouldRetire', () => {
@@ -312,11 +363,11 @@ describe('shouldRetire', () => {
   });
 
   it('holds a beat inside its window', () => {
-    expect(goad && shouldRetire({ beat: goad, shownAtMs: 0, playTimeMs: 119_999 })).toBe(false);
+    expect(goad && shouldRetire({ beat: goad, shownAtMs: 0, playTimeMs: 74_999 })).toBe(false);
   });
 
   it('retires a beat on the millisecond its window closes', () => {
-    expect(goad && shouldRetire({ beat: goad, shownAtMs: 0, playTimeMs: 120_000 })).toBe(true);
+    expect(goad && shouldRetire({ beat: goad, shownAtMs: 0, playTimeMs: 75_000 })).toBe(true);
   });
 
   it('measures the window from when the beat was shown', () => {
@@ -326,31 +377,54 @@ describe('shouldRetire', () => {
   });
 });
 
-describe('goadLine', () => {
-  const lines = v1Copy.onboarding.goad;
+describe('urgingLine', () => {
+  const lines = v1Copy.onboarding.urging;
 
-  it('flatters while the realm is still sore', () => {
-    expect(goadLine(lines, 0.56)).toBe(lines[0]?.line);
+  it('is on the first line after the first blow', () => {
+    expect(urgingLine(lines, 1)).toBe(lines[0]);
   });
 
-  it('reasons as the sting fades', () => {
-    expect(goadLine(lines, 0.3)).toBe(lines[1]?.line);
+  it('is on the second line after the second blow', () => {
+    expect(urgingLine(lines, 2)).toBe(lines[1]);
   });
 
-  it('feigns patience near the end', () => {
-    expect(goadLine(lines, 0.1)).toBe(lines[2]?.line);
+  it('clamps to the last line however many blows have landed', () => {
+    expect(urgingLine(lines, 9)).toBe(lines[lines.length - 1]);
   });
 
-  it('is finally correct at zero', () => {
-    expect(goadLine(lines, 0)).toBe(lines[3]?.line);
+  it('reads the first line rather than nothing before any blow has landed', () => {
+    expect(urgingLine(lines, 0)).toBe(lines[0]);
+  });
+});
+
+describe('waitingLine', () => {
+  const lines = v1Copy.onboarding.waiting;
+
+  it('picks the first line whose threshold Apathy exceeds', () => {
+    expect(waitingLine(lines, 0.5)).toBe(lines[0]?.line);
   });
 
-  it('takes the boundary as belonging to the line below it', () => {
-    expect(goadLine(lines, 0.45)).toBe(lines[1]?.line);
+  it('takes the calmer line when Apathy sits exactly on the boundary', () => {
+    expect(waitingLine(lines, 0.35)).toBe(lines[1]?.line);
+  });
+});
+
+describe('herLine', () => {
+  const urging = v1Copy.onboarding.urging;
+  const waiting = v1Copy.onboarding.waiting;
+
+  it('urges while the cooldown still runs', () => {
+    const state = fresh();
+    state.smiteCooldownMs = 1;
+    state.stats.smites = 1;
+    expect(herLine({ urging, waiting, state })).toBe(urging[0]);
   });
 
-  it('takes the second boundary as belonging to the line below it too', () => {
-    expect(goadLine(lines, 0.2)).toBe(lines[2]?.line);
+  it('waits once the cooldown has cleared', () => {
+    const state = fresh();
+    state.smiteCooldownMs = 0;
+    state.smiteApathy = 0.5;
+    expect(herLine({ urging, waiting, state })).toBe(waiting[0]?.line);
   });
 });
 
@@ -367,18 +441,31 @@ describe('what is written down', () => {
   });
 
   it('reads back the beats that were consumed', () => {
-    writeOnboarding({ dominion: ['stir', 'orders'], malice: [], done: false });
+    writeOnboarding({ dominion: ['stir', 'orders'], malice: [], done: false, caved: false });
     expect(readOnboarding()?.dominion).toEqual(['stir', 'orders']);
   });
 
   it('reads back the Malice track too', () => {
-    writeOnboarding({ dominion: [], malice: ['first-blow'], done: false });
+    writeOnboarding({ dominion: [], malice: ['first-blow'], done: false, caved: false });
     expect(readOnboarding()?.malice).toEqual(['first-blow']);
   });
 
   it('reads back an unfinished walk as unfinished', () => {
-    writeOnboarding({ dominion: ['stir'], malice: [], done: false });
+    writeOnboarding({ dominion: ['stir'], malice: [], done: false, caved: false });
     expect(readOnboarding()?.done).toBe(false);
+  });
+
+  it('round-trips caved', () => {
+    writeOnboarding({ dominion: [], malice: [], done: false, caved: true });
+    expect(readOnboarding()?.caved).toBe(true);
+  });
+
+  it('reads a stored object with no caved key as caved: false', () => {
+    localStorage.setItem(
+      'dread-majesty:onboarding-seen',
+      JSON.stringify({ dominion: [], malice: [], done: false }),
+    );
+    expect(readOnboarding()?.caved).toBe(false);
   });
 
   it('reads back a finished walk as finished', () => {
@@ -420,7 +507,7 @@ describe('what is written down', () => {
 });
 
 describe('onboardingDecision', () => {
-  const midway = { dominion: ['stir', 'orders'], malice: [], done: false } as const;
+  const midway = { dominion: ['stir', 'orders'], malice: [], done: false, caved: false } as const;
 
   it('starts a player with no save and nothing written down', () => {
     expect(onboardingDecision({ stored: null, fresh: true }).kind).toBe('run');
@@ -442,13 +529,19 @@ describe('onboardingDecision', () => {
 
   it('says nothing to a player who finished or skipped', () => {
     expect(
-      onboardingDecision({ stored: { dominion: [], malice: [], done: true }, fresh: false }).kind,
+      onboardingDecision({
+        stored: { dominion: [], malice: [], done: true, caved: false },
+        fresh: false,
+      }).kind,
     ).toBe('nothing');
   });
 
   it('says nothing to a finished player even on a save-less visit', () => {
     expect(
-      onboardingDecision({ stored: { dominion: [], malice: [], done: true }, fresh: true }).kind,
+      onboardingDecision({
+        stored: { dominion: [], malice: [], done: true, caved: false },
+        fresh: true,
+      }).kind,
     ).toBe('nothing');
   });
 
@@ -463,50 +556,65 @@ describe('onboardingDecision', () => {
 
 describe('supersededBeat', () => {
   function superseded(state: GameState, consumed: readonly MaliceBeatId[]) {
-    return supersededBeat({
-      track: malice,
-      consumed,
-      state,
-      content,
-      bandCount,
-    });
+    return supersededBeat({ track: malice, consumed, state, content });
   }
 
-  function struck(apathy: number): GameState {
+  function struckTimes(smites: number): GameState {
     const state = fresh();
-    state.stats.smites = 1;
-    state.smiteApathy = apathy;
+    state.stats.smites = smites;
     return state;
   }
 
-  it('leaves her talking while the realm still flinches', () => {
-    expect(superseded(struck(1.5), ['first-blow'])).toBeNull();
+  it('leaves her talking before the third blow', () => {
+    expect(superseded(struckTimes(2), ['first-blow'])).toBeNull();
   });
 
-  it('hands over once the realm has stopped looking', () => {
-    expect(superseded(struck(2.1), ['first-blow'])).toBe('goad');
-  });
-
-  it('takes the boundary as belonging to the narrator', () => {
-    expect(superseded(struck(2), ['first-blow'])).toBe('goad');
+  it('hands over once the third blow lands', () => {
+    expect(superseded(struckTimes(3), ['first-blow'])).toBe('goad');
   });
 
   it('supersedes nothing when the showing beat waits on the player', () => {
-    expect(superseded(struck(2.1), [])).toBeNull();
+    expect(superseded(struckTimes(3), [])).toBeNull();
   });
 
   it('supersedes nothing once she is already consumed', () => {
-    expect(superseded(struck(2.1), ['first-blow', 'goad'])).toBeNull();
+    expect(superseded(struckTimes(3), ['first-blow', 'goad'])).toBeNull();
   });
 
   it('supersedes nothing when no beat is showing', () => {
-    expect(superseded(fresh(), ['first-blow', 'goad', 'apathy'])).toBeNull();
+    expect(superseded(fresh(), ['first-blow', 'goad', 'verdict'])).toBeNull();
   });
 
   it('hands over even while she is hidden by her own cooldown', () => {
-    const state = struck(2.1);
+    const state = struckTimes(3);
     state.smiteCooldownMs = 20_000;
     state.smiteActiveMs = 15_000;
     expect(superseded(state, ['first-blow'])).toBe('goad');
+  });
+
+  it('reports the showing beat even while its own readiness is false — the deadlock guard', () => {
+    const state = fresh();
+    state.stats.smites = 3;
+    const her = testBeat({
+      id: 'her',
+      ready: { kind: 'smites-at-least', count: 99 },
+      clearedBy: { kind: 'superseded', when: { kind: 'smites-at-least', count: 3 } },
+    });
+    expect(supersededBeat({ track: [her], consumed: [], state, content })).toBe('her');
+  });
+});
+
+describe('spotlightFor', () => {
+  it('points at the strike itself for a beat whose points is smite', () => {
+    const goad = malice.find((beat) => beat.id === 'goad');
+    expect(goad && spotlightFor(goad).target).toBe('.evil-node');
+  });
+
+  it('falls back to the gate for a beat with no points', () => {
+    const muster = dominion.find((beat) => beat.id === 'muster');
+    expect(muster && spotlightFor(muster)).toEqual({
+      target: '.rail__row[data-tier="minion"]',
+      panel: 'muster',
+    });
   });
 });

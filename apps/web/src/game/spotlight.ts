@@ -1,4 +1,4 @@
-import type { BeatGate } from '@dm/content';
+import type { BeatGate, BeatPoints, OnboardingBeat } from '@dm/content';
 
 /**
  * Which control a beat is pointing at, and which panel holds it.
@@ -18,18 +18,30 @@ import type { BeatGate } from '@dm/content';
  *
  * A gate of `none` points at nothing on purpose — a narrative beat dims the whole screen
  * rather than framing a control, because there is no control to frame.
+ *
+ * A beat may `points` at a control it does not gate, and that is how she frames the strike:
+ * pointing draws the eye, gating holds everything else back, and she must not gate — the
+ * player refusing her is one of the two ways her conversation ends. Absent, the spotlight
+ * follows the gate, which is every other beat.
  */
-export function spotlightFor(gate: BeatGate): { target?: string; panel?: string } {
-  switch (gate.kind) {
+export function spotlightFor(beat: Pick<OnboardingBeat<string>, 'gate' | 'points'>): {
+  target?: string;
+  panel?: string;
+} {
+  const named: BeatPoints | BeatGate = beat.points ?? beat.gate;
+
+  switch (named.kind) {
     case 'rouse':
-      return { target: `.stage-node[data-tier="${gate.tierId}"]` };
+      return { target: `.stage-node[data-tier="${named.tierId}"]` };
     case 'buy':
-      return { target: `.rail__row[data-tier="${gate.tierId}"]`, panel: 'muster' };
+      return { target: `.rail__row[data-tier="${named.tierId}"]`, panel: 'muster' };
     case 'appoint':
       return {
-        target: `.miscreant__post[data-overseer="${gate.overseerId}"]`,
+        target: `.miscreant__post[data-overseer="${named.overseerId}"]`,
         panel: 'miscreants',
       };
+    case 'smite':
+      return { target: '.evil-node' };
     case 'none':
       return {};
   }
