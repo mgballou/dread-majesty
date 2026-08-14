@@ -1,12 +1,12 @@
 import Decimal from 'break_eternity.js';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { CURRENT, CURRENT_COPY } from '@dm/content';
+import { CURRENT, CURRENT_COPY, CURRENT_ONBOARDING } from '@dm/content';
 import type { Content } from '@dm/content';
 import { createState, exportSave, serialize, type SaveBlob } from '@dm/engine';
 import type { Intent, IntentFailure, IntentResult } from '@dm/engine';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { App } from './App.tsx';
+import { App, spotlightFor } from './App.tsx';
 import {
   finishOnboarding,
   forgetOnboarding,
@@ -66,6 +66,23 @@ function struckBlob(): SaveBlob {
   const state = createState(CURRENT);
   state.stats.smites = 1;
   state.smiteApathy = 1;
+  return serialize(state, Date.now());
+}
+
+/*
+ * Every rung met, one of each held.
+ *
+ * The muster draws a row only for a tier the player has met, so the beats that point
+ * into it can only be checked on a board that has met the tiers they name. A tier is
+ * met at half the price of its first unit, so every beat that gates a purchase is ready
+ * only once its row is already drawn — this blob is that board, reached in one step.
+ */
+function metEveryTierBlob(): SaveBlob {
+  const state = createState(CURRENT);
+  for (const tier of CURRENT.tiers) {
+    state.gens[tier.id].owned = new Decimal(1);
+    state.unlocked[tier.id] = true;
+  }
   return serialize(state, Date.now());
 }
 
@@ -512,5 +529,116 @@ describe('the Malice conversation resolves', () => {
 
     expect(screen.queryByRole('status', { name: onboarding.herLabel })).not.toBeInTheDocument();
     expect(screen.queryByText(onboarding.malice.apathy)).not.toBeInTheDocument();
+  });
+});
+
+/*
+ * The dim, and the panel a beat reaches into.
+ *
+ * jsdom measures every element as zero, so a beat that names a control always falls back
+ * to dimming the whole screen here rather than cutting its hole. Both classes carry the
+ * full scrim and only the soft one means "points at nothing", so the class is asserted as
+ * either. The geometry, the click through the lit region and the ring's pulse are the
+ * browser pass's to check.
+ */
+describe('the spotlight follows the beat', () => {
+  const onboarding = CURRENT_COPY.onboarding;
+  const minions = CURRENT.tiers.find((tier) => tier.id === 'minion')?.plural ?? '';
+  const rouseMinions = CURRENT_COPY.overseer.rouse(minions);
+  const musterTab = new RegExp(`^${CURRENT_COPY.rail.title}`);
+  const deedsTab = new RegExp(`^${CURRENT_COPY.deeds.title}`);
+
+  beforeEach(() => forgetOnboarding());
+
+  afterEach(() => {
+    vi.useRealTimers();
+    forgetOnboarding();
+    vi.restoreAllMocks();
+  });
+
+  function wind(ms: number): void {
+    act(() => {
+      vi.advanceTimersByTime(ms);
+    });
+  }
+
+  async function firstRun(): Promise<void> {
+    vi.spyOn(storage, 'readSave').mockResolvedValue(null);
+    render(<App />);
+    await screen.findByText(onboarding.dominion.stir);
+  }
+
+  async function fundTheRealm(): Promise<void> {
+    await userEvent.click(screen.getByRole('button', { name: 'Set' }));
+  }
+
+  /**
+   * Brings a deck panel forward by its id rather than by its name.
+   *
+   * The deck builds both ids off the tab's own id, so this needs no second copy of the
+   * panel titles — which is the whole point of a test that enumerates from the content.
+   * A panel that cannot be found is left shut, and the assertion that follows fails on
+   * an element nobody can see.
+   */
+  async function openPanel(panel: string): Promise<void> {
+    const tab = document.querySelector<HTMLButtonElement>(`[role="tab"][id$="-${panel}-tab"]`);
+    if (tab !== null) await userEvent.click(tab);
+  }
+
+  it('dims around the control the opening beat names', async () => {
+    await firstRun();
+
+    expect(screen.getByTestId('spotlight').className).toMatch(/spotlight--(cutout|whole)/);
+  });
+
+  it('dims at the lighter weight for a beat that names nothing', async () => {
+    writeOnboarding({ dominion: ['stir'], malice: [], done: false });
+    vi.spyOn(storage, 'readSave').mockResolvedValue(struckBlob());
+    render(<App />);
+    await screen.findByText(onboarding.malice['first-blow']);
+
+    expect(screen.getByTestId('spotlight')).toHaveClass('spotlight--soft');
+  });
+
+  it('brings the muster forward when the beat points into it', async () => {
+    vi.useFakeTimers({ toFake: ['performance', 'requestAnimationFrame', 'cancelAnimationFrame'] });
+    await firstRun();
+    await userEvent.click(screen.getByRole('tab', { name: deedsTab }));
+    await fundTheRealm();
+    await userEvent.click(screen.getByRole('button', { name: rouseMinions }));
+    wind(15_000);
+    await userEvent.click(screen.getByRole('button', { name: rouseMinions }));
+    await screen.findByText(onboarding.dominion.muster);
+
+    expect(screen.getByRole('tab', { name: musterTab })).toHaveAttribute('aria-selected', 'true');
+  });
+
+  it('dims nothing once onboarding is over', async () => {
+    vi.spyOn(storage, 'readSave').mockResolvedValue(savedBlob());
+    render(<App />);
+    await screen.findAllByRole('tab');
+
+    expect(screen.queryByTestId('spotlight')).toBeNull();
+  });
+
+  /*
+   * The anchor. `spotlightFor` writes selectors, and a renamed class or attribute would
+   * lose the dim with every other test still green — so this walks the shipped tracks
+   * themselves and asks the screen for what each beat names. A track that gains a beat is
+   * covered the day it is written; a hand-listed set of selectors would not be.
+   */
+  it('names a control that is on screen for every beat of the shipped tracks', async () => {
+    writeOnboarding({ dominion: [], malice: [], done: false });
+    vi.spyOn(storage, 'readSave').mockResolvedValue(metEveryTierBlob());
+    render(<App />);
+    await screen.findByText(onboarding.dominion.stir);
+
+    for (const beat of [...CURRENT_ONBOARDING.dominion, ...CURRENT_ONBOARDING.malice]) {
+      const { target, panel } = spotlightFor(beat.gate);
+      if (target === undefined) continue;
+      if (panel !== undefined) await openPanel(panel);
+
+      expect(document.querySelector(target)).toBeVisible();
+    }
   });
 });
