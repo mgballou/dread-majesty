@@ -146,6 +146,7 @@ export function ChainStage({
         {rungs.map((tier, index) => (
           <li className="stage__rung" key={tier.id} data-tier={tier.id}>
             <TierNode
+              tierId={tier.id}
               name={tier.plural}
               art={tier.art}
               count={state.gens[tier.id].owned}

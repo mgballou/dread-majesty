@@ -1,6 +1,6 @@
 import { useId, type ReactNode } from 'react';
 import type Decimal from 'break_eternity.js';
-import type { ArtSlot, OverseerCopy, StageCopy } from '@dm/content';
+import type { ArtSlot, OverseerCopy, StageCopy, TierId } from '@dm/content';
 import { TierArt } from '../art/TierArt.tsx';
 import { formatWhole } from '../format.ts';
 import { useReducedMotion } from '../useReducedMotion.ts';
@@ -50,6 +50,14 @@ interface Oversight {
 type NodeState = 'overseen' | 'dormant' | 'turning' | 'idle';
 
 interface TierNodeProps {
+  /**
+   * The tier this rung stands for.
+   *
+   * Read by nobody yet — it exists so the first-run tutorial can point its spotlight
+   * at a specific rung rather than at whichever one happens to render. Do not remove
+   * it as unused.
+   */
+  tierId: TierId;
   /** Plural display name — the noun the player reasons in. */
   name: string;
   /** Key into the art manifest. */
@@ -130,6 +138,7 @@ interface TierNodeProps {
  * gold on the stage is the focus ring, which every focusable thing in the app wears.
  */
 export function TierNode({
+  tierId,
   name,
   art,
   count,
@@ -168,6 +177,7 @@ export function TierNode({
       aria-label={isUnlocked ? undefined : copy.sealed}
       data-motion={reduced ? 'reduced' : 'full'}
       data-oversight={state}
+      data-tier={tierId}
       {...(heldBack ? { 'data-gated': 'true' } : {})}
       style={{ ...tint, ['--surge-index' as string]: surgeIndex }}
     >
