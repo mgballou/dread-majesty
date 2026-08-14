@@ -115,8 +115,11 @@
  * player looking at a permanent empty band. `.shell--onboarding` carries the room under
  * the footer instead, for the length of onboarding, so nothing shifts either way.
  *
- * The z-index sits under the return summary's 10: a save that has been away is not a
- * first run, and while that summary is up it is the screen.
+ * **Three layers, and nothing may reorder them: the spotlight's 4, this bar's 5, the
+ * return summary's 10.** The dim must never fall across the words explaining it, and a
+ * save that has been away is not a first run — while that summary is up it is the
+ * screen. See `Spotlight.css` and `OfflineSummary.css`; the stylesheet test in
+ * `Spotlight.test.tsx` pins the first pair.
  */
 .shell__prompt {
   position: fixed;
