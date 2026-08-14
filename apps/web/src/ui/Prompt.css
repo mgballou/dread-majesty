@@ -15,18 +15,21 @@
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: var(--space-3);
+  gap: var(--space-4);
   justify-content: space-between;
-  padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--line);
+  padding: var(--space-4);
+  border: 1px solid var(--line-strong);
   border-radius: var(--space-2);
-  background: var(--surface-raised);
+
+  /* A lifted ground rather than the bar's own, so the card reads as a thing being said
+     and not as the strip it stands on. Playtest called the old weight furniture. */
+  background: var(--surface-panel);
 }
 
 .prompt__line {
   flex: 1 1 20rem;
   margin: 0;
-  font-size: var(--text-base);
+  font-size: var(--text-lg);
   line-height: 1.5;
 }
 
@@ -57,7 +60,7 @@
 
 @media (width <= 52rem) {
   .prompt {
-    padding: var(--space-2) var(--space-3);
+    padding: var(--space-3);
   }
 
   .prompt__actions {
