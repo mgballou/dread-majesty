@@ -7,7 +7,7 @@ import { Banner } from '../Banner.tsx';
 import { formatWhole } from '../format.ts';
 import { TierRow, type RailScreenCopy } from './TierRow.tsx';
 import { QuantityChip } from './QuantityChip.tsx';
-import { spendEmphasis, type RailPlan, type RailPurchase } from './railPlan.ts';
+import { spendEmphasis, type RailPlan, type RailPurchase, type SpendEmphasis } from './railPlan.ts';
 import type { BuyQuantity } from './quantity.ts';
 import '../controls.css';
 import './BuyRail.css';
@@ -94,6 +94,8 @@ export function BuyRail({
   const met = rungs.filter((tier) => isUnlocked(tier.id));
   const upcoming = rungs.find((tier) => !isUnlocked(tier.id));
 
+  const lifted = liftedPurchase(plan, isGated);
+
   return (
     <div className="muster">
       <div className="muster__setting">
@@ -120,7 +122,7 @@ export function BuyRail({
               state={state}
               content={content}
               purchase={purchase}
-              emphasis={spendEmphasis(plan, 'purchase', tier.id)}
+              emphasis={purchaseEmphasis({ plan, tierId: tier.id, lifted })}
               quantity={quantity}
               isGated={isGated?.({ kind: 'buy', tierId: tier.id }) === true}
               onPurchase={onPurchase}
@@ -135,6 +137,56 @@ export function BuyRail({
       </ul>
     </div>
   );
+}
+
+/**
+ * Which tier's purchase should carry the rail's one accent, gating folded in.
+ *
+ * `railPlan` picks `best.purchase` with no idea onboarding exists, so its pick can be
+ * the very row a beat is holding back — the thing ui-sensibility §3 forbids, a control
+ * wearing the accent that cannot be pressed. When that happens the accent falls to the
+ * next affordable, non-gated purchase by the same score the plan already computed, or
+ * to nothing if the gated pick was the only affordable one. `railPlan` itself is
+ * untouched; this only re-reads the ranked list it already produced.
+ */
+function liftedPurchase(
+  plan: RailPlan,
+  isGated?: (control: GatedControl) => boolean,
+): TierId | null {
+  const best = plan.best.purchase;
+  if (best && isGated?.({ kind: 'buy', tierId: best.tierId }) !== true) return best.tierId;
+
+  let winner: RailPurchase | null = null;
+  for (const option of plan.options) {
+    if (option.kind !== 'purchase' || !option.affordable) continue;
+    if (isGated?.({ kind: 'buy', tierId: option.tierId }) === true) continue;
+    if (winner === null || option.score.gt(winner.score)) winner = option;
+  }
+
+  return winner?.tierId ?? null;
+}
+
+/**
+ * A row's emphasis, with the gate applied.
+ *
+ * `spendEmphasis` alone cannot see the gate. `lifted` is `liftedPurchase`'s answer once
+ * gating is folded in: the row it names carries the accent regardless of what the plan
+ * itself picked, and the plan's own pick is downgraded to nothing wherever the two
+ * disagree — never left reading as best twice, never left blank when a legitimate row
+ * is waiting to take it.
+ */
+function purchaseEmphasis({
+  plan,
+  tierId,
+  lifted,
+}: {
+  plan: RailPlan;
+  tierId: TierId;
+  lifted: TierId | null;
+}): SpendEmphasis {
+  if (tierId === lifted) return 'best';
+  const emphasis = spendEmphasis(plan, 'purchase', tierId);
+  return emphasis === 'best' ? 'none' : emphasis;
 }
 
 interface UpcomingRowProps {

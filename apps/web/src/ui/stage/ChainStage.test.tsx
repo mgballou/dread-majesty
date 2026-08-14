@@ -354,6 +354,23 @@ describe('ChainStage', () => {
       );
     });
 
+    it('marks a gated rung apart from a genuinely waiting one', () => {
+      const { container } = render(stage({ state: ownedTwo(), isGated: gateAllButMinionRouse }));
+
+      expect(container.querySelector('[data-tier="warren"] .stage-node')).toHaveAttribute(
+        'data-gated',
+        'true',
+      );
+    });
+
+    it('leaves the named rung carrying no gated marker', () => {
+      const { container } = render(stage({ state: ownedTwo(), isGated: gateAllButMinionRouse }));
+
+      expect(container.querySelector('[data-tier="minion"] .stage-node')).not.toHaveAttribute(
+        'data-gated',
+      );
+    });
+
     it('never gates Smite', () => {
       render(stage({ isGated: () => true }));
 

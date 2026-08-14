@@ -312,5 +312,29 @@ describe('Miscreants', () => {
 
       expect(buttons.every((button) => !(button as HTMLButtonElement).disabled)).toBe(true);
     });
+
+    function gateMinionHandAppoint(control: GatedControl): boolean {
+      return control.kind === 'appoint' && control.overseerId === 'minion-hand';
+    }
+
+    it("never lets a gated post carry the panel's one accent", () => {
+      state.resources.evil = new Decimal(30000);
+
+      draw(() => true, gateMinionHandAppoint);
+
+      expect(
+        screen.getByRole('button', { name: new RegExp(OVERSEER.names['minion-hand']) }),
+      ).not.toHaveClass('miscreant__post--best');
+    });
+
+    it("lifts the next legitimate post once the plan's own pick is gated", () => {
+      state.resources.evil = new Decimal(30000);
+
+      draw(() => true, gateMinionHandAppoint);
+
+      expect(
+        screen.getByRole('button', { name: new RegExp(OVERSEER.names['minion-goad']) }),
+      ).toHaveClass('miscreant__post--best');
+    });
   });
 });
