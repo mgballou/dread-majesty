@@ -5,6 +5,7 @@ import type { DominionBeatId, MaliceBeatId, OnboardingBeat, TierId } from '@dm/c
 import { apply, createState, nextCost } from '@dm/engine';
 import type { GameState } from '@dm/engine';
 import {
+  accomplishedBeat,
   clearsBeat,
   finishOnboarding,
   forgetOnboarding,
@@ -616,6 +617,58 @@ describe('supersededBeat', () => {
       clearedBy: { kind: 'superseded', when: { kind: 'smites-at-least', count: 3 } },
     });
     expect(supersededBeat({ track: [her], consumed: [], state, content })).toBe('her');
+  });
+});
+
+describe('accomplishedBeat', () => {
+  const appoint = testBeat({ id: 'appoint', gate: { kind: 'appoint', overseerId: 'minion-hand' } });
+
+  function filled(): GameState {
+    const state = fresh();
+    state.resources.evil = new Decimal(5000);
+    apply(state, content, { kind: 'appoint', overseerId: 'minion-hand' });
+    return state;
+  }
+
+  function accomplished(state: GameState, track: readonly OnboardingBeat<string>[]): string | null {
+    return accomplishedBeat({ track, consumed: [], state, content });
+  }
+
+  it('reports an appoint beat whose post is filled', () => {
+    expect(accomplished(filled(), [appoint])).toBe('appoint');
+  });
+
+  it('reports nothing while the post stands empty', () => {
+    expect(accomplished(fresh(), [appoint])).toBeNull();
+  });
+
+  it('reports nothing for a rouse beat, whatever the tier is doing', () => {
+    const state = filled();
+    state.gens.minion.running = true;
+    const rouse = testBeat({ id: 'rouse', gate: { kind: 'rouse', tierId: 'minion' } });
+    expect(accomplished(state, [rouse])).toBeNull();
+  });
+
+  it('reports nothing for a buy beat, however many are owned', () => {
+    const state = filled();
+    state.gens.minion.owned = new Decimal(500);
+    const buy = testBeat({ id: 'buy', gate: { kind: 'buy', tierId: 'minion' } });
+    expect(accomplished(state, [buy])).toBeNull();
+  });
+
+  it('reports nothing for a beat that gates nothing', () => {
+    expect(accomplished(filled(), [testBeat({ id: 'narrative' })])).toBeNull();
+  });
+
+  it('never looks past the first unconsumed beat', () => {
+    const first = testBeat({ id: 'first', gate: { kind: 'rouse', tierId: 'minion' } });
+    expect(accomplished(filled(), [first, appoint])).toBeNull();
+  });
+
+  it('reports nothing once the beat is already consumed', () => {
+    expect(
+      accomplishedBeat({ track: [appoint], consumed: ['appoint'], state: filled(), content }),
+    ).toBeNull();
   });
 });
 
