@@ -111,7 +111,9 @@ describe('the onboarding copy', () => {
   });
 
   it('gives the narrator an answer for each way her turn ends', () => {
-    expect([copy.malice.verdict.caved, copy.malice.verdict.resisted].every((l) => l.length > 0)).toBe(true);
+    expect(
+      [copy.malice.verdict.caved, copy.malice.verdict.resisted].every((l) => l.length > 0),
+    ).toBe(true);
   });
 
   it('does not promise the cascade a count it cannot keep', () => {
