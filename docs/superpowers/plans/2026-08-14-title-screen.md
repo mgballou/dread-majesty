@@ -81,12 +81,12 @@ hammer drawing, the screen, the wiring, and the rate. No `packages/engine` file 
   - `StartCopy { readonly lede: string; readonly premise: string; readonly begin: string }`
   - `Copy` gains `readonly start: StartCopy`
 
-- [ ] **Step 1: Read the spec**
+- [x] **Step 1: Read the spec**
 
 Read `docs/superpowers/specs/2026-08-14-title-screen-design.md`. Sections 1, 2 and 2.3 are what
 this task implements.
 
-- [ ] **Step 2: Add the hammer to the shape union and the manifest**
+- [x] **Step 2: Add the hammer to the shape union and the manifest**
 
 In `packages/content/src/art.ts`, add `'hammer'` to the `shape` union, then add the slot. Put it
 after `resource/evil`:
@@ -105,7 +105,7 @@ after `resource/evil`:
   },
 ```
 
-- [ ] **Step 3: Add the copy type**
+- [x] **Step 3: Add the copy type**
 
 In `packages/content/src/copy.ts`, above the `Copy` interface:
 
@@ -134,7 +134,7 @@ Add to `Copy`, beside the other screen blocks:
 
 Export `StartCopy` from `packages/content/src/index.ts`, in whatever form that file already uses.
 
-- [ ] **Step 4: Write the copy and fix the opening line**
+- [x] **Step 4: Write the copy and fix the opening line**
 
 In `packages/content/src/v1/copy.ts`, add the `start` block. Place it near the other screen copy,
 matching the file's existing ordering:
@@ -162,7 +162,7 @@ It becomes:
 The premise now lives on the title screen. `it` points at the lackey in the sentence before,
 which is the whole reason for the change — see spec §1.
 
-- [ ] **Step 5: Update the content tests**
+- [x] **Step 5: Update the content tests**
 
 There is an existing test in `packages/content/test/onboarding.test.ts`:
 
@@ -217,7 +217,7 @@ describe('the art manifest', () => {
 Use a straight apostrophe in the test name if the file's lint config objects to the typographic
 one; match whatever the neighboring test files do.
 
-- [ ] **Step 6: Run the content tests and typecheck**
+- [x] **Step 6: Run the content tests and typecheck**
 
 ```
 ./node_modules/.bin/vitest run packages/content
@@ -227,7 +227,7 @@ npx tsc --noEmit -p packages/content/tsconfig.json
 `apps/web` will not typecheck until Task 4 adds `copy.start` consumers — that is expected. Do not
 run the web typecheck.
 
-- [ ] **Step 7: Lint, format, commit**
+- [x] **Step 7: Lint, format, commit**
 
 ```bash
 ./node_modules/.bin/prettier --check .
@@ -249,7 +249,7 @@ git commit -m "Give the game a mark and move the premise off the opening beat"
 - Consumes from Task 1: the `'hammer'` shape kind and the `mark/dread-majesty` slot.
 - Produces: nothing new — `TierArt` renders the new kind.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Render `<TierArt slot="mark/dread-majesty" />` and assert the accessible name is the slot's `alt`
 (`'A black war hammer'`). Add a second case asserting the decorative form exposes no accessible
@@ -259,7 +259,7 @@ inventing one.
 Run: `./node_modules/.bin/vitest run apps/web/src/ui/art`
 Expected: FAIL — the switch has no `hammer` arm, so the component throws or renders nothing.
 
-- [ ] **Step 2: Draw it**
+- [x] **Step 2: Draw it**
 
 Add a `case 'hammer':` arm to `shape()` in `TierArt.tsx`. The drawing conventions are set by the
 arms already there and are not optional: a 48×48 viewBox, `fill="currentColor"`, weight carried by
@@ -281,14 +281,14 @@ arms already there and are not optional: a 48×48 viewBox, `fill="currentColor"`
 
 Keep the arms in the same order as the union declares them, if the existing switch does that.
 
-- [ ] **Step 3: Look at it**
+- [x] **Step 3: Look at it**
 
 The silhouette must read as a hammer at 48px, not as a block on a stick. Render it and check.
 **If it reads wrong, adjust the head-to-haft proportion and say what you changed and why in your
 report** — the numbers above are a starting point, not a measurement, and this is the one part of
 this plan I could not verify without seeing it.
 
-- [ ] **Step 4: Run, lint, commit**
+- [x] **Step 4: Run, lint, commit**
 
 ```
 ./node_modules/.bin/vitest run apps/web/src/ui/art
@@ -323,14 +323,14 @@ git commit -m "Draw the hammer"
   }): ReactNode
   ```
 
-- [ ] **Step 1: Read the precedent**
+- [x] **Step 1: Read the precedent**
 
 Read `apps/web/src/screens/OfflineSummary.tsx` and `OfflineSummary.css` first. This screen is the
 same shape deliberately — spec §2.2 — and copying its structure is the requirement, not a
 shortcut. Match how it declares its dialog role, how it names itself, and how its one primary
 action is marked.
 
-- [ ] **Step 2: Write the failing tests**
+- [x] **Step 2: Write the failing tests**
 
 In `TitleScreen.test.tsx`, following the render helpers the neighboring screen tests use:
 
@@ -342,7 +342,7 @@ In `TitleScreen.test.tsx`, following the render helpers the neighboring screen t
 Run: `./node_modules/.bin/vitest run apps/web/src/screens/TitleScreen.test.tsx`
 Expected: FAIL — the module does not exist.
 
-- [ ] **Step 3: Write the component**
+- [x] **Step 3: Write the component**
 
 ```tsx
 import { useEffect, useRef, type ReactNode } from 'react';
@@ -407,7 +407,7 @@ export function TitleScreen({ title, copy, onStart }: TitleScreenProps): ReactNo
 }
 ```
 
-- [ ] **Step 4: Write the stylesheet**
+- [x] **Step 4: Write the stylesheet**
 
 Model `TitleScreen.css` on `OfflineSummary.css` — read it and reuse its scrim, sheet and centering
 approach rather than inventing a second one. Requirements it must meet:
@@ -427,7 +427,7 @@ sits at or above the return summary and above the prompt bar, using those helper
 never fall across a screen that has taken the screen, and a stacking rule nobody pins is a
 stacking rule that drifts.
 
-- [ ] **Step 5: Run and commit**
+- [x] **Step 5: Run and commit**
 
 ```
 ./node_modules/.bin/vitest run apps/web/src/screens
@@ -452,7 +452,7 @@ git commit -m "Add the title screen"
 - Consumes everything Tasks 1-3 produce.
 - Produces: a green `apps/web` typecheck.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 In `App.test.tsx`, following its existing render helpers and its existing way of setting up a
 fresh run versus a loaded save (read the file first — it already distinguishes these for the
@@ -475,7 +475,7 @@ under vitest, so fake only `performance` and the animation frame, and install fa
 Run: `./node_modules/.bin/vitest run apps/web/src/App.test.tsx`
 Expected: FAIL.
 
-- [ ] **Step 2: Hold the latch**
+- [x] **Step 2: Hold the latch**
 
 Add beside the other onboarding state in `App`:
 
@@ -489,7 +489,7 @@ Add beside the other onboarding state in `App`:
   const [started, setStarted] = useState(false);
 ```
 
-- [ ] **Step 3: Decide when it shows**
+- [x] **Step 3: Decide when it shows**
 
 Place this beside `behindTheSummary`, and widen that flag rather than adding a sibling:
 
@@ -510,7 +510,7 @@ Replace every use of `behindTheSummary` with `screenTaken`. There are three: the
 `.shell__frame`, the spotlight's render guard, and the comment above the spotlight — read that
 comment and update it, since it names the summary specifically and now covers two screens.
 
-- [ ] **Step 4: Render it**
+- [x] **Step 4: Render it**
 
 Beside the `OfflineSummary` block at the end of the shell, after it:
 
@@ -522,7 +522,7 @@ Beside the `OfflineSummary` block at the end of the shell, after it:
 
 Import `TitleScreen` from `./screens/TitleScreen.tsx`.
 
-- [ ] **Step 5: Run the web suite**
+- [x] **Step 5: Run the web suite**
 
 ```
 ./node_modules/.bin/vitest run apps/web
@@ -538,7 +538,7 @@ meets a title screen before the tutorial. Fix them to the new shapes rather than
 and re-read each one you touch — if the reshape left it asserting nothing, give it a real
 assertion or delete it.
 
-- [ ] **Step 6: Lint, format, commit**
+- [x] **Step 6: Lint, format, commit**
 
 ```bash
 ./node_modules/.bin/prettier --check .
@@ -561,7 +561,7 @@ git commit -m "Show the title screen before a run with no save"
 
 Read spec §3 first.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 In `Crown.test.tsx`, following its existing render helper and its existing way of driving state:
 
@@ -572,13 +572,13 @@ In `Crown.test.tsx`, following its existing render helper and its existing way o
 Run: `./node_modules/.bin/vitest run apps/web/src/ui/crown`
 Expected: FAIL.
 
-- [ ] **Step 2: Change the call**
+- [x] **Step 2: Change the call**
 
 In `Crown.tsx`, the rate line uses `formatNumber(rate)`. Change it to `formatWhole(rate)` and
 update the import. **Only the rate.** The souls multiplier keeps `formatNumber` — it is not a rate
 and a surge does not make it noisy.
 
-- [ ] **Step 3: Correct the comment that now contradicts itself**
+- [x] **Step 3: Correct the comment that now contradicts itself**
 
 `formatWhole`'s doc comment in `apps/web/src/ui/format.ts` currently ends:
 
@@ -598,7 +598,7 @@ that paragraph with:
  * yield per tier, which is where a player checks the arithmetic.
 ```
 
-- [ ] **Step 4: Run and commit**
+- [x] **Step 4: Run and commit**
 
 ```
 ./node_modules/.bin/vitest run apps/web
