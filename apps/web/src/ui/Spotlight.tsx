@@ -117,10 +117,16 @@ export function Spotlight({ target }: SpotlightProps): ReactNode {
    * somebody reading, and would drag back anybody who scrolled away on purpose. The ref
    * holds the target last scrolled to, so this fires on the way into a measured frame and
    * then leaves the player alone until a different control is named.
+   *
+   * **A layout effect, so the scroll resolves before anything paints. Do not make it a
+   * passive one.** Under reduced motion the scroll is instant, and a passive effect runs
+   * after the browser's first paint — so the ring would show for a frame at its
+   * pre-scroll position and then snap. Full motion hides this, because a sweep starting a
+   * tick later looks the same; reduced motion is the case that must not flash.
    */
   const scrolledTo = useRef<string | null>(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (target === undefined || frame === null || scrolledTo.current === target) return;
     scrolledTo.current = target;
 
