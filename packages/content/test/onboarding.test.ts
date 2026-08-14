@@ -50,7 +50,7 @@ describe('the Malice track', () => {
   });
 
   it("answers her in the narrator's voice", () => {
-    expect(v1Onboarding.malice.find((beat) => beat.id === 'apathy')?.voice).toBe('narrator');
+    expect(v1Onboarding.malice.find((beat) => beat.id === 'verdict')?.voice).toBe('narrator');
   });
 });
 
@@ -93,17 +93,29 @@ describe('the onboarding copy', () => {
     for (const id of DOMINION_BEAT_IDS) expect(copy.dominion[id].length).toBeGreaterThan(0);
   });
 
-  it('orders the goad lines by descending threshold', () => {
-    const thresholds = copy.goad.map((entry) => entry.aboveApathy);
+  it('orders the waiting lines by descending threshold', () => {
+    const thresholds = copy.waiting.map((entry) => entry.aboveApathy);
     expect(thresholds).toEqual([...thresholds].sort((one, other) => other - one));
   });
 
-  it('ends the goad list on a threshold that always matches', () => {
-    expect(copy.goad.at(-1)?.aboveApathy).toBeLessThan(0);
+  it('ends the waiting list on a threshold that always matches', () => {
+    expect(copy.waiting.at(-1)?.aboveApathy).toBeLessThan(0);
   });
 
-  it('gives every goad entry a line', () => {
-    for (const entry of copy.goad) expect(entry.line.length).toBeGreaterThan(0);
+  it('gives every waiting entry a line', () => {
+    for (const entry of copy.waiting) expect(entry.line.length).toBeGreaterThan(0);
+  });
+
+  it('gives her a line for every blow that can land while she is on screen', () => {
+    expect(copy.urging.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('gives the narrator an answer for each way her turn ends', () => {
+    expect([copy.malice.verdict.caved, copy.malice.verdict.resisted].every((l) => l.length > 0)).toBe(true);
+  });
+
+  it('does not promise the cascade a count it cannot keep', () => {
+    expect(copy.dominion.cascade).not.toContain('Five');
   });
 
   it('offers both bail actions on the opening beat', () => {
@@ -119,12 +131,19 @@ describe('the Malice track resolves', () => {
   const malice = v1Onboarding.malice;
   const beat = (id: string) => malice.find((candidate) => candidate.id === id);
 
-  it('keeps her talking across strikes', () => {
-    expect(beat('goad')?.clearedBy).toBe('next-ready');
+  it('keeps her talking until the player has caved twice', () => {
+    expect(beat('goad')?.clearedBy).toEqual({
+      kind: 'superseded',
+      when: { kind: 'smites-at-least', count: 3 },
+    });
   });
 
-  it('lets the narrator answer her rather than a timer', () => {
-    expect(beat('apathy')?.retireAfterMs).toBeNull();
+  it('lets the verdict land however her turn ended', () => {
+    expect(beat('verdict')?.ready).toEqual({ kind: 'always' });
+  });
+
+  it('never expires the verdict', () => {
+    expect(beat('verdict')?.retireAfterMs).toBeNull();
   });
 
   it('never expires the opening explanation', () => {
@@ -136,10 +155,17 @@ describe('the Malice track resolves', () => {
     expect(timed.map((candidate) => candidate.id)).toEqual(['goad']);
   });
 
-  it('gives every beat that clears on the next one a successor to wait for', () => {
+  it('brings her on with the blow rather than with the next one', () => {
+    expect(beat('goad')?.ready).toEqual({ kind: 'smites-at-least', count: 1 });
+  });
+
+  it('gives every superseded beat a successor to hand over to', () => {
     for (const track of [v1Onboarding.dominion, v1Onboarding.malice]) {
-      const last = track.at(-1);
-      expect(last?.clearedBy).not.toBe('next-ready');
+      expect(typeof track.at(-1)?.clearedBy).toBe('string');
     }
+  });
+
+  it('points her at the strike rather than at her own gate', () => {
+    expect(beat('goad')?.points).toEqual({ kind: 'smite' });
   });
 });

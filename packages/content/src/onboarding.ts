@@ -23,9 +23,7 @@ export type BeatReady =
   | { readonly kind: 'cycled'; readonly tierId: TierId }
   | { readonly kind: 'smites-at-least'; readonly count: number }
   /** A blow has been struck, its effect has run out, and the next one is available. */
-  | { readonly kind: 'blow-ready-after-first' }
-  /** Apathy has reached the given band. Bands are the floor of Apathy; see the spec §5.3. */
-  | { readonly kind: 'band-at-least'; readonly band: number };
+  | { readonly kind: 'blow-ready-after-first' };
 
 /**
  * The one control left live while a beat is showing.
@@ -40,23 +38,42 @@ export type BeatGate =
   | { readonly kind: 'appoint'; readonly overseerId: OverseerId }
   | { readonly kind: 'none' };
 
+/**
+ * What a beat draws the eye to, when that is not the control it gates.
+ *
+ * Separate from `BeatGate` because they are not the same claim: a gate holds every other
+ * control back, and pointing only says "here". Smite appears here and deliberately not in
+ * `BeatGate` — she asks for a blow and the player stays free to refuse, which is one of the
+ * two ways her conversation ends. Gate it and that ending disappears.
+ */
+export type BeatPoints =
+  | { readonly kind: 'rouse'; readonly tierId: TierId }
+  | { readonly kind: 'buy'; readonly tierId: TierId }
+  | { readonly kind: 'appoint'; readonly overseerId: OverseerId }
+  | { readonly kind: 'smite' };
+
 /** Who is speaking. A property of the beat, because two narrator beats sit in the Malice track. */
 export type BeatVoice = 'narrator' | 'her';
 
 /**
  * What consumes a beat, besides retiring unread.
  *
- * `next-ready` means the beat is consumed when the next unconsumed beat in its track has
- * a `ready` that holds — one line handing over to the next rather than the player ending
- * it. It is what lets a beat keep talking across several player actions instead of being
- * spent by the first one.
+ * `superseded` carries its own condition: the beat is consumed when `when` holds on the
+ * current state. A beat says what ends it rather than deferring to whether its successor
+ * happens to be ready, which coupled two beats through a condition neither of them stated.
  */
-export type BeatClearedBy = 'gated-action' | 'smite' | 'dismiss' | 'next-ready';
+export type BeatClearedBy =
+  | 'gated-action'
+  | 'smite'
+  | 'dismiss'
+  | { readonly kind: 'superseded'; readonly when: BeatReady };
 
 export interface OnboardingBeat<Id extends string> {
   readonly id: Id;
   readonly ready: BeatReady;
   readonly gate: BeatGate;
+  /** Overrides `gate` for the spotlight only. Absent means the spotlight follows the gate. */
+  readonly points?: BeatPoints;
   readonly voice: BeatVoice;
   readonly clearedBy: BeatClearedBy;
   /**

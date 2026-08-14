@@ -422,28 +422,41 @@ export const v1Copy = {
       warren: 'Take ground of your own. A Warren breeds Minions without being asked.',
       'rouse-warren': 'It will not start itself. They never do.',
       cascade:
-        'Five Minions you did not raise, already at work. Everything above feeds what is below it, all at once. The rest is yours.',
+        'Minions you did not raise, already at work. Everything above feeds what is below it, all at once. The rest is yours.',
     },
     malice: {
       'first-blow':
         'I knew it would not take long for you to take matters into your own hands. When you strike, the dark force in you runs through the ranks and everything works harder for a while. Try not to overdo it.',
-      apathy: 'You listened to her. Everyone does, once. Let them rest and the fear returns.',
-    },
-    // Descending, and the last entry always matches. She flatters, then reads the
-    // resistance and renames it weakness, then stops pushing and gets intimate — and
-    // then she is simply correct, which is the only honest thing she says and the most
-    // persuasive. See the spec §5.2.
-    goad: [
-      {
-        aboveApathy: 0.45,
-        line: "Oh, that was good. Again — while they are still trembling. Don't let them settle.",
+      verdict: {
+        caved: 'You listened to her. Everyone does, once. Let them rest and the fear returns.',
+        resisted:
+          'You outlasted her. She has nothing else to do but wait. Let them rest and the fear returns.',
       },
+    },
+    // What she says in the twenty seconds after a blow. Indexed by lifetime blows, so it
+    // only ever moves forward — the old single list was keyed to Apathy, which rises when
+    // the player caves, and so walked her backwards through her own lines.
+    //
+    // Two entries against a three-blow supersession: the third blow ends her turn on the
+    // frame it lands, so a third line would be unreachable. The picker clamps.
+    urging: [
+      "Oh, that was good. Again — while they are still trembling. Don't let them settle.",
+      "There. You felt that, didn't you? Once more and they will not settle for a week.",
+    ],
+    // Descending, and the last entry always matches. She reads the resistance and renames
+    // it weakness, then stops pushing and gets intimate — and then she is simply correct,
+    // which is the only honest thing she says and the most persuasive. See the spec §4.
+    //
+    // Thresholds are set against when she actually reaches this state: the cooldown clears
+    // twenty seconds after the blow with Apathy at 0.556, and it bleeds to zero at
+    // forty-five. That gives the three lines roughly ten, eleven and thirty seconds.
+    waiting: [
       {
-        aboveApathy: 0.2,
+        aboveApathy: 0.35,
         line: 'You are being careful. I do like that in you. But careful is not the same as strong.',
       },
       {
-        aboveApathy: 0,
+        aboveApathy: 0.12,
         line: "No? Then I'll wait with you. I have nothing else. Neither, in the end, do you.",
       },
       {

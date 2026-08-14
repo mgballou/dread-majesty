@@ -8,7 +8,7 @@ const SECOND = 1000;
  * Every threshold these beats name is read off the existing economy rather than added
  * to it — `can-afford-tier` and `can-afford-overseer` ask the live cost, so a balance
  * change moves the track with it and nothing here goes stale. Nothing in this file is a
- * balance number in its own right except the two retirement windows.
+ * balance number in its own right except the one retirement window.
  *
  * The Dominion track ends at the first Warren's first cycle, which the harness puts at
  * about eleven minutes. See the spec §3.
@@ -65,7 +65,7 @@ export const v1Onboarding: Onboarding = {
     },
     {
       // The finale, and the only Dominion beat that gates nothing. It is a caption on
-      // five Minions that arrived without being asked, which is why it cannot be written
+      // Minions that arrived without being asked, which is why it cannot be written
       // any earlier: until the Warren has cycled there is nothing to caption.
       id: 'cascade',
       ready: { kind: 'cycled', tierId: 'warren' },
@@ -88,24 +88,30 @@ export const v1Onboarding: Onboarding = {
       retireAfterMs: null,
     },
     {
-      // She is not spent by one strike. Her lines are chosen from Apathy, and Apathy
-      // *rises* when the player caves — so caving lands her back on "Again", which is the
-      // insistence. What ends her is the narrator: when Apathy crosses band 2 on the
-      // second cave, `apathy` becomes ready and takes the bar from her. If the player
-      // resists instead, she walks down to her honest line and gives up at her window,
-      // which is the only ending she has that is not an interruption.
+      // She arrives on the blow itself, on the same condition as the narrator, so she
+      // queues directly behind him and takes the bar inside the cooldown — an answer to
+      // what the player just did, with the whole cooldown to be read in. It also stops
+      // her withdrawing: the old condition lapsed on every cooldown, so she vanished and
+      // came back on each cave, which is most of why her lines looked like they repeated.
+      //
+      // Three lifetime blows ends her: the one that summoned her, plus two caves. A count,
+      // not an Apathy band — a band is only reachable near the cooldown floor, so a player
+      // striking every forty-five seconds caved over and over and was handed the ending
+      // written for someone who resisted. See the spec §2.
       id: 'goad',
-      ready: { kind: 'blow-ready-after-first' },
+      ready: { kind: 'smites-at-least', count: 1 },
       gate: { kind: 'none' },
+      points: { kind: 'smite' },
       voice: 'her',
-      clearedBy: 'next-ready',
-      retireAfterMs: 120 * SECOND,
+      clearedBy: { kind: 'superseded', when: { kind: 'smites-at-least', count: 3 } },
+      retireAfterMs: 75 * SECOND,
     },
     {
-      // Band 2, not band 1 — see the 2026-08-13 spec §5.3 for the strike-by-strike walk.
-      // Dismiss-only: it is the answer to her, and the player should close it themselves.
-      id: 'apathy',
-      ready: { kind: 'band-at-least', band: 2 },
+      // Ready always, so it lands however her turn ended, and dismiss-only so the player
+      // closes the answer themselves. Which of its two lines it carries is decided by how
+      // she was consumed, not by anything read off the state when it shows.
+      id: 'verdict',
+      ready: { kind: 'always' },
       gate: { kind: 'none' },
       voice: 'narrator',
       clearedBy: 'dismiss',
