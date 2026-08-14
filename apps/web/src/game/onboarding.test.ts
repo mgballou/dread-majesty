@@ -2,7 +2,7 @@ import Decimal from 'break_eternity.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CURRENT, CURRENT_ONBOARDING, v1Copy } from '@dm/content';
 import type { DominionBeatId, MaliceBeatId, OnboardingBeat, TierId } from '@dm/content';
-import { createState, nextCost } from '@dm/engine';
+import { apply, createState, nextCost } from '@dm/engine';
 import type { GameState } from '@dm/engine';
 import {
   clearsBeat,
@@ -149,6 +149,21 @@ describe('isBeatReady', () => {
         content,
       }),
     ).toBe(true);
+  });
+
+  it('withholds can-afford-overseer once the post is filled', () => {
+    const state = fresh();
+    state.resources.evil = new Decimal(5000);
+    apply(state, content, { kind: 'appoint', overseerId: 'minion-hand' });
+    state.resources.evil = new Decimal(5000);
+
+    expect(
+      isBeatReady({
+        ready: { kind: 'can-afford-overseer', overseerId: 'minion-hand' },
+        state,
+        content,
+      }),
+    ).toBe(false);
   });
 
   it('withholds smites-at-least below the count', () => {

@@ -10,7 +10,7 @@ import type {
   TierId,
   WaitingLine,
 } from '@dm/content';
-import { nextCost } from '@dm/engine';
+import { canAppoint, nextCost } from '@dm/engine';
 import type { GameState } from '@dm/engine';
 
 const PROGRESS_KEY = 'dread-majesty:onboarding-seen';
@@ -59,13 +59,13 @@ export function isBeatReady({
       return state.resources[tier.costResource].gte(cost);
     }
 
-    case 'can-afford-overseer': {
-      for (const tier of content.tiers) {
-        const post = tier.overseers.find((candidate) => candidate.id === ready.overseerId);
-        if (post) return state.resources[tier.costResource].gte(post.cost);
-      }
-      return false;
-    }
+    // `canAppoint` rather than a price comparison, because `ready` means *the named action
+    // can be performed* and a filled post cannot be filled again. The price alone said yes
+    // to a post already held, so the beat came back the moment Evil recovered — gating every
+    // other control behind a button disabled for good, with no dismissal and no window. The
+    // selector is the engine's, so the same question is asked here and by the rail.
+    case 'can-afford-overseer':
+      return canAppoint(state, content, ready.overseerId);
 
     case 'smites-at-least':
       return state.stats.smites >= ready.count;
