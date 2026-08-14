@@ -132,6 +132,21 @@ The general rule, and it is the right one for any beat: *the retirement clock re
 player does the thing the beat is asking for.* `goad` is the only beat this reaches today —
 every other beat asking for an action is cleared by it rather than timed out.
 
+### 4.2 One Dominion line counts something it cannot count
+
+Unrelated to Malice, found in the same pass. `cascade` reads *"Five Minions you did not
+raise…"* and five is not guaranteed. The Warren yields 5 a cycle, but a second Warren is
+affordable inside the first one's sixty seconds — `costRate` is 1.25 on a base of 3000 — and a
+smite surge running when the cycle lands multiplies the yield. The beat fires on the Warren
+having cycled at all, so the number can be ten, or 7.5.
+
+Drop the count: *"Minions you did not raise, already at work. Everything above feeds what is
+below it, all at once. The rest is yours."*
+
+The two source comments that narrate "five Minions" go with it, as does the quotation in the
+2026-08-13 spec §4 — it quotes shipped copy, and stale quotations in a spec are how the next
+reader learns the wrong thing.
+
 ---
 
 ## 5 Both endings, and which one you get
@@ -234,6 +249,26 @@ reason §6 does.
 Under `prefers-reduced-motion` the pulse drops and nothing replaces it. This is pure emphasis on
 a control that is already visible, labeled and reachable — unlike the spotlight ring, which
 carries the pointing and therefore stays.
+
+### 7.3 The rate says nothing about the surge
+
+The blow's whole effect is that production runs harder for a while, and the one figure that
+reports production — *N Evil per second* in the crown — does not move a pixel when it happens.
+The number changes; nothing says why. The player is left to infer that the button they pressed
+at the top of the chain and the figure at the top of the screen are the same subject.
+
+While the blow is running, the rate takes `--tone-resource`. That is not a new decision: it is
+the Evil tone, and `EvilNode` already turns it on `[data-smite='active']`. The same tone in both
+places is the whole point — one thing lit in two positions reads as one fact, and two different
+highlights would read as two.
+
+Carried on a `data-smite` attribute mirroring the one `EvilNode` already uses, so the tone rides
+with the data and no stylesheet decides what state the game is in. The figure and the label move
+together into their own span; the standing beside them keeps its own color, since it is a
+different fact.
+
+Color is not carrying this alone. The standing on the same line already reads *reigning* through
+the surge, so the tone is emphasis on something already said in words.
 
 ---
 
