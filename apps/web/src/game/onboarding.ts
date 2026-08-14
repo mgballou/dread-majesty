@@ -10,7 +10,7 @@ import type {
   TierId,
   WaitingLine,
 } from '@dm/content';
-import { canAppoint, nextCost } from '@dm/engine';
+import { canAppoint, findOverseer, hasPost, nextCost } from '@dm/engine';
 import type { GameState } from '@dm/engine';
 
 const PROGRESS_KEY = 'dread-majesty:onboarding-seen';
@@ -218,6 +218,78 @@ export function supersededBeat<Id extends string>({
   if (typeof clearedBy === 'string') return null;
 
   return isBeatReady({ ready: clearedBy.when, state, content }) ? showing.id : null;
+}
+
+/**
+ * The beat whose gated action the player has already accomplished.
+ *
+ * The fourth answer to "this beat's time is up", beside the player acting (`clearsBeat`),
+ * nobody acting (`shouldRetire`) and the state moving on (`supersededBeat`). This one is the
+ * player having acted at a moment nothing was asking them to: there is nothing left to teach,
+ * so the beat has no business waiting to teach it.
+ *
+ * Without it, `appoint` stalls the Dominion track for good. Every Malice beat gates nothing,
+ * so the post's button is live while she talks; a player who fills it then is answering a beat
+ * the track has not reached, so `clearsBeat` rightly says no — and `can-afford-overseer` then
+ * refuses to be ready for a post that cannot be filled twice. Not consumed, never ready, and
+ * `showingBeat` walks no further than the first unconsumed beat: no gate over the screen, but
+ * no more tutorial either, and `done` never written.
+ *
+ * Consuming it in its turn rather than out of order is the whole point. The alternative —
+ * letting an action reach past the current candidate — would qualify "one at a time, in order",
+ * which is the rule that makes the walk's order irrelevant everywhere else.
+ *
+ * Narrow in the same way `supersededBeat` is: only the first *unconsumed* beat is ever
+ * reported, so a beat deeper in the track can never be skipped.
+ */
+export function accomplishedBeat<Id extends string>({
+  track,
+  consumed,
+  state,
+  content,
+}: {
+  track: readonly OnboardingBeat<Id>[];
+  consumed: readonly Id[];
+  state: GameState;
+  content: Content;
+}): Id | null {
+  const standing = track.find((beat) => !consumed.includes(beat.id));
+  if (!standing) return null;
+
+  return isGateAccomplished({ gate: standing.gate, state, content }) ? standing.id : null;
+}
+
+/**
+ * Whether the action a gate names has already been performed and cannot be performed again.
+ *
+ * `hasPost` and `findOverseer` rather than `isAppointed`, which asks whether the *tier* runs
+ * itself — a tier may hold several posts and only one of them automates, so it answers a
+ * different question. Both of these are the engine's and already exported, so nothing about
+ * who holds what is worked out twice.
+ */
+function isGateAccomplished({
+  gate,
+  state,
+  content,
+}: {
+  gate: BeatGate;
+  state: GameState;
+  content: Content;
+}): boolean {
+  switch (gate.kind) {
+    case 'appoint': {
+      const found = findOverseer(content, gate.overseerId);
+      return found !== undefined && hasPost(state, found.tier.id, found.post.id);
+    }
+
+    // Not forgotten: neither rousing nor buying has a terminal state — a tier can be roused
+    // again the moment it stops and bought again for ever — so no beat of these kinds can be
+    // accomplished and stuck. A gate of `none` names no action to have accomplished.
+    case 'rouse':
+    case 'buy':
+    case 'none':
+      return false;
+  }
 }
 
 /**
