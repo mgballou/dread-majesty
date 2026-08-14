@@ -204,7 +204,28 @@ game state that does not decay. Malice, after the changes above, runs continuous
 first blow to `verdict` with no gap for Dominion to slip into — she no longer withdraws, and
 `verdict` is ready always.
 
-The exposure is bounded: her window is 75s, restarted by a blow the player chose to strike.
+**How long Dominion waits, honestly.** `goad` is bounded by her 75s window, restarted by a blow
+the player chose to strike. `first-blow` and `verdict` are not bounded by anything but the
+player: both are dismiss-only with no window, so somebody who never presses the button holds
+Dominion off the bar for as long as they like. That costs nothing, and the reason is the rule
+below rather than any figure — no Dominion beat carries a window, none of them is ready off
+anything that decays, and the actions they wait on are recorded whoever is on the bar.
+
+**Which beat is on the bar and which beat an action answers are two different questions.** Both
+tracks are resolved every frame; only the bar picks between them. A Malice beat gates nothing,
+so every control stays live while she is talking, and a Dominion beat's gated action performed
+during her turn consumes that beat unshown. This is not a nicety. Without it, appointing the
+Minion Hand while she held the bar left `appoint` unconsumed, ready again the moment Evil
+recovered, gating every other control behind a post button that is disabled for good once
+filled — no dismissal, no window, and nothing written down, so it survived a reload.
+
+A dismissal is the one action that does not reach past the bar. It is a press on the bar's own
+button, so the only beat it can answer is the one on the bar.
+
+**And `ready` means the named action can be performed**, not merely that it is affordable.
+`can-afford-overseer` asks `canAppoint`, which refuses a post already filled. A condition that
+claims ready for an impossible action is what turned the missing record above into a lock
+rather than a repeated lesson.
 
 **One exception, and it is about the way out.** The opening Dominion beat carries the only Skip
 tutorial and Load save buttons in the game. Malice does not take the bar while it is showing —

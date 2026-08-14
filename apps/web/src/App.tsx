@@ -142,17 +142,13 @@ export function App(): ReactNode {
   const { state, dispatch } = session;
 
   /**
-   * Which track holds the bar.
+   * The beat each track is standing on, whether or not it is the one being shown.
    *
-   * Malice wins once it has started, and holds until it ends. Nothing is lost by making
-   * Dominion wait: no Dominion beat carries a retirement window and every one of them is ready
-   * off state that does not decay. Dominion winning is what cut into her conversation — the
-   * track began on a blow struck during the ten-minute opening, got crowded off the bar, and
-   * was interrupted by the next Dominion beat coming ready.
-   *
-   * The exception is the opening beat, which carries the only Skip tutorial and Load save
-   * buttons in the game. A player who strikes before rousing anything must not lose their way
-   * out for the next minute.
+   * **Which beat is on the bar and which beat an action answers are two different
+   * questions.** Both tracks are resolved here and the bar picks one below; nothing else
+   * may assume the two are the same. A Malice beat gates nothing, so every control stays
+   * live while she is talking, and a Dominion beat's gated action performed during her turn
+   * has to be recorded — see `acted`.
    *
    * `shownAt` is a ref read during render. That is deliberate and safe here: it holds what was
    * on screen last frame, the game loop re-renders every frame, and the only reader is the
@@ -171,21 +167,56 @@ export function App(): ReactNode {
           shownId: shownId !== null && isMaliceBeatId(shownId) ? shownId : null,
         })
       : null;
-  const dominionBeat =
-    running && maliceBeat === null
-      ? showingBeat({
-          track: onboarding.dominion,
-          consumed: doneDominion,
-          state,
-          content,
-          shownId: shownId !== null && isDominionBeatId(shownId) ? shownId : null,
-        })
-      : null;
+  const dominionBeat = running
+    ? showingBeat({
+        track: onboarding.dominion,
+        consumed: doneDominion,
+        state,
+        content,
+        shownId: shownId !== null && isDominionBeatId(shownId) ? shownId : null,
+      })
+    : null;
+
+  /**
+   * Which of the two holds the bar.
+   *
+   * Malice wins once it has started, and holds until it ends. Nothing is lost by making
+   * Dominion wait: no Dominion beat carries a retirement window, every one of them is ready
+   * off state that does not decay, and its actions are recorded whoever is on the bar.
+   * Dominion winning is what cut into her conversation — the track began on a blow struck
+   * during the ten-minute opening, got crowded off the bar, and was interrupted by the next
+   * Dominion beat coming ready.
+   *
+   * The exception is the opening beat, which carries the only Skip tutorial and Load save
+   * buttons in the game. A player who strikes before rousing anything must not lose their way
+   * out for the next minute. That is `openingDone`, above.
+   */
   const beat = maliceBeat ?? dominionBeat;
 
+  /**
+   * Records an action against every beat it answers, shown or not.
+   *
+   * A Dominion beat is consulted even while Malice holds the bar. Her beats gate nothing, so
+   * the controls a Dominion beat is waiting on stay live throughout her turn, and a player
+   * who works one of them has done the thing that beat exists to teach. Consuming a beat
+   * they never read is correct: the lesson was learned by doing it. `showingBeat` only ever
+   * returns the first unconsumed beat of a track, so the order still holds.
+   *
+   * Leaving it unrecorded stranded them outright. `appoint` came back ready for a post
+   * already filled, and its button is disabled for good once filled — a gate over every
+   * other control, with no dismissal, no window and no way out.
+   *
+   * A dismissal is the one action that does not reach past the bar, and that is the same
+   * rule rather than an exception: it is a press on the bar's own button, so the only beat
+   * it can answer is the one on the bar. Malice holding the bar means `maliceBeat` is what
+   * is on it.
+   */
   const acted = useCallback(
     (action: ClearingAction): void => {
-      if (dominionBeat && clearsBeat(dominionBeat, action)) {
+      const dismissing = action.kind === 'dismiss';
+      const dominionOnTheBar = maliceBeat === null;
+
+      if (dominionBeat && (!dismissing || dominionOnTheBar) && clearsBeat(dominionBeat, action)) {
         setDoneDominion((done) => [...done, dominionBeat.id]);
       }
       if (maliceBeat && clearsBeat(maliceBeat, action)) {
@@ -198,17 +229,20 @@ export function App(): ReactNode {
   /**
    * Give up on the beat on screen, unread.
    *
+   * The beat on the bar, never the other track's — a beat nobody has been shown cannot have
+   * stood unanswered. That is why this reads in the same order `beat` does.
+   *
    * The consumed id is appended straight to the track's list rather than passed through
    * `acted`. `clearsBeat` answers "did the player do the thing?", and retirement is the
    * case where they did not — routing one through the other silently does nothing for
    * any beat that clears on something other than a dismissal.
    */
   const retire = useCallback((): void => {
-    if (dominionBeat) {
-      setDoneDominion((done) => [...done, dominionBeat.id]);
+    if (maliceBeat) {
+      setDoneMalice((done) => [...done, maliceBeat.id]);
       return;
     }
-    if (maliceBeat) setDoneMalice((done) => [...done, maliceBeat.id]);
+    if (dominionBeat) setDoneDominion((done) => [...done, dominionBeat.id]);
   }, [dominionBeat, maliceBeat]);
 
   /**
