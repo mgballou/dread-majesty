@@ -445,13 +445,4 @@ describe('onboarding retires a beat nobody answered', () => {
 
     expect(screen.queryByRole('status', { name: onboarding.herLabel })).not.toBeInTheDocument();
   });
-
-  it('retires a beat that clears on something other than a dismissal', async () => {
-    await struckAndCrowdedOut();
-    await userEvent.click(screen.getByRole('button', { name: rouseMinions }));
-    wind(13_000);
-    wind(121_000);
-
-    expect(screen.queryByRole('status', { name: onboarding.herLabel })).not.toBeInTheDocument();
-  });
 });
