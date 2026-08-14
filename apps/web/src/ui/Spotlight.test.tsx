@@ -298,7 +298,7 @@ describe('the stylesheet contract', () => {
      across whichever one lost. It shares the return summary's layer and stands
      above the prompt bar, same as the return summary does. */
   it("sits the title screen on the return summary's layer, above the prompt bar", () => {
-    expect(zIndex(titleCss, '.title')).toBeGreaterThanOrEqual(zIndex(returnCss, '.return'));
+    expect(zIndex(titleCss, '.title')).toBe(zIndex(returnCss, '.return'));
     expect(zIndex(titleCss, '.title')).toBeGreaterThan(zIndex(appCss, '.shell__prompt'));
   });
 });
