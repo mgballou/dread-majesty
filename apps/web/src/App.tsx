@@ -395,7 +395,8 @@ export function App(): ReactNode {
               acted({ kind: 'rouse', tierId });
             }}
             onSmite={() => {
-              dispatch({ kind: 'smite' });
+              const result = dispatch({ kind: 'smite' });
+              if (!result.ok) return;
               sound.play('smite');
               acted({ kind: 'smite' });
             }}
