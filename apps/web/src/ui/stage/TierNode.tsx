@@ -31,6 +31,14 @@ interface Oversight {
   isAppointed: boolean;
   /** True when rousing now would start a cycle. */
   isRousable: boolean;
+  /**
+   * True while onboarding is holding this tier's rouse back.
+   *
+   * Resolved by the caller, the same as `isAppointed` and `isRousable` above it — the
+   * node does not know why, only whether. Kept off `isRousable` on purpose: folding it
+   * in would make a gated tier read as "already turning", which is not true of it.
+   */
+  isGated: boolean;
   /** The Overseer's title. Shown once appointed and never before. */
   overseer: string;
   /** The manual layer's writing. `copy.overseer` at the call site. */
@@ -184,9 +192,9 @@ export function TierNode({
             type="button"
             className="stage-node__tap"
             aria-labelledby={stateId}
-            aria-disabled={state === 'turning'}
+            aria-disabled={state === 'turning' || oversight.isGated}
             onClick={() => {
-              if (state === 'dormant') oversight.onRouse();
+              if (state === 'dormant' && !oversight.isGated) oversight.onRouse();
             }}
           />
         )}

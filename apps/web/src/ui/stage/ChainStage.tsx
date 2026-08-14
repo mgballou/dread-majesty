@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { ART, type ArtSlot, type Content, type Copy, type TierDef, type TierId } from '@dm/content';
 import { automatorOf, effectiveCycleMs, smitePhase, type GameState } from '@dm/engine';
+import type { GatedControl } from '../../game/onboarding.ts';
 import { ChainLink } from './ChainLink.tsx';
 import { EvilNode, EVIL_ART } from './EvilNode.tsx';
 import { TierNode, type Feed } from './TierNode.tsx';
@@ -64,6 +65,14 @@ interface ChainStageProps {
    * seconds while you are tapping.
    */
   needsHand: (tierId: TierId) => boolean;
+  /**
+   * Whether onboarding is holding this control back.
+   *
+   * A predicate of the same shape as the ones above it, so the chain owes nothing to
+   * how onboarding decides. Absent means nothing is gated, which is every state of the
+   * game after the first run.
+   */
+  isGated?: (control: GatedControl) => boolean;
   /** Start one manual cycle. */
   onRouse: (tierId: TierId) => void;
   /** Evoke. The chain runs the wave; the caller credits the Evil. */
@@ -107,6 +116,7 @@ export function ChainStage({
   isAppointed,
   isRousable,
   needsHand,
+  isGated,
   onRouse,
   onSmite,
 }: ChainStageProps): ReactNode {
@@ -149,6 +159,7 @@ export function ChainStage({
               oversight={{
                 isAppointed: isAppointed(tier.id),
                 isRousable: isRousable(tier.id),
+                isGated: isGated?.({ kind: 'rouse', tierId: tier.id }) === true,
                 overseer: automatorName(tier, copy),
                 copy: copy.overseer,
                 onRouse: () => onRouse(tier.id),
@@ -178,6 +189,9 @@ export function ChainStage({
         content={content}
         state={state}
         feed={feedFrom({ producer: last, state, version })}
+        /* Smite is never gated. `GatedControl` has no `smite` case on purpose: it is
+           the one control that must stay live throughout the tutorial, since the
+           second track only starts when the player smites of their own accord. */
         onSmite={onSmite}
       />
     </section>

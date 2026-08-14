@@ -32,6 +32,13 @@ interface TierRowProps {
   purchase: RailPurchase;
   emphasis: SpendEmphasis;
   quantity: BuyQuantity;
+  /**
+   * True while onboarding is holding this tier's purchase back.
+   *
+   * Resolved by the caller, the same as every other fact on this row — the row does
+   * not know why, only whether.
+   */
+  isGated: boolean;
   onPurchase: (tierId: TierId, quantity: BuyQuantity) => void;
   copy: RailScreenCopy;
 }
@@ -56,6 +63,7 @@ export function TierRow({
   purchase,
   emphasis,
   quantity,
+  isGated,
   onPurchase,
   copy,
 }: TierRowProps): ReactNode {
@@ -101,7 +109,7 @@ export function TierRow({
         <button
           type="button"
           className={`button button--numeric${emphasis === 'best' ? ' button--primary' : ''}`}
-          disabled={!purchase.affordable}
+          disabled={!purchase.affordable || isGated}
           aria-label={buyLabel({ tier, purchase, emphasis, copy })}
           onClick={() => onPurchase(tier.id, quantity)}
         >

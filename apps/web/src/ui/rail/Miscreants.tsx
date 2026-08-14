@@ -2,6 +2,7 @@ import Decimal from 'break_eternity.js';
 import { useState, type ReactNode } from 'react';
 import type { Content, Copy, OverseerCopy, OverseerDef, OverseerId, TierDef } from '@dm/content';
 import { hasPost, type GameState } from '@dm/engine';
+import type { GatedControl } from '../../game/onboarding.ts';
 import { Banner } from '../Banner.tsx';
 import { Confirm } from '../Confirm.tsx';
 import { formatNumber, formatWhole } from '../format.ts';
@@ -23,6 +24,14 @@ interface MiscreantsProps {
   state: GameState;
   /** Purchases and appointments on one ranking. Only the appointments are read. */
   plan: RailPlan;
+  /**
+   * Whether onboarding is holding this control back.
+   *
+   * A predicate of the same shape as `onAppoint`'s neighbours elsewhere on the panel,
+   * so the panel owes nothing to how onboarding decides. Absent means nothing is
+   * gated, which is every state of the game after the first run.
+   */
+  isGated?: (control: GatedControl) => boolean;
   onAppoint: (overseerId: OverseerId) => void;
   copy: MiscreantsCopy;
 }
@@ -69,7 +78,14 @@ interface TierPosts {
  * a whole tier of the chain, so it deserves the question — and the sheet is the only
  * place `notes` has ever had room to say who these people are.
  */
-export function Miscreants({ content, state, plan, onAppoint, copy }: MiscreantsProps): ReactNode {
+export function Miscreants({
+  content,
+  state,
+  plan,
+  isGated,
+  onAppoint,
+  copy,
+}: MiscreantsProps): ReactNode {
   const [asking, setAsking] = useState<OverseerId | null>(null);
 
   const offers = new Map<OverseerId, RailAppointment>();
@@ -115,6 +131,7 @@ export function Miscreants({ content, state, plan, onAppoint, copy }: Miscreants
               <Post
                 key={post.post.id}
                 post={post}
+                isGated={isGated?.({ kind: 'appoint', overseerId: post.post.id }) === true}
                 onAsk={() => setAsking(post.post.id)}
                 copy={copy}
               />
@@ -145,6 +162,13 @@ export function Miscreants({ content, state, plan, onAppoint, copy }: Miscreants
 
 interface PostProps {
   post: PostState;
+  /**
+   * True while onboarding is holding this post's appointment back.
+   *
+   * Resolved by the caller, the same as every other fact on this post — it does not
+   * know why, only whether.
+   */
+  isGated: boolean;
   onAsk: () => void;
   copy: MiscreantsCopy;
 }
@@ -157,7 +181,7 @@ interface PostProps {
  * dead once the post is filled and dead while the price is out of reach — a control
  * that opens a question it cannot answer is worse than one that plainly will not move.
  */
-function Post({ post, onAsk, copy }: PostProps): ReactNode {
+function Post({ post, isGated, onAsk, copy }: PostProps): ReactNode {
   const { tier, filled, offer, price, emphasis } = post;
 
   return (
@@ -165,7 +189,7 @@ function Post({ post, onAsk, copy }: PostProps): ReactNode {
       <button
         type="button"
         className={`miscreant__post miscreant__post--${emphasis}`}
-        disabled={offer === null || !offer.affordable}
+        disabled={offer === null || !offer.affordable || isGated}
         aria-haspopup="dialog"
         onClick={onAsk}
       >
