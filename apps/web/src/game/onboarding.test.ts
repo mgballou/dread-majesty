@@ -289,8 +289,8 @@ describe('clearsBeat', () => {
     expect(stir && clearsBeat(stir, { kind: 'buy', tierId: 'minion' })).toBe(false);
   });
 
-  it('clears goad on a blow', () => {
-    expect(goad && clearsBeat(goad, { kind: 'smite' })).toBe(true);
+  it('no longer clears goad on a blow', () => {
+    expect(goad && clearsBeat(goad, { kind: 'smite' })).toBe(false);
   });
 
   it('leaves goad alone on a purchase', () => {
@@ -314,9 +314,7 @@ describe('shouldRetire', () => {
   });
 
   it('retires a beat on the millisecond its window closes', () => {
-    expect(firstBlow && shouldRetire({ beat: firstBlow, shownAtMs: 0, playTimeMs: 12_000 })).toBe(
-      true,
-    );
+    expect(goad && shouldRetire({ beat: goad, shownAtMs: 0, playTimeMs: 120_000 })).toBe(true);
   });
 
   it('measures the window from when the beat was shown', () => {
