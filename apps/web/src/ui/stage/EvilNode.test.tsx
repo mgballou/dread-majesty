@@ -1,3 +1,5 @@
+import { existsSync, readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import type { ReactElement } from 'react';
 import Decimal from 'break_eternity.js';
 import { render, screen } from '@testing-library/react';
@@ -163,5 +165,65 @@ describe('EvilNode', () => {
     const { container } = render(evil());
 
     expect(container.querySelector('.evil-node')).toHaveAttribute('data-motion', 'reduced');
+  });
+
+  it('carries no beckon marker by default', () => {
+    const { container } = render(evil());
+
+    expect(container.querySelector('.evil-node')).toHaveAttribute('data-beckon', 'false');
+  });
+
+  it('marks the beckon on the node when told to draw the eye', () => {
+    const { container } = render(evil({ beckon: true }));
+
+    expect(container.querySelector('.evil-node')).toHaveAttribute('data-beckon', 'true');
+  });
+});
+
+/**
+ * Walks up from the working directory rather than reading `import.meta.url`, which
+ * under jsdom is an http URL and cannot be turned into a path. Mirrors `tokens.test.ts`.
+ */
+function locate(relative: string): string {
+  let dir = process.cwd();
+  while (!existsSync(join(dir, relative))) {
+    const parent = dirname(dir);
+    if (parent === dir) throw new Error(`Could not find ${relative} above ${process.cwd()}`);
+    dir = parent;
+  }
+  return join(dir, relative);
+}
+
+const css = readFileSync(locate(join('apps', 'web', 'src', 'ui', 'stage', 'EvilNode.css')), 'utf8');
+
+function escapeForPattern(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/** The declaration body of a single CSS rule, found by its selector text. */
+function rule(selector: string): string {
+  const pattern = new RegExp(`${escapeForPattern(selector)}\\s*\\{([^}]*)\\}`);
+  const match = pattern.exec(css);
+  if (!match) throw new Error(`No rule found in EvilNode.css for selector "${selector}"`);
+  return match[1] ?? '';
+}
+
+/**
+ * The beckon is emphasis on a control that is already visible, labeled and reachable, so
+ * reduced motion has to be able to drop it and put nothing in its place — unlike the
+ * landing pulse above it, which carries information and so has a reduced-motion face of
+ * its own.
+ */
+describe('the stylesheet contract', () => {
+  it('animates the beckon only under full motion', () => {
+    expect(
+      rule(
+        ".evil-node[data-motion='full'][data-beckon='true'][data-smite='ready'] .evil-node__strike",
+      ),
+    ).toMatch(/animation/);
+  });
+
+  it('leaves the strike unanimated outside that gated rule', () => {
+    expect(rule('.evil-node__strike')).not.toMatch(/animation/);
   });
 });

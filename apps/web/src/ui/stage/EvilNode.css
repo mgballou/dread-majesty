@@ -206,3 +206,20 @@
     font-size: var(--text-lg);
   }
 }
+
+/* The first blow has to be found. Smite sits outside every cutout for the whole Dominion
+   track, so without this the tutorial spends ten minutes quietly saying it is not the thing
+   to look at, and it gets found by fiddling.
+
+   Emphasis only, on a control that is already visible, labeled and reachable — so reduced
+   motion drops it and puts nothing in its place. That is the opposite of the spotlight ring,
+   which carries the pointing and therefore stays. */
+.evil-node[data-motion='full'][data-beckon='true'][data-smite='ready'] .evil-node__strike {
+  animation: evil-node-beckon var(--duration-slow) ease-in-out infinite;
+}
+
+@keyframes evil-node-beckon {
+  50% {
+    transform: scale(1.015);
+  }
+}
