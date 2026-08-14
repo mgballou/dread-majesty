@@ -309,7 +309,7 @@ already holds it on the stage, `--tone-resource` is Evil itself, and `--tone-apa
 in its own comment that nothing else may take it.
 
 **Verdigris — `--raw-verdigris-400: #3fa87e`.** Corroded bronze. Hue 156°, which is 110°
-from gold and clear of every chain tone by more than 50°; measured 7.3:1 against
+from gold and clear of every chain tone by more than 50°; measured 6.59:1 against
 `--surface`, so it carries body text at AA. `tokens.test.ts` recomputes both the contrast
 ratio and the hue distance from the stylesheet, so these two figures are checked rather
 than asserted.
