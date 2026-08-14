@@ -94,16 +94,21 @@ export const v1Onboarding: Onboarding = {
       // her withdrawing: the old condition lapsed on every cooldown, so she vanished and
       // came back on each cave, which is most of why her lines looked like they repeated.
       //
-      // Three lifetime blows ends her: the one that summoned her, plus two caves. A count,
-      // not an Apathy band — a band is only reachable near the cooldown floor, so a player
-      // striking every forty-five seconds caved over and over and was handed the ending
-      // written for someone who resisted. See the spec §2.
+      // Two caves after she arrives ends her. A count, not an Apathy band — a band is only
+      // reachable near the cooldown floor, so a player striking every forty-five seconds
+      // caved over and over and was handed the ending written for someone who resisted.
+      //
+      // Counted from her arrival, not from zero. Lifetime blows read as three here, on the
+      // assumption that exactly one preceded her — but Smite is ungated during the opening
+      // beat, so a player who struck three times before rousing anything satisfied it on the
+      // frame she first rendered, and the narrator told them they had listened to somebody
+      // they never saw. See the spec §2.
       id: 'goad',
       ready: { kind: 'smites-at-least', count: 1 },
       gate: { kind: 'none' },
       points: { kind: 'smite' },
       voice: 'her',
-      clearedBy: { kind: 'superseded', when: { kind: 'smites-at-least', count: 3 } },
+      clearedBy: { kind: 'superseded', when: { kind: 'smites-since-shown', count: 2 } },
       retireAfterMs: 75 * SECOND,
     },
     {

@@ -685,6 +685,22 @@ describe('the malice track holds the bar', () => {
     expect(screen.queryByText(onboarding.dominion.appoint)).not.toBeInTheDocument();
   });
 
+  /*
+   * The same lock, one door along. `orders` gates Rouse Minion, and an automated tier refuses
+   * the rouse outright while reading as idle — so the beat would have held the whole screen
+   * behind a button dead for good. Out of reach today only because the Hand's post costs 1200
+   * Evil, which is a balance number.
+   */
+  it('consumes a rouse beat whose tier has been handed to an automator', async () => {
+    writeOnboarding({ dominion: ['stir'], malice: [], done: false, caved: false });
+    vi.spyOn(storage, 'readSave').mockResolvedValue(struckAndFundedBlob());
+    render(<App />);
+    await screen.findByText(onboarding.malice['first-blow']);
+    await fillsThePost();
+
+    expect(readOnboarding()?.dominion).toContain('orders');
+  });
+
   it('consumes a beat whose gated action was already done before the track reached it', async () => {
     await appointsBeforeTheTrackAsks();
     await buy('minion');
@@ -794,19 +810,107 @@ describe('the Malice conversation resolves', () => {
   });
 
   /*
-   * The five-second regression. The verdict latches, so once it is up it stays up whatever
-   * Apathy does — and sixty seconds is more than the bleed needs to carry the gauge back
-   * under the band the shipped beat waited on.
+   * The §5 trap, which is what is left of the five-second regression once `verdict.ready`
+   * became `always`: the beat staying on screen is now the content's doing and no test here
+   * can shake it, but *which of its two lines it carries* is this file's business.
+   *
+   * A hundred and thirty seconds carries Apathy from the 2.5 the third blow leaves to zero —
+   * a point bleeds in forty-five seconds. So the line is read once at the moment she was
+   * consumed and never re-read: pick it from the gauge instead and it flips out from under a
+   * player still reading it, which is the fault the flag exists to make impossible.
    */
-  it('keeps the verdict on the bar while apathy bleeds away beneath it', async () => {
+  it('holds the verdict to one line while apathy bleeds away beneath it', async () => {
     await findsHer();
     await strike();
     wind(21_000);
     await strike();
     await screen.findByText(onboarding.malice.verdict.caved);
-    wind(60_000);
+    wind(130_000);
 
     expect(screen.getByText(onboarding.malice.verdict.caved)).toBeInTheDocument();
+    expect(screen.queryByText(onboarding.malice.verdict.resisted)).not.toBeInTheDocument();
+  });
+});
+
+/*
+ * Her turn is counted from her arrival, per the 2026-08-14 design spec §2.
+ *
+ * Smite is ungated throughout the opening beat, and Malice may not take the bar until that
+ * beat is consumed — so blows struck before she can appear are not answers to her. Counted as
+ * lifetime blows they were: three strikes before rousing anything satisfied her supersession
+ * on the frame she first rendered, and the narrator congratulated the player on listening to
+ * somebody they had never seen. Two strikes was the likelier shape, and cost her all but one
+ * line.
+ */
+describe('her turn is counted from her arrival', () => {
+  const onboarding = CURRENT_COPY.onboarding;
+  const minions = CURRENT.tiers.find((tier) => tier.id === 'minion')?.plural ?? '';
+  const rouseMinions = CURRENT_COPY.overseer.rouse(minions);
+  const smiteName = new RegExp(`^${CURRENT_COPY.smite.action}\\.`);
+
+  beforeEach(() => forgetOnboarding());
+
+  afterEach(() => {
+    vi.useRealTimers();
+    forgetOnboarding();
+    vi.restoreAllMocks();
+  });
+
+  function wind(ms: number): void {
+    act(() => {
+      vi.advanceTimersByTime(ms);
+    });
+  }
+
+  async function strike(): Promise<void> {
+    await userEvent.click(screen.getByRole('button', { name: smiteName }));
+  }
+
+  /**
+   * Strikes `times` blows before rousing anything, then walks to the moment she speaks.
+   *
+   * The opening beat gates the rouse and nothing else, so this is an ordinary way to play:
+   * press the one control that visibly does something, then get on with the tutorial.
+   */
+  async function strikesBeforeRousing(times: number): Promise<void> {
+    vi.useFakeTimers({ toFake: ['performance', 'requestAnimationFrame', 'cancelAnimationFrame'] });
+    vi.spyOn(storage, 'readSave').mockResolvedValue(null);
+    render(<App />);
+    await screen.findByText(onboarding.dominion.stir);
+
+    for (let blow = 0; blow < times; blow += 1) {
+      await strike();
+      wind(21_000);
+    }
+
+    await userEvent.click(screen.getByRole('button', { name: rouseMinions }));
+    await screen.findByText(onboarding.malice['first-blow']);
+    await userEvent.click(screen.getByRole('button', { name: onboarding.dismiss }));
+  }
+
+  it('gives her a turn to a player who struck three times before rousing anything', async () => {
+    await strikesBeforeRousing(3);
+
+    expect(await screen.findByRole('status', { name: onboarding.herLabel })).toBeInTheDocument();
+  });
+
+  it('leaves her talking after one cave, whatever came before her', async () => {
+    await strikesBeforeRousing(2);
+    await screen.findByRole('status', { name: onboarding.herLabel });
+    await strike();
+    wind(21_000);
+
+    expect(screen.getByRole('status', { name: onboarding.herLabel })).toBeInTheDocument();
+  });
+
+  it('reaches the narrator on the second cave after she arrives', async () => {
+    await strikesBeforeRousing(2);
+    await screen.findByRole('status', { name: onboarding.herLabel });
+    await strike();
+    wind(21_000);
+    await strike();
+
+    expect(await screen.findByText(onboarding.malice.verdict.caved)).toBeInTheDocument();
   });
 });
 

@@ -117,7 +117,7 @@ describe('the onboarding copy', () => {
   });
 
   it('does not promise the cascade a count it cannot keep', () => {
-    expect(copy.dominion.cascade).not.toContain('Five');
+    expect(copy.dominion.cascade.toLowerCase()).not.toContain('five');
   });
 
   it('offers both bail actions on the opening beat', () => {
@@ -133,10 +133,10 @@ describe('the Malice track resolves', () => {
   const malice = v1Onboarding.malice;
   const beat = (id: string) => malice.find((candidate) => candidate.id === id);
 
-  it('keeps her talking until the player has caved twice', () => {
+  it('keeps her talking until the player has caved twice since she arrived', () => {
     expect(beat('goad')?.clearedBy).toEqual({
       kind: 'superseded',
-      when: { kind: 'smites-at-least', count: 3 },
+      when: { kind: 'smites-since-shown', count: 2 },
     });
   });
 
