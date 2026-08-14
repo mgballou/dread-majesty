@@ -240,6 +240,10 @@ const returnCss = readFileSync(
   locate(join('apps', 'web', 'src', 'screens', 'OfflineSummary.css')),
   'utf8',
 );
+const titleCss = readFileSync(
+  locate(join('apps', 'web', 'src', 'screens', 'TitleScreen.css')),
+  'utf8',
+);
 
 function escapeForPattern(text: string): string {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -287,5 +291,14 @@ describe('the stylesheet contract', () => {
      from both. Three files, one order, and nothing may reorder them. */
   it('leaves the prompt bar beneath the return summary', () => {
     expect(zIndex(appCss, '.shell__prompt')).toBeLessThan(zIndex(returnCss, '.return'));
+  });
+
+  /* The title screen is the other full-screen take-over, and disagreeing with the
+     return summary about which layer a take-over sits on would let the dim fall
+     across whichever one lost. It shares the return summary's layer and stands
+     above the prompt bar, same as the return summary does. */
+  it("sits the title screen on the return summary's layer, above the prompt bar", () => {
+    expect(zIndex(titleCss, '.title')).toBeGreaterThanOrEqual(zIndex(returnCss, '.return'));
+    expect(zIndex(titleCss, '.title')).toBeGreaterThan(zIndex(appCss, '.shell__prompt'));
   });
 });
