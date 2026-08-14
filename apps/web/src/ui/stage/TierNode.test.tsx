@@ -21,6 +21,7 @@ const OVERSIGHT = {
 function node(overrides: Partial<Parameters<typeof TierNode>[0]> = {}): ReactElement {
   return (
     <TierNode
+      tierId="warren"
       name="Warrens"
       art="tier/warren"
       count={new Decimal(3)}
@@ -305,6 +306,12 @@ describe('TierNode', () => {
     const { container } = render(node());
 
     expect(container.querySelector('.stage-node')).toHaveAttribute('data-motion', 'reduced');
+  });
+
+  it('names which tier it is, so the tutorial can point at it', () => {
+    const { container } = render(node({ tierId: 'minion' }));
+
+    expect(container.querySelector('.stage-node')).toHaveAttribute('data-tier', 'minion');
   });
 });
 

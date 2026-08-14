@@ -194,6 +194,9 @@ function Post({ post, isGated, onAsk, copy }: PostProps): ReactNode {
         className={`miscreant__post miscreant__post--${emphasis}`}
         disabled={offer === null || !offer.affordable || isGated}
         aria-haspopup="dialog"
+        // Names which post this is, so the first-run tutorial can point its spotlight
+        // at a specific one. Nothing reads it yet — do not remove it as unused.
+        data-overseer={post.post.id}
         onClick={onAsk}
       >
         <Diamond filled={filled} />
