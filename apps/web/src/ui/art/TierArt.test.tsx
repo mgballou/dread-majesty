@@ -25,6 +25,18 @@ describe('TierArt', () => {
     expect(container.querySelector('svg')).toHaveAttribute('aria-hidden', 'true');
   });
 
+  it('carries the hammer mark alt text as its accessible name', () => {
+    render(<TierArt slot="mark/dread-majesty" />);
+
+    expect(screen.getByLabelText(ART['mark/dread-majesty']?.alt ?? '')).toBeInTheDocument();
+  });
+
+  it('hides the hammer mark from assistive tech when decorative', () => {
+    const { container } = render(<TierArt slot="mark/dread-majesty" decorative />);
+
+    expect(container.querySelector('svg')).toHaveAttribute('aria-hidden', 'true');
+  });
+
   it('resolves the tone to a semantic token, never a colour', () => {
     const { container } = render(<TierArt slot="tier/minion" />);
 

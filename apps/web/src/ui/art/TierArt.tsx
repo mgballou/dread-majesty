@@ -192,5 +192,16 @@ function shape(kind: ArtSlot['fallback']['shape']): ReactElement {
           </g>
         </>
       );
+    case 'hammer':
+      return (
+        <g fill="currentColor">
+          <rect x="9" y="7" width="30" height="13" />
+          <rect x="5" y="10" width="4" height="7" opacity="0.5" />
+          <rect x="39" y="10" width="4" height="7" opacity="0.5" />
+          <rect x="21" y="20" width="6" height="22" opacity="0.74" />
+          <rect x="18" y="42" width="12" height="4" />
+          <rect x="22" y="10" width="4" height="7" className="art__void" />
+        </g>
+      );
   }
 }
