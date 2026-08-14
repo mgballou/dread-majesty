@@ -215,7 +215,6 @@ function Post({ post, isGated, onAsk, copy }: PostProps): ReactNode {
           {!filled && (
             <span className="miscreant__cost">{copy.overseer.cost(formatWhole(price))}</span>
           )}
-          {emphasis === 'saving' && <span className="miscreant__flag">{copy.rail.saving}</span>}
         </span>
 
         {emphasis === 'best' && (

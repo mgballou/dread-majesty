@@ -280,13 +280,11 @@ export const v1Copy = {
   rail: {
     title: 'Muster',
     list: 'What you can raise',
-    saving: 'Save toward this',
     locked: 'Not yet known',
     lockedHint: 'You have not come this far yet.',
-    held: (count: string): string => `${count} held`,
+    purchased: (count: string): string => `${count} purchased`,
     buy: ({ count, tier, cost }: { count: string; tier: string; cost: string }): string =>
       `Buy ${count} ${tier} for ${cost}`,
-    shortfall: (amount: string): string => `Short ${amount} Evil`,
     quantity: 'Buy quantity',
     quantityOption: (count: string): string => `Buy ${count} at a time`,
     max: 'Max',
@@ -295,7 +293,6 @@ export const v1Copy = {
     upcomingTitle: 'Next in the chain',
     upcoming: ({ tier, cost }: { tier: string; cost: string }): string =>
       `${tier} cost ${cost}. Further than you have come.`,
-    bought: (count: string): string => `${count} bought — the price follows this`,
     lifted: 'best available',
     waiting: 'something to spend on',
   },

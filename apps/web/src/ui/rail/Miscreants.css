@@ -175,13 +175,6 @@
   color: var(--ink-muted);
 }
 
-.miscreant__flag {
-  font-size: var(--text-xs);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--ink);
-}
-
 /* Said, never shown. The button's fill carries the same fact by looking. */
 .miscreant__lifted {
   position: absolute;
