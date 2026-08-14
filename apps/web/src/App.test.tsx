@@ -130,9 +130,138 @@ function metEveryTierBlob(): SaveBlob {
   return serialize(state, Date.now());
 }
 
+/*
+ * Presses Start Game, which is how a session with no save reaches the game at all.
+ *
+ * Every such session opens on the title screen and the shell behind it is inert, so a test
+ * that reaches for a control without pressing this is reaching through a screen no player can
+ * reach through. jsdom enforces nothing about `inert`, which is exactly why the press has to
+ * be written down rather than relied on to fail.
+ */
+async function startGame(): Promise<void> {
+  await userEvent.click(await screen.findByRole('button', { name: CURRENT_COPY.start.begin }));
+}
+
+/*
+ * The screen before the first frame of play, per the 2026-08-14 title screen design §2.1.
+ *
+ * It shows on a session that found no save of any kind, and pressing Start Game ends it for
+ * the rest of that session. The latch is what makes "for the rest of the session" true:
+ * `session.fresh` never goes false once the read has come back empty, so a player who
+ * abdicates an hour in would otherwise be handed the title screen mid-run.
+ */
+describe('the title screen', () => {
+  const start = CURRENT_COPY.start;
+  const onboarding = CURRENT_COPY.onboarding;
+
+  beforeEach(() => forgetOnboarding());
+
+  afterEach(() => {
+    forgetOnboarding();
+    vi.restoreAllMocks();
+  });
+
+  async function freshSession(): Promise<void> {
+    vi.spyOn(storage, 'readSave').mockResolvedValue(null);
+    render(<App />);
+    await screen.findByText(start.lede);
+  }
+
+  /**
+   * Throws the realm away from the ledger, which is the one reset a player can reach.
+   *
+   * Both buttons are labelled "Abdicate" — the one in the controls opens the confirmation and
+   * the one inside it does the deed — so they are told apart by their order, not their name.
+   */
+  async function abdicates(): Promise<void> {
+    await userEvent.click(screen.getByRole('button', { name: CURRENT_COPY.ledger.title }));
+    const opens = screen.getAllByRole('button', { name: CURRENT_COPY.ledger.abdicate })[0];
+    if (opens) await userEvent.click(opens);
+    const confirms = screen.getAllByRole('button', { name: CURRENT_COPY.ledger.abdicateConfirm });
+    const confirm = confirms.at(-1);
+    if (confirm) await userEvent.click(confirm);
+  }
+
+  it('opens on a session that found no save', async () => {
+    vi.spyOn(storage, 'readSave').mockResolvedValue(null);
+    render(<App />);
+
+    expect(await screen.findByText(start.lede)).toBeInTheDocument();
+  });
+
+  it('stays away when a save was loaded', async () => {
+    vi.spyOn(storage, 'readSave').mockResolvedValue(savedBlob());
+    render(<App />);
+    await screen.findAllByRole('tab');
+
+    expect(screen.queryByText(start.lede)).toBeNull();
+  });
+
+  it('goes when the player starts the game', async () => {
+    await freshSession();
+    await startGame();
+
+    expect(screen.queryByText(start.lede)).toBeNull();
+  });
+
+  it('does not come back when the player abdicates later in the session', async () => {
+    await freshSession();
+    await startGame();
+    await abdicates();
+
+    expect(screen.queryByText(start.lede)).toBeNull();
+  });
+
+  it('defers to the return summary', async () => {
+    await freshSession();
+    await userEvent.click(screen.getByRole('button', { name: 'Away 1h' }));
+    await screen.findByText(CURRENT_COPY.offline.heading);
+
+    expect(screen.queryByText(start.lede)).toBeNull();
+  });
+
+  it('holds the shell inert behind it', async () => {
+    await freshSession();
+
+    expect(document.querySelector('.shell__frame')).toHaveAttribute('inert');
+  });
+
+  it('gives the shell back once the game starts', async () => {
+    await freshSession();
+    await startGame();
+
+    expect(document.querySelector('.shell__frame')).not.toHaveAttribute('inert');
+  });
+
+  it('withholds the spotlight while it is up, though onboarding is running behind it', async () => {
+    await freshSession();
+    await screen.findByText(onboarding.dominion.stir);
+
+    expect(screen.queryByTestId('spotlight')).toBeNull();
+  });
+
+  it('leaves the premise off the opening beat', async () => {
+    await freshSession();
+    await startGame();
+    const bar = await screen.findByRole('status', { name: onboarding.narratorLabel });
+
+    expect(bar).toHaveTextContent(onboarding.dominion.stir);
+    expect(bar.textContent).not.toContain('abomination');
+  });
+});
+
 describe('the deck and the records', () => {
-  beforeEach(() => finishOnboarding());
-  afterEach(() => forgetOnboarding());
+  // A returning player, so the frame is the whole screen: a session that found no save opens
+  // on the title screen, and these tests are about what is behind it rather than about it.
+  beforeEach(() => {
+    finishOnboarding();
+    vi.spyOn(storage, 'readSave').mockResolvedValue(savedBlob());
+  });
+
+  afterEach(() => {
+    forgetOnboarding();
+    vi.restoreAllMocks();
+  });
 
   it('shows four tabs', async () => {
     render(<App />);
@@ -180,6 +309,7 @@ describe('first-run onboarding', () => {
   it('opens on the first beat for a new player', async () => {
     vi.spyOn(storage, 'readSave').mockResolvedValue(null);
     render(<App />);
+    await startGame();
 
     expect(await screen.findByText(CURRENT_COPY.onboarding.dominion.stir)).toBeInTheDocument();
   });
@@ -196,7 +326,7 @@ describe('first-run onboarding', () => {
     finishOnboarding();
     vi.spyOn(storage, 'readSave').mockResolvedValue(null);
     render(<App />);
-    await screen.findAllByRole('tab');
+    await startGame();
 
     expect(screen.queryByText(CURRENT_COPY.onboarding.dominion.stir)).not.toBeInTheDocument();
   });
@@ -205,7 +335,7 @@ describe('first-run onboarding', () => {
     localStorage.setItem('dread-majesty:onboarding-seen', '1');
     vi.spyOn(storage, 'readSave').mockResolvedValue(null);
     render(<App />);
-    await screen.findAllByRole('tab');
+    await startGame();
 
     expect(screen.queryByText(CURRENT_COPY.onboarding.dominion.stir)).not.toBeInTheDocument();
   });
@@ -239,6 +369,7 @@ describe('first-run onboarding', () => {
     vi.spyOn(storage, 'readSave').mockResolvedValue(null);
     const minions = CURRENT.tiers.find((tier) => tier.id === 'minion')?.plural ?? '';
     render(<App />);
+    await startGame();
     await userEvent.click(
       await screen.findByRole('button', { name: CURRENT_COPY.overseer.rouse(minions) }),
     );
@@ -249,6 +380,7 @@ describe('first-run onboarding', () => {
   it('clears every prompt when the player skips', async () => {
     vi.spyOn(storage, 'readSave').mockResolvedValue(null);
     render(<App />);
+    await startGame();
     await userEvent.click(
       await screen.findByRole('button', { name: CURRENT_COPY.onboarding.skip }),
     );
@@ -259,6 +391,7 @@ describe('first-run onboarding', () => {
   it('remembers a skip across visits', async () => {
     vi.spyOn(storage, 'readSave').mockResolvedValue(null);
     render(<App />);
+    await startGame();
     await userEvent.click(
       await screen.findByRole('button', { name: CURRENT_COPY.onboarding.skip }),
     );
@@ -291,6 +424,7 @@ describe("the engine's answer decides, not the click", () => {
     refusal.refuses = { kind: 'rouse', reason: 'tier-not-owned' };
     vi.spyOn(storage, 'readSave').mockResolvedValue(null);
     render(<App />);
+    await startGame();
     await userEvent.click(await screen.findByRole('button', { name: rouseMinions }));
 
     expect(screen.getByText(onboarding.dominion.stir)).toBeInTheDocument();
@@ -300,6 +434,7 @@ describe("the engine's answer decides, not the click", () => {
     refusal.refuses = { kind: 'rouse', reason: 'tier-not-owned' };
     vi.spyOn(storage, 'readSave').mockResolvedValue(null);
     render(<App />);
+    await startGame();
     await userEvent.click(await screen.findByRole('button', { name: rouseMinions }));
 
     expect(readOnboarding()?.dominion).toEqual([]);
@@ -348,6 +483,7 @@ describe('onboarding drives the interface', () => {
   async function firstRun(): Promise<void> {
     vi.spyOn(storage, 'readSave').mockResolvedValue(null);
     render(<App />);
+    await startGame();
     await screen.findByText(onboarding.dominion.stir);
   }
 
@@ -466,6 +602,7 @@ describe('onboarding retires a beat nobody answered', () => {
     vi.useFakeTimers({ toFake: ['performance', 'requestAnimationFrame', 'cancelAnimationFrame'] });
     vi.spyOn(storage, 'readSave').mockResolvedValue(null);
     render(<App />);
+    await startGame();
     await screen.findByText(onboarding.dominion.stir);
 
     await userEvent.click(screen.getByRole('button', { name: rouseMinions }));
@@ -550,6 +687,7 @@ describe('the malice track holds the bar', () => {
   async function firstRun(): Promise<void> {
     vi.spyOn(storage, 'readSave').mockResolvedValue(null);
     render(<App />);
+    await startGame();
     await screen.findByText(onboarding.dominion.stir);
   }
 
@@ -886,6 +1024,7 @@ describe('her turn is counted from her arrival', () => {
     vi.useFakeTimers({ toFake: ['performance', 'requestAnimationFrame', 'cancelAnimationFrame'] });
     vi.spyOn(storage, 'readSave').mockResolvedValue(null);
     render(<App />);
+    await startGame();
     await screen.findByText(onboarding.dominion.stir);
 
     for (let blow = 0; blow < times; blow += 1) {
@@ -979,6 +1118,7 @@ describe('the spotlight follows the beat', () => {
   async function firstRun(): Promise<void> {
     vi.spyOn(storage, 'readSave').mockResolvedValue(null);
     render(<App />);
+    await startGame();
     await screen.findByText(onboarding.dominion.stir);
   }
 
