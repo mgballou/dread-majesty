@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { useReducedMotion } from './useReducedMotion.ts';
 import './Spotlight.css';
 
@@ -61,18 +61,8 @@ export function Spotlight({ target }: SpotlightProps): ReactNode {
   }, [target]);
 
   useLayoutEffect(() => {
-    if (target !== undefined) {
-      const element = document.querySelector(target);
-      // jsdom implements no scrolling, so the call is optional rather than guarded by
-      // a capability check — the real branch then runs everywhere the real method
-      // exists.
-      element?.scrollIntoView?.({
-        behavior: reducedMotion ? 'auto' : 'smooth',
-        block: 'center',
-      });
-    }
     measure();
-  }, [measure, reducedMotion, target]);
+  }, [measure]);
 
   useEffect(() => {
     // `scroll` is captured rather than bubbled: the stage scrolls inside its own
@@ -112,6 +102,35 @@ export function Spotlight({ target }: SpotlightProps): ReactNode {
     observer.observe(element);
     return () => observer.disconnect();
   }, [measure, target]);
+
+  /**
+   * Brings the target into view, once, as soon as it has a box to bring.
+   *
+   * Keyed on the measurement rather than on the selector, because a target inside a shut
+   * deck panel is `display: none` at the moment the selector changes — scrolling to it
+   * then is a no-op, and the hole would be cut wherever the player happened to be
+   * standing. A hole below the fold is invisible, which is the same fault as a prompt
+   * below the fold.
+   *
+   * **Once per target, not once per measurement.** The observer above and the scroll
+   * listener both fire repeatedly; scrolling on each would yank the page out from under
+   * somebody reading, and would drag back anybody who scrolled away on purpose. The ref
+   * holds the target last scrolled to, so this fires on the way into a measured frame and
+   * then leaves the player alone until a different control is named.
+   */
+  const scrolledTo = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (target === undefined || frame === null || scrolledTo.current === target) return;
+    scrolledTo.current = target;
+
+    // jsdom implements no scrolling, so the call is optional rather than guarded by a
+    // capability check — the real branch then runs everywhere the real method exists.
+    document.querySelector(target)?.scrollIntoView?.({
+      behavior: reducedMotion ? 'auto' : 'smooth',
+      block: 'center',
+    });
+  }, [frame, reducedMotion, target]);
 
   const mode = target === undefined ? 'soft' : frame === null ? 'whole' : 'cutout';
 
