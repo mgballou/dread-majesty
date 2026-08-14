@@ -69,19 +69,12 @@ describe('Crown', () => {
     expect(screen.getByText('1 Evil per second')).toBeInTheDocument();
   });
 
-  it('reads the rate as a whole number, floored rather than rounded', () => {
-    render(crown(seeded(0, true)));
-
-    expect(screen.queryByText(/\./)).not.toBeInTheDocument();
-  });
-
-  it('keeps the rate whole even when a blow makes it noisy', () => {
+  it('keeps the rate whole even when a blow makes it noisy, floored rather than rounded', () => {
     const state = seeded(100, true);
     apply(state, CURRENT, { kind: 'smite' });
     render(crown(state));
 
-    const figure = screen.getByText(/Evil per second/);
-    expect(figure.textContent).not.toMatch(/\./);
+    expect(screen.getByText('2 Evil per second')).toBeInTheDocument();
   });
 
   it('says nothing about souls before any have been claimed', () => {
