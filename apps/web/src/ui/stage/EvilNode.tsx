@@ -34,6 +34,8 @@ interface EvilNodeProps {
   state: GameState;
   /** The Minion rung, so the node can mark a delivery landing. */
   feed: Feed | null;
+  /** Draw the eye to a control the player has never used. See App for when. */
+  beckon?: boolean;
   onSmite: () => void;
 }
 
@@ -69,6 +71,7 @@ export function EvilNode({
   content,
   state,
   feed,
+  beckon = false,
   onSmite,
 }: EvilNodeProps): ReactNode {
   const reduced = useReducedMotion();
@@ -85,7 +88,12 @@ export function EvilNode({
     ] ?? copy.bands[0];
 
   return (
-    <div className="evil-node" data-motion={reduced ? 'reduced' : 'full'} data-smite={phase.kind}>
+    <div
+      className="evil-node"
+      data-motion={reduced ? 'reduced' : 'full'}
+      data-smite={phase.kind}
+      data-beckon={beckon ? 'true' : 'false'}
+    >
       <button
         type="button"
         className={ready ? 'evil-node__strike evil-node__strike--lifted' : 'evil-node__strike'}

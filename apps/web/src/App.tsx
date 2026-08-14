@@ -363,6 +363,18 @@ export function App(): ReactNode {
     ? (control: GatedControl): boolean => isGatedOut(beat.gate, control)
     : undefined;
 
+  /**
+   * Whether to draw the eye to the strike.
+   *
+   * Never struck a blow, and not standing on the opening beat — that beat carries the only way
+   * out of the tutorial, and a second thing asking for attention beside it is the near-tie the
+   * accent has no hysteresis to survive. It ends itself the first time the button is used and
+   * never returns, which is why there is no timer here and nothing random: a random delay in
+   * the interface makes a timing-sensitive thing unreproducible exactly where it needs tuning,
+   * and it would have no stopping condition.
+   */
+  const beckon = state.stats.smites === 0 && !(running && doneDominion.length === 0);
+
   // What the dim frames, and which panel has to be open for it to be framing anything.
   // Null once onboarding is over, which is when the whole thing goes off the screen.
   const spotlight = beat ? spotlightFor(beat) : null;
@@ -533,6 +545,7 @@ export function App(): ReactNode {
             isRousable={rousable}
             needsHand={needsHand}
             {...(isGated ? { isGated } : {})}
+            {...(beckon ? { beckon } : {})}
             onRouse={(tierId) => {
               const result = dispatch({ kind: 'rouse', tierId });
               if (!result.ok) return;

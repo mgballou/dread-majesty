@@ -377,4 +377,25 @@ describe('ChainStage', () => {
       expect(strike()).not.toBeDisabled();
     });
   });
+
+  describe('beckoning the player to the first blow', () => {
+    it('marks the Evil node when beckoned', () => {
+      const { container } = render(stage({ beckon: true }));
+
+      expect(container.querySelector('.evil-node')).toHaveAttribute('data-beckon', 'true');
+    });
+
+    it('leaves the Evil node unmarked when not beckoned', () => {
+      const { container } = render(stage());
+
+      expect(container.querySelector('.evil-node')).toHaveAttribute('data-beckon', 'false');
+    });
+
+    it('keeps the beckon marker under reduced motion, leaving the animation to the stylesheet', () => {
+      setReducedMotion(true);
+      const { container } = render(stage({ beckon: true }));
+
+      expect(container.querySelector('.evil-node')).toHaveAttribute('data-beckon', 'true');
+    });
+  });
 });
