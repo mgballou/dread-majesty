@@ -194,8 +194,11 @@ function Post({ post, isGated, onAsk, copy }: PostProps): ReactNode {
         className={`miscreant__post miscreant__post--${emphasis}`}
         disabled={offer === null || !offer.affordable || isGated}
         aria-haspopup="dialog"
-        // Names which post this is, so the first-run tutorial can point its spotlight
-        // at a specific one. Nothing reads it yet — do not remove it as unused.
+        // Read by game/spotlight.ts, which builds a selector string from this value to
+        // point the first-run spotlight at a specific post. TypeScript cannot see that
+        // dependency, so renaming this attribute loses the spotlight silently. The
+        // anchor test in App.test.tsx guards it by walking the shipped tracks and
+        // asserting every selector resolves.
         data-overseer={post.post.id}
         onClick={onAsk}
       >

@@ -1,6 +1,6 @@
 # Onboarding Presence
 
-**Status:** approved, not built
+**Status:** built
 **Extends:** `2026-08-13-onboarding-design.md`. That spec's model, beats, copy and voices stand;
 this one changes how much of the screen they command and repairs the Malice track's unresolved
 dialogue.
@@ -60,7 +60,7 @@ narrator interrupting.
 | The player | What happens |
 | ---------- | ------------ |
 | Caves twice | Apathy crosses 2 on the second cave, `goad` is superseded, the narrator answers. |
-| Resists | Apathy bleeds to 0, she walks down all four lines to *"Now. **Now.** Hit them."* — her only honest line — and retires at her window. |
+| Resists | Apathy bleeds to 0, she walks down all four lines to *"There. They have forgotten you entirely. That is the moment — take it, and take all of it."* — her only honest line — and retires at her window. |
 
 Neither pathway could complete before. The first was cut off after one strike; the second ended in
 silence because she had already been consumed.
