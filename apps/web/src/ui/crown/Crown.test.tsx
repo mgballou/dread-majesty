@@ -66,7 +66,22 @@ describe('Crown', () => {
   it('counts a tier once somebody oversees it', () => {
     render(crown(seeded(0, true)));
 
-    expect(screen.getByText('1.25 Evil per second')).toBeInTheDocument();
+    expect(screen.getByText('1 Evil per second')).toBeInTheDocument();
+  });
+
+  it('reads the rate as a whole number, floored rather than rounded', () => {
+    render(crown(seeded(0, true)));
+
+    expect(screen.queryByText(/\./)).not.toBeInTheDocument();
+  });
+
+  it('keeps the rate whole even when a blow makes it noisy', () => {
+    const state = seeded(100, true);
+    apply(state, CURRENT, { kind: 'smite' });
+    render(crown(state));
+
+    const figure = screen.getByText(/Evil per second/);
+    expect(figure.textContent).not.toMatch(/\./);
   });
 
   it('says nothing about souls before any have been claimed', () => {
