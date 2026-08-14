@@ -22,6 +22,19 @@ export type BeatReady =
   /** Has completed at least one cycle, ever. */
   | { readonly kind: 'cycled'; readonly tierId: TierId }
   | { readonly kind: 'smites-at-least'; readonly count: number }
+  /**
+   * Blows struck since this beat reached the screen.
+   *
+   * Not a lifetime count, and the difference is the whole reason it exists. A beat that asks
+   * the player to strike is asking them to strike *now*; measuring it against blows landed
+   * before it appeared credits the player with an answer to a question nobody had put. Her
+   * supersession read lifetime blows and could therefore be satisfied by strikes made during
+   * the opening beat, ending her turn on the frame she first rendered and telling the player
+   * they listened to somebody they had never seen. See the spec §2.
+   *
+   * False for a beat that has not been shown: there is no arrival to count from.
+   */
+  | { readonly kind: 'smites-since-shown'; readonly count: number }
   /** A blow has been struck, its effect has run out, and the next one is available. */
   | { readonly kind: 'blow-ready-after-first' };
 

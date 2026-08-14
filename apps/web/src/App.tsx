@@ -112,14 +112,26 @@ export function App(): ReactNode {
   /** Whether she got what she asked for. Decides which line the verdict carries. */
   const [caved, setCaved] = useState(false);
   /**
-   * The beat on screen, when it appeared, and how many blows had landed then.
+   * The beat on screen, and two counts that are emphatically not the same fact.
    *
-   * The play time drives the retirement clock. The blow count restarts it: a beat asking for
-   * an action that the player then takes has been answered, and giving up on them ten seconds
-   * after they caved reads as the tutorial not watching. `goad` is the only beat this reaches
-   * — every other beat asking for an action is cleared by it rather than timed out.
+   * `arrivedAtSmites` is where the beat's own conversation started. It is taken once, when the
+   * beat reaches the screen, and never touched again. Her supersession counts caves from it,
+   * so that blows struck before she spoke cannot answer her — see the spec §2.
+   *
+   * `clockFromMs` is where the retirement clock is measured from, and it is re-taken on every
+   * blow. A beat asking for an action that the player then takes has been answered, and giving
+   * up on them ten seconds after they caved reads as the tutorial not watching. `clockFromSmites`
+   * exists only to notice that a blow landed; nothing reads it as a count.
+   *
+   * **The re-take is why one field cannot serve both.** After a cave, a single count equals the
+   * live one, and "caves since she arrived" is then always zero.
    */
-  const shownAt = useRef<{ id: string; atMs: number; smites: number } | null>(null);
+  const shownAt = useRef<{
+    id: string;
+    arrivedAtSmites: number;
+    clockFromMs: number;
+    clockFromSmites: number;
+  } | null>(null);
 
   useEffect(() => {
     if (!session.ready || decided.current) return;
@@ -152,11 +164,12 @@ export function App(): ReactNode {
    * has to be recorded — see `acted`.
    *
    * `shownAt` is a ref read during render. That is deliberate and safe here: it holds what was
-   * on screen last frame, the game loop re-renders every frame, and the only reader is the
-   * latch.
+   * on screen last frame, the game loop re-renders every frame, and its only readers are the
+   * latch and the arrival count.
    */
   const openingDone = doneDominion.length > 0;
   const shownId = shownAt.current?.id ?? null;
+  const shownAtSmites = shownAt.current?.arrivedAtSmites ?? null;
 
   const maliceBeat =
     running && openingDone
@@ -166,6 +179,7 @@ export function App(): ReactNode {
           state,
           content,
           shownId: shownId !== null && isMaliceBeatId(shownId) ? shownId : null,
+          shownAtSmites,
         })
       : null;
   const dominionBeat = running
@@ -175,6 +189,7 @@ export function App(): ReactNode {
         state,
         content,
         shownId: shownId !== null && isDominionBeatId(shownId) ? shownId : null,
+        shownAtSmites,
       })
     : null;
 
@@ -254,11 +269,22 @@ export function App(): ReactNode {
    * must fire even while `goad` herself is off screen for her own cooldown, which is the
    * same strike that supersedes her.
    *
+   * The stamp goes through because her condition counts caves from her own arrival. Passed the
+   * live blow count instead, she could be ended by strikes made during the opening beat, before
+   * Malice may take the bar at all — the narrator answering for a conversation nobody had.
+   *
    * Only Malice is checked. No Dominion beat declares a supersession condition today, and
    * checking the track anyway would be dead code.
    */
   const handedOver = running
-    ? supersededBeat({ track: onboarding.malice, consumed: doneMalice, state, content })
+    ? supersededBeat({
+        track: onboarding.malice,
+        consumed: doneMalice,
+        state,
+        content,
+        shownId: shownId !== null && isMaliceBeatId(shownId) ? shownId : null,
+        shownAtSmites,
+      })
     : null;
 
   /**
@@ -293,12 +319,18 @@ export function App(): ReactNode {
       // consumed the way `retire()` is. It also means the player took the action the beat was
       // asking for — that is what a supersession condition reads — which is what the verdict
       // needs to know, and what it must not try to work out later from a value that decays.
-      setDoneMalice((done) => [...done, handedOver]);
+      //
+      // Both appends here are guarded against an id already in the list. These two run from an
+      // effect, and StrictMode invokes an effect twice on mount — a duplicate would not be
+      // loud, it would quietly put `done` out of reach for good if that were a length check.
+      // It is not, any more, but the guard is a line and the class is worth closing at both
+      // ends. Returning the same array also spares React the render.
+      setDoneMalice((done) => (done.includes(handedOver) ? done : [...done, handedOver]));
       setCaved(true);
     }
 
     if (accomplished) {
-      setDoneDominion((done) => [...done, accomplished]);
+      setDoneDominion((done) => (done.includes(accomplished) ? done : [...done, accomplished]));
     }
 
     // Both, when a frame produces both. They are consumptions of different tracks and neither
@@ -312,17 +344,34 @@ export function App(): ReactNode {
       return;
     }
 
-    if (shownAt.current?.id !== beat.id || shownAt.current.smites !== state.stats.smites) {
+    // Arrival. Both counts are taken together, and `arrivedAtSmites` is not written again for
+    // as long as this beat holds the bar.
+    if (shownAt.current?.id !== beat.id) {
       shownAt.current = {
         id: beat.id,
-        atMs: state.stats.playTimeMs,
-        smites: state.stats.smites,
+        arrivedAtSmites: state.stats.smites,
+        clockFromMs: state.stats.playTimeMs,
+        clockFromSmites: state.stats.smites,
+      };
+      return;
+    }
+
+    // A blow, which restarts the retirement clock and nothing else.
+    if (shownAt.current.clockFromSmites !== state.stats.smites) {
+      shownAt.current = {
+        ...shownAt.current,
+        clockFromMs: state.stats.playTimeMs,
+        clockFromSmites: state.stats.smites,
       };
       return;
     }
 
     if (
-      shouldRetire({ beat, shownAtMs: shownAt.current.atMs, playTimeMs: state.stats.playTimeMs })
+      shouldRetire({
+        beat,
+        shownAtMs: shownAt.current.clockFromMs,
+        playTimeMs: state.stats.playTimeMs,
+      })
     ) {
       retire();
     }
@@ -338,6 +387,12 @@ export function App(): ReactNode {
    * Walking the last Dominion beat is finishing, whatever the Malice track still has to
    * say — she is welcome to keep talking for the rest of this session, but a later visit
    * owes the player nothing.
+   *
+   * "Every id consumed", not a length equality. The two agree only while the list is a set,
+   * and two of the four consumption paths now append from an effect. A duplicate would leave
+   * the length one over the mark it is compared against and put finishing permanently out of
+   * reach — the quiet kind of wrong, on the one flag that decides whether the tutorial ever
+   * comes back.
    */
   useEffect(() => {
     if (!running) return;
@@ -345,9 +400,9 @@ export function App(): ReactNode {
       dominion: doneDominion,
       malice: doneMalice,
       caved,
-      done: doneDominion.length === onboarding.dominion.length,
+      done: onboarding.dominion.every((beat) => doneDominion.includes(beat.id)),
     });
-  }, [running, doneDominion, doneMalice, caved, onboarding.dominion.length]);
+  }, [running, doneDominion, doneMalice, caved, onboarding.dominion]);
 
   // Passed only while a beat is showing, so after onboarding the prop is absent and the
   // controls are exactly what they were.
