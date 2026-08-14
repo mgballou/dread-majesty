@@ -44,6 +44,12 @@
      itself. Measured 5.18:1 against --surface and 143° of hue from gold. */
   --raw-ash-400: #8a7f9c;
 
+  /* Verdigris. Corroded bronze, and the only voice in the game that is spoken rather
+     than written. Not gold, because gold means act and she never offers one; not ember,
+     because ember is Evil; not ash, because ash is the gauge she is arguing against.
+     Measured 6.59:1 against --surface and 110° of hue from gold. */
+  --raw-verdigris-400: #3fa87e;
+
   /* The chain, bottom rung to top. Cool and thin at the bottom, hot and saturated at
      the top, so a glance down the stage reads as a climb. None of these is the
      accent, and none may sit within 45° of gold — the hue test pins that. The top
@@ -128,6 +134,10 @@
      the only thing that carries it, and nothing else may borrow it. */
   --tone-apathy: var(--raw-ash-400);
   --tone-apathy-well: var(--raw-ink-850);
+
+  /* What she is drawn in. Tone rides with the data — this is the second voice of the
+     onboarding prompt and nothing else may borrow it. */
+  --tone-malice: var(--raw-verdigris-400);
 
   --space-1: var(--raw-step-1);
   --space-2: var(--raw-step-2);
