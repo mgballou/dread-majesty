@@ -386,7 +386,7 @@ export interface ErrorCopy {
 }
 
 /**
- * One of her lines, and the Apathy above which she says it.
+ * One line she says while waiting, and the Apathy above which she says it.
  *
  * The threshold sits beside the sentence rather than in `v1/onboarding.ts` because it
  * paces prose, not the economy, and splitting a threshold from the line it chooses is
@@ -396,7 +396,7 @@ export interface ErrorCopy {
  * whose threshold Apathy exceeds, and the last threshold is negative so it always
  * matches. There is no fallback branch, and so none to leave untested.
  */
-export interface GoadLine {
+export interface WaitingLine {
   readonly aboveApathy: number;
   readonly line: string;
 }
@@ -420,9 +420,20 @@ export interface OnboardingCopy {
   readonly dominion: Readonly<Record<DominionBeatId, string>>;
   readonly malice: {
     readonly 'first-blow': string;
-    readonly apathy: string;
+    /**
+     * The narrator's answer to her, one line per way her turn ended. Chosen from a fact
+     * recorded when she was consumed, not from a value re-read later — the beat latches, so
+     * a line picked from decaying Apathy would be pinned to one arbitrary frame.
+     */
+    readonly verdict: {
+      readonly caved: string;
+      readonly resisted: string;
+    };
   };
-  readonly goad: readonly GoadLine[];
+  /** What she says in the cooldown after a blow, indexed by lifetime blows and clamped. */
+  readonly urging: readonly string[];
+  /** What she says while she is being ignored, chosen by descending Apathy. */
+  readonly waiting: readonly WaitingLine[];
 }
 
 export interface Copy {
