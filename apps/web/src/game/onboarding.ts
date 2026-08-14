@@ -358,12 +358,35 @@ function isGateAccomplished({
 /**
  * Which of her lines she is on in the cooldown after a blow.
  *
- * Indexed by lifetime blows and clamped at both ends, so it only ever moves forward. The
- * shipped single list was keyed to Apathy, which rises when the player caves, and so walked
- * her backwards through lines she had already said.
+ * Indexed by **caves since she arrived** and clamped at both ends, so it only ever moves
+ * forward. The shipped single list was keyed to Apathy, which rises when the player caves, and
+ * so walked her backwards through lines she had already said.
+ *
+ * Counted from her arrival for the same reason her supersession is — see the spec §2.1. She is
+ * reacting to what she has watched, and the blow that summoned her is the first thing she saw,
+ * which is `urging[0]`. A lifetime index handed her second line to a player who had struck
+ * twice before rousing anything, and then handed it to them again on their next cave, because
+ * the clamp had nowhere else to go. That is the repeat this list was split out to stop.
+ *
+ * Index 2 is unreachable: the second cave supersedes her on the frame it lands. That is why
+ * the list has two entries, and the clamp is what keeps a third from being read off the end if
+ * supersession ever moves.
+ *
+ * A null arrival reads as no caves yet, which is the truth on the frame she appears — the
+ * stamp is taken by an effect after that render.
  */
-export function urgingLine(lines: readonly string[], smites: number): string {
-  const index = Math.min(Math.max(smites, 1), lines.length) - 1;
+export function urgingLine({
+  lines,
+  smites,
+  shownAtSmites,
+}: {
+  lines: readonly string[];
+  smites: number;
+  /** Lifetime blows when she reached the screen, or null before it has been recorded. */
+  shownAtSmites: number | null;
+}): string {
+  const caves = shownAtSmites === null ? 0 : smites - shownAtSmites;
+  const index = Math.min(Math.max(caves, 0), lines.length - 1);
   return lines[index] ?? '';
 }
 
@@ -389,18 +412,24 @@ export function waitingLine(lines: readonly WaitingLine[], apathy: number): stri
  * The cooldown is the whole switch: while it runs she is answering the blow that started it,
  * and once it clears she is asking for the next one. Two lists rather than one, because those
  * are two different kinds of line and one descending threshold cannot pick between them.
+ *
+ * Only the urging list needs her arrival. Apathy is a fact about the realm and reads the same
+ * whoever is on the bar; her lines are a fact about her turn.
  */
 export function herLine({
   urging,
   waiting,
   state,
+  shownAtSmites,
 }: {
   urging: readonly string[];
   waiting: readonly WaitingLine[];
   state: GameState;
+  /** Lifetime blows when she reached the screen, or null before it has been recorded. */
+  shownAtSmites: number | null;
 }): string {
   return state.smiteCooldownMs > 0
-    ? urgingLine(urging, state.stats.smites)
+    ? urgingLine({ lines: urging, smites: state.stats.smites, shownAtSmites })
     : waitingLine(waiting, state.smiteApathy);
 }
 

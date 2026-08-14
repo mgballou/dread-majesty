@@ -670,7 +670,16 @@ export function App(): ReactNode {
         {beat && (
           <div className="shell__prompt">
             <Prompt
-              line={lineFor({ copy, beatId: beat.id, state, caved })}
+              line={lineFor({
+                copy,
+                beatId: beat.id,
+                state,
+                caved,
+                /* The stamp names one beat. Handed to another it would say that beat had
+                   been on screen since a blow it was never present for — the same guard
+                   `showingBeat` and `supersededBeat` apply to the arrival count. */
+                shownAtSmites: shownId === beat.id ? shownAtSmites : null,
+              })}
               voice={beat.voice}
               label={
                 beat.voice === 'her' ? copy.onboarding.herLabel : copy.onboarding.narratorLabel
@@ -761,9 +770,10 @@ export function App(): ReactNode {
 /**
  * The line a beat says.
  *
- * Two of the ten are not fixed. `goad` is chosen from the cooldown and from Apathy, so the
- * prompt moves while the player strikes or ignores her. `verdict` is chosen from how she was
- * consumed, a fact recorded when it happened rather than read back off a decaying value.
+ * Two of the ten are not fixed. `goad` is chosen from the cooldown, from her own arrival and
+ * from Apathy, so the prompt moves while the player strikes or ignores her. `verdict` is chosen
+ * from how she was consumed, a fact recorded when it happened rather than read back off a
+ * decaying value.
  *
  * The three Malice ids are checked before the Dominion lookup, so the fall-through can
  * only be reached by a Dominion id — and because the two unions are disjoint, the
@@ -775,17 +785,20 @@ function lineFor({
   beatId,
   state,
   caved,
+  shownAtSmites,
 }: {
   copy: Copy;
   beatId: DominionBeatId | MaliceBeatId;
   state: GameState;
   caved: boolean;
+  shownAtSmites: number | null;
 }): string {
   if (beatId === 'goad') {
     return herLine({
       urging: copy.onboarding.urging,
       waiting: copy.onboarding.waiting,
       state,
+      shownAtSmites,
     });
   }
   if (beatId === 'first-blow') return copy.onboarding.malice['first-blow'];
