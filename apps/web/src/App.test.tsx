@@ -402,6 +402,21 @@ describe('onboarding retires a beat nobody answered', () => {
     wind(15_000);
   }
 
+  /**
+   * Consumes `first-blow` by dismissal and winds to the moment `goad` takes the bar.
+   *
+   * She is the only Malice beat left carrying a retirement window, so any test that
+   * needs one to close now needs her on screen first. `first-blow` no longer retires,
+   * so a dismissal is the only way past it.
+   */
+  async function revealsGoad(): Promise<void> {
+    await struckAndCrowdedOut();
+    await userEvent.click(screen.getByRole('button', { name: rouseMinions }));
+    await userEvent.click(screen.getByRole('button', { name: onboarding.dismiss }));
+    wind(6_000);
+    await screen.findByRole('status', { name: onboarding.herLabel });
+  }
+
   it('gives the bar to dominion when a beat comes due mid-malice', async () => {
     await struckAndCrowdedOut();
 
@@ -416,20 +431,20 @@ describe('onboarding retires a beat nobody answered', () => {
   });
 
   it('retires the beat once its own window closes', async () => {
-    await struckAndCrowdedOut();
-    await userEvent.click(screen.getByRole('button', { name: rouseMinions }));
-    wind(13_000);
+    await revealsGoad();
+    wind(121_000);
 
-    expect(screen.queryByText(onboarding.malice['first-blow'])).not.toBeInTheDocument();
+    expect(screen.queryByRole('status', { name: onboarding.herLabel })).not.toBeInTheDocument();
   });
 
-  it('moves the track on to the next beat when one retires', async () => {
-    await struckAndCrowdedOut();
-    await userEvent.click(screen.getByRole('button', { name: rouseMinions }));
-    wind(13_000);
-
-    expect(screen.getByRole('status', { name: onboarding.herLabel })).toBeInTheDocument();
-  });
+  // Deliberately not repointed at goad. See the Task 1 report's note on this test: her
+  // own `ready` and the cooldown a cave restarts are the same clock, so caving to raise
+  // Apathy for `apathy` to take over also blanks the screen and resets the timer that
+  // would let her retire — the two preconditions this test wants can't hold at once
+  // under the current content. Task 2 or 3, whichever wires up `next-ready`, is what
+  // makes this reachable: a successor's readiness would consume her directly rather
+  // than through this retirement path.
+  it.todo('moves the track on to the next beat when one retires');
 
   it('retires a beat that clears on something other than a dismissal', async () => {
     await struckAndCrowdedOut();
