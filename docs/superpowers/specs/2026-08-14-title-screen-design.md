@@ -1,6 +1,6 @@
 # The Title Screen, and a Whole-Number Rate
 
-**Status:** drafted
+**Status:** built
 **Extends:** `2026-08-13-onboarding-design.md` and `2026-08-14-malice-track-design.md`. The beat
 model and both tracks stand. This adds a screen in front of the first run and changes one line
 of Dominion copy.
