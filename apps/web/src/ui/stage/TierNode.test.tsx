@@ -12,6 +12,7 @@ const CYCLE = { progressMs: 12_000, cycleMs: 24_000 };
 const OVERSIGHT = {
   isAppointed: false,
   isRousable: true,
+  isGated: false,
   overseer: CURRENT_COPY.overseer.names['warren-hand'],
   copy: CURRENT_COPY.overseer,
   onRouse: (): void => {},
@@ -170,6 +171,27 @@ describe('TierNode', () => {
     render(node({ oversight: { ...OVERSIGHT, isRousable: false } }));
 
     expect(screen.getByText(CURRENT_COPY.overseer.running('Warrens'))).toBeInTheDocument();
+  });
+
+  it('marks a dormant but gated tier as offering nothing to press', () => {
+    render(node({ oversight: { ...OVERSIGHT, isGated: true } }));
+
+    expect(screen.getByRole('button')).toHaveAttribute('aria-disabled', 'true');
+  });
+
+  it('rouses nothing while the tier is gated', async () => {
+    const onRouse = vi.fn();
+    render(node({ oversight: { ...OVERSIGHT, isGated: true, onRouse } }));
+
+    await userEvent.click(screen.getByRole('button'));
+
+    expect(onRouse).not.toHaveBeenCalled();
+  });
+
+  it('still says a gated tier is waiting to be roused, not that it is running', () => {
+    render(node({ oversight: { ...OVERSIGHT, isGated: true } }));
+
+    expect(screen.getByText(CURRENT_COPY.overseer.rouse('Warrens'))).toBeInTheDocument();
   });
 
   it('offers no button once an Overseer is appointed', () => {

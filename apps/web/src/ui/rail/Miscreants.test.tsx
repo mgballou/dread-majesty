@@ -5,6 +5,7 @@ import { CURRENT, CURRENT_COPY } from '@dm/content';
 import type { TierId } from '@dm/content';
 import { createState, type GameState } from '@dm/engine';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { GatedControl } from '../../game/onboarding.ts';
 import { formatNumber } from '../format.ts';
 import { Miscreants } from './Miscreants.tsx';
 import { railPlan } from './railPlan.ts';
@@ -20,7 +21,10 @@ beforeEach(() => {
   state = createState(CURRENT);
 });
 
-function draw(isUnlocked: (id: TierId) => boolean = () => true) {
+function draw(
+  isUnlocked: (id: TierId) => boolean = () => true,
+  isGated?: (control: GatedControl) => boolean,
+) {
   const plan = railPlan({
     state,
     content: CURRENT,
@@ -37,6 +41,7 @@ function draw(isUnlocked: (id: TierId) => boolean = () => true) {
         content={CURRENT}
         state={state}
         plan={plan}
+        {...(isGated === undefined ? {} : { isGated })}
         onAppoint={onAppoint}
         copy={CURRENT_COPY}
       />,
@@ -266,5 +271,46 @@ describe('Miscreants', () => {
     );
 
     expect(screen.getByRole('dialog').textContent?.includes(OVERSEER.effect.automate)).toBe(true);
+  });
+
+  describe('the onboarding gate', () => {
+    function gateAllButMinionHandAppoint(control: GatedControl): boolean {
+      return !(control.kind === 'appoint' && control.overseerId === 'minion-hand');
+    }
+
+    function unlockAndAffordEveryPost(): void {
+      for (const tier of CURRENT.tiers) state.unlocked[tier.id] = true;
+      state.resources.evil = new Decimal('1e18');
+    }
+
+    it('leaves the named post live', () => {
+      unlockAndAffordEveryPost();
+
+      draw(() => true, gateAllButMinionHandAppoint);
+
+      expect(
+        screen.getByRole('button', { name: new RegExp(OVERSEER.names['minion-hand']) }),
+      ).not.toBeDisabled();
+    });
+
+    it('disables every post the gate does not name', () => {
+      unlockAndAffordEveryPost();
+
+      const { container } = draw(() => true, gateAllButMinionHandAppoint);
+      const others = [...container.querySelectorAll('.miscreant__post')].filter(
+        (button) => !button.textContent?.includes(OVERSEER.names['minion-hand']),
+      );
+
+      expect(others.every((button) => (button as HTMLButtonElement).disabled)).toBe(true);
+    });
+
+    it('leaves affordability alone deciding when nothing is gated', () => {
+      unlockAndAffordEveryPost();
+
+      const { container } = draw();
+      const buttons = [...container.querySelectorAll('.miscreant__post')];
+
+      expect(buttons.every((button) => !(button as HTMLButtonElement).disabled)).toBe(true);
+    });
   });
 });
