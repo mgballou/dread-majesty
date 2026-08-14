@@ -14,6 +14,7 @@ import {
   readOnboarding,
   shouldRetire,
   showingBeat,
+  supersededBeat,
   writeOnboarding,
   type ClearingAction,
   type GatedControl,
@@ -163,7 +164,25 @@ export function App(): ReactNode {
   }, [dominionBeat, maliceBeat]);
 
   /**
-   * The retirement clock, wound on the beat that is actually on screen.
+   * Whether the beat standing on the Malice track is superseded by its own successor
+   * becoming ready.
+   *
+   * Read from the track and `doneMalice` directly, not from `maliceBeat` — the handover
+   * must fire even while `goad` herself is off screen for her own cooldown, which is the
+   * same strike that pushes Apathy over the line for `apathy`. See `supersededBeat`'s
+   * note on why it does not require the beat it clears to be ready.
+   *
+   * Only Malice is checked. Dominion carries no `'next-ready'` beat today, and checking
+   * it anyway would be dead code.
+   */
+  const handedOver = running
+    ? supersededBeat({ track: onboarding.malice, consumed: doneMalice, state, content, bandCount })
+    : null;
+
+  /**
+   * The retirement clock, wound on the beat that is actually on screen — and the one
+   * place a handed-over beat is consumed, for the same reason: both are answers to "this
+   * beat's time is up" that a component should not decide on its own.
    *
    * The stamp is cleared when nothing is showing and re-taken whenever the showing beat
    * is not the one recorded. Both matter: Dominion takes the bar from Malice mid-track,
@@ -171,6 +190,14 @@ export function App(): ReactNode {
    * earlier, to be retired unread on the frame it came back.
    */
   useEffect(() => {
+    if (handedOver) {
+      // A handover is not something the player did, so it is consumed the way
+      // `retire()` is — appended straight to the track's list — rather than through
+      // `clearsBeat`, which asks what the player did.
+      setDoneMalice((done) => [...done, handedOver]);
+      return;
+    }
+
     if (!beat) {
       shownAt.current = null;
       return;
@@ -186,7 +213,7 @@ export function App(): ReactNode {
     ) {
       retire();
     }
-  }, [beat, state.stats.playTimeMs, retire]);
+  }, [beat, handedOver, state.stats.playTimeMs, retire]);
 
   /**
    * Writes the tracks down on every consumption, not once at the end.
