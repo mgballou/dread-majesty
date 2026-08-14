@@ -85,6 +85,21 @@ function struckMidRunBlob(): SaveBlob {
 }
 
 /*
+ * A blow struck and Evil enough to fill the Minion Hand's post.
+ *
+ * With the three beats before it consumed, `appoint` is the Dominion beat standing next and
+ * Malice is in front of it. That is the board the soft-lock was reachable from: her beats gate
+ * nothing, so the post's button is live while she talks, and the appointment it takes has to be
+ * recorded against a beat that is nowhere on the screen.
+ */
+function struckAndFundedBlob(): SaveBlob {
+  const state = createState(CURRENT);
+  state.resources.evil = new Decimal(5000);
+  state.stats.smites = 1;
+  return serialize(state, Date.now());
+}
+
+/*
  * Every rung met, one of each held.
  *
  * The muster draws a row only for a tier the player has met, so the beats that point
@@ -238,7 +253,7 @@ describe('first-run onboarding', () => {
   });
 });
 
-describe('a refused action consumes nothing', () => {
+describe("the engine's answer decides, not the click", () => {
   const onboarding = CURRENT_COPY.onboarding;
   const minions = CURRENT.tiers.find((tier) => tier.id === 'minion')?.plural ?? '';
   const rouseMinions = CURRENT_COPY.overseer.rouse(minions);
@@ -498,18 +513,53 @@ describe('onboarding retires a beat nobody answered', () => {
 describe('the malice track holds the bar', () => {
   const onboarding = CURRENT_COPY.onboarding;
   const smiteName = new RegExp(`^${CURRENT_COPY.smite.action}\\.`);
+  const appointHand = new RegExp(`^${CURRENT_COPY.overseer.names['minion-hand']}`);
+  const miscreantsTab = new RegExp(`^${CURRENT_COPY.overseer.panelTitle}`);
 
   beforeEach(() => forgetOnboarding());
 
   afterEach(() => {
+    vi.useRealTimers();
     forgetOnboarding();
     vi.restoreAllMocks();
   });
+
+  function wind(ms: number): void {
+    act(() => {
+      vi.advanceTimersByTime(ms);
+    });
+  }
 
   async function firstRun(): Promise<void> {
     vi.spyOn(storage, 'readSave').mockResolvedValue(null);
     render(<App />);
     await screen.findByText(onboarding.dominion.stir);
+  }
+
+  /**
+   * Fills the Minion Hand's post while she is on the bar and `appoint` is next in Dominion.
+   *
+   * The post's button is live because her beats gate nothing, so this is an ordinary thing
+   * for a player to do — and the beat it answers is one they have never been shown.
+   */
+  async function appointsDuringHerTurn(): Promise<void> {
+    writeOnboarding({
+      dominion: ['stir', 'orders', 'muster'],
+      malice: [],
+      done: false,
+      caved: false,
+    });
+    vi.spyOn(storage, 'readSave').mockResolvedValue(struckAndFundedBlob());
+    render(<App />);
+    await screen.findByText(onboarding.malice['first-blow']);
+
+    await userEvent.click(screen.getByRole('tab', { name: miscreantsTab }));
+    await userEvent.click(screen.getByRole('button', { name: appointHand }));
+    // The post opens a confirmation rather than appointing on the press. The beat is
+    // answered by the dispatch behind the second button, never by the first.
+    await userEvent.click(
+      await screen.findByRole('button', { name: CURRENT_COPY.overseer.confirmAction }),
+    );
   }
 
   async function bothTracksReady(): Promise<void> {
@@ -553,6 +603,32 @@ describe('the malice track holds the bar', () => {
     await userEvent.click(screen.getByRole('button', { name: onboarding.dismiss }));
 
     expect(await screen.findByText(onboarding.dominion.orders)).toBeInTheDocument();
+  });
+
+  it('records a dominion beat the player answered while she held the bar', async () => {
+    await appointsDuringHerTurn();
+
+    expect(readOnboarding()?.dominion).toContain('appoint');
+  });
+
+  /*
+   * The soft-lock, end to end. `appoint` gates every control but the post's own button, and
+   * that button is disabled for good once filled — so the beat coming back after her turn had
+   * no dismissal, no window and no way out, and nothing written down to survive a reload.
+   *
+   * The track carrying on to `warren` is the assertion that matters. A beat that is neither
+   * consumed nor ready leaves the bar empty and the tutorial silently dead, which passes any
+   * test that only looks for the line that should not be there.
+   */
+  it('carries the dominion track past a post the player filled during her turn', async () => {
+    vi.useFakeTimers({ toFake: ['performance', 'requestAnimationFrame', 'cancelAnimationFrame'] });
+    await appointsDuringHerTurn();
+    await userEvent.click(screen.getByRole('button', { name: onboarding.dismiss }));
+    wind(80_000);
+    await userEvent.click(screen.getByRole('button', { name: onboarding.dismiss }));
+
+    expect(await screen.findByText(onboarding.dominion.warren)).toBeInTheDocument();
+    expect(screen.queryByText(onboarding.dominion.appoint)).not.toBeInTheDocument();
   });
 });
 
@@ -643,7 +719,7 @@ describe('the Malice conversation resolves', () => {
    * Apathy does — and sixty seconds is more than the bleed needs to carry the gauge back
    * under the band the shipped beat waited on.
    */
-  it('keeps the verdict on the bar long after its old condition would have lapsed', async () => {
+  it('keeps the verdict on the bar while apathy bleeds away beneath it', async () => {
     await findsHer();
     await strike();
     wind(21_000);
@@ -724,22 +800,18 @@ describe('the spotlight follows the beat', () => {
   });
 
   /*
-   * She points at the strike, which is the one beat naming a control it does not gate.
-   * Smite has no `GatedControl` case and never will — the player refusing her is one of the
-   * two ways her conversation ends — so pointing is the only way the dim can reach it.
+   * She is the one beat naming a control it does not gate, and her gate is `none` — so the
+   * dim reaching anything at all is the whole assertion. Handed the gate rather than the
+   * beat, or handed a beat whose `points` is ignored, this falls to the soft weight the
+   * narrative beat above it draws. Which selector she names is the anchor test's job.
    */
-  it('names the strike while she is on the bar', async () => {
+  it('frames a control while she is on the bar', async () => {
     writeOnboarding({ dominion: ['stir'], malice: ['first-blow'], done: false, caved: false });
     vi.spyOn(storage, 'readSave').mockResolvedValue(struckBlob());
     render(<App />);
     await screen.findByRole('status', { name: onboarding.herLabel });
 
-    const targets = CURRENT_ONBOARDING.malice
-      .filter((beat) => beat.id === 'goad')
-      .map((beat) => spotlightFor(beat).target);
-
-    expect(targets).toEqual(['.evil-node']);
-    expect(document.querySelector('.evil-node')).toBeInTheDocument();
+    expect(screen.getByTestId('spotlight')).toHaveClass('spotlight--whole');
   });
 
   it('brings the muster forward when the beat points into it', async () => {
