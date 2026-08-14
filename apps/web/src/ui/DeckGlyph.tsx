@@ -1,4 +1,5 @@
 import type { ReactElement, ReactNode } from 'react';
+import { hammerMark } from './art/hammer.tsx';
 
 /** One mark per panel of the deck. */
 export type DeckGlyphKind = 'muster' | 'miscreants' | 'deeds' | 'malice';
@@ -47,12 +48,10 @@ export function DeckGlyph({ kind }: DeckGlyphProps): ReactNode {
  * the answer because it is the one mark in the deck with a curve in it — every other is
  * straight-edged — so it cannot be confused with any of them however small the tube gets.
  *
- * **The hammer's handle is centred on `x 24` and run up into the head's notch, and both
- * of those are load-bearing.** It used to sit at `x 21–27` against a head centred on
- * `x 20`, starting at `y 16` when the head's solid bar stopped at `y 12` — so it hung
- * right of centre and touched the head only by a one-unit sliver against the right leg.
- * A crossbar with a stem off its right side, floating clear of the middle, reads as a
- * question mark. It was never going to read as a hammer.
+ * **The hammer now lives in `art/hammer.tsx`, shared with the title mark**, and the note
+ * on why its handle runs up into the head's notch lives with it. It was drawn twice for
+ * a while — once here, once for the title screen — on this same grid and differing in
+ * exactly that join, which is the argument for one copy rather than two.
  *
  * **Returns `ReactElement`, not `ReactNode`, and that is the exhaustiveness check.**
  * A switch with no `default` does not on its own make a missing case a type error:
@@ -64,12 +63,7 @@ export function DeckGlyph({ kind }: DeckGlyphProps): ReactNode {
 function shape(kind: DeckGlyphKind): ReactElement {
   switch (kind) {
     case 'muster':
-      return (
-        <g fill="currentColor">
-          <path d="M6 6 L42 6 L42 20 L30 20 L30 14 L18 14 L18 20 L6 20 Z" />
-          <rect x="21" y="13" width="6" height="32" rx="1" />
-        </g>
-      );
+      return hammerMark();
     case 'miscreants':
       return <path d="M24 3 L45 24 L24 45 L3 24 Z" fill="currentColor" />;
     case 'deeds':
