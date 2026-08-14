@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { CURRENT, CURRENT_COPY, CURRENT_ONBOARDING, type TierId } from '@dm/content';
-import type { BeatGate, Copy, DominionBeatId, MaliceBeatId } from '@dm/content';
+import type { Copy, DominionBeatId, MaliceBeatId } from '@dm/content';
 import { isAppointed, isRousable, isTierUnlocked, prestigeGain } from '@dm/engine';
 import { useSound } from './audio/useSound.ts';
 import { DevBar } from './dev/DevBar.tsx';
@@ -20,6 +20,7 @@ import {
   type GatedControl,
 } from './game/onboarding.ts';
 import { isPrestigeWorthShowing } from './game/reveals.ts';
+import { spotlightFor } from './game/spotlight.ts';
 import { useGameSession } from './game/useGameSession.ts';
 import { Ledger } from './screens/Ledger.tsx';
 import { OfflineSummary } from './screens/OfflineSummary.tsx';
@@ -469,8 +470,16 @@ export function App(): ReactNode {
         </main>
 
         {/* Before the prompt's row, so the layer that dims is also earlier in the
-            document than the layer that explains it. See App.css. */}
-        {spotlight && <Spotlight {...(spotlight.target ? { target: spotlight.target } : {})} />}
+            document than the layer that explains it. See App.css.
+
+            Withheld while the return summary is up. That screen carries a scrim of its
+            own, and two stacked scrims are darker than either was drawn to be — it also
+            leaves the prompt bar dimmed behind a summary that has already taken the
+            screen. A player coming back to an unfinished tutorial gets the lesson back
+            the moment they dismiss it. */}
+        {spotlight && !behindTheSummary && (
+          <Spotlight {...(spotlight.target ? { target: spotlight.target } : {})} />
+        )}
 
         {/* Pinned to the foot of the viewport, and mounted only when there is something
             to say. The first instruction of a first run cannot be below the fold, and
@@ -594,35 +603,6 @@ function lineFor({
   if (beatId === 'first-blow') return copy.onboarding.malice['first-blow'];
   if (beatId === 'apathy') return copy.onboarding.malice.apathy;
   return copy.onboarding.dominion[beatId];
-}
-
-/**
- * Which control a beat is pointing at, and which panel holds it.
- *
- * Selectors rather than refs, for the reason the deleted tour gave: the rung, the row and
- * the post are all inside laid-out containers, and wrapping any of them to hold a ref
- * would change what the layout is arranging. The cost is a class or attribute rename
- * silently losing the spotlight, which the anchor test exists to catch — it is exported
- * for that test alone, which walks the shipped tracks and asks the screen for whatever
- * this names.
- *
- * A gate of `none` points at nothing on purpose — a narrative beat dims the whole screen
- * rather than framing a control, because there is no control to frame.
- */
-export function spotlightFor(gate: BeatGate): { target?: string; panel?: string } {
-  switch (gate.kind) {
-    case 'rouse':
-      return { target: `.stage-node[data-tier="${gate.tierId}"]` };
-    case 'buy':
-      return { target: `.rail__row[data-tier="${gate.tierId}"]`, panel: 'muster' };
-    case 'appoint':
-      return {
-        target: `.miscreant__post[data-overseer="${gate.overseerId}"]`,
-        panel: 'miscreants',
-      };
-    case 'none':
-      return {};
-  }
 }
 
 /**
