@@ -13,7 +13,7 @@ export interface ArtSlot {
   /** Drives the generated SVG fallback. */
   readonly fallback: {
     /** Silhouette the fallback draws. */
-    readonly shape: 'spire' | 'banner' | 'hovel' | 'figure' | 'sigil' | 'throne';
+    readonly shape: 'spire' | 'banner' | 'hovel' | 'figure' | 'sigil' | 'throne' | 'hammer';
     /** Semantic token name. Never a raw colour. */
     readonly tone: 'tier-1' | 'tier-2' | 'tier-3' | 'tier-4' | 'tier-5' | 'resource';
   };
@@ -51,5 +51,16 @@ export const ART: Readonly<Record<string, ArtSlot>> = {
     src: null,
     fallback: { shape: 'sigil', tone: 'resource' },
     alt: 'The sigil of Evil',
+  },
+  /**
+   * The game's own mark, and the only slot that is not a tier or a resource.
+   *
+   * Drawn in the resource tone rather than any tier's: the hammer stands for the game, and
+   * borrowing a rung's color would say it stood for that rung.
+   */
+  'mark/dread-majesty': {
+    src: null,
+    fallback: { shape: 'hammer', tone: 'resource' },
+    alt: 'A black war hammer',
   },
 };

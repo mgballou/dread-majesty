@@ -124,8 +124,12 @@ describe('the onboarding copy', () => {
     expect([copy.skip, copy.loadSave].every((label) => label.length > 0)).toBe(true);
   });
 
-  it('plants her in the opening line', () => {
-    expect(copy.dominion.stir).toContain('otherworldly abomination');
+  it('plants her in the premise the title screen carries', () => {
+    expect(v1Copy.start.premise).toContain('otherworldly abomination');
+  });
+
+  it('leaves the opening beat a plain instruction', () => {
+    expect(copy.dominion.stir).not.toContain('abomination');
   });
 });
 
