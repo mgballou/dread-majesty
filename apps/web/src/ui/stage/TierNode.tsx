@@ -104,8 +104,17 @@ interface TierNodeProps {
  * stage has: the medallion lifts onto the raised surface, takes an edge in its own
  * tone, and says outright what pressing it does. A turning tier keeps the button —
  * losing it would drop focus out from under anyone holding it — and marks itself
- * `aria-disabled`, because there is nothing to rouse while it is already turning. An
- * appointed tier is no button at all; it names the Overseer who runs it instead.
+ * `aria-disabled`, because there is nothing to rouse while it is already turning or
+ * while onboarding is holding it back. An appointed tier is no button at all; it names
+ * the Overseer who runs it instead.
+ *
+ * **A gated tier stays dormant, but stops asking.** `isGated` never changes what state
+ * the node reports — the tier really is dormant, waiting only on the tutorial rather
+ * than on the player — so `data-gated` sits beside `data-oversight` rather than folded
+ * into it, and the stylesheet reads the pair to drop the raised surface and the
+ * breathing that otherwise mean "press me now". The label stays true throughout:
+ * "Rouse the Warrens" is still what pressing it would do, it is simply not on offer
+ * yet, which `aria-disabled` already says.
  *
  * Colour is never the only carrier. Each of those three states writes a line of its
  * own, and that line is the button's accessible name.
@@ -148,12 +157,18 @@ export function TierNode({
   const line = state === 'idle' || oversight === null ? '' : stateLine(state, oversight, name);
   const isTappable = state === 'dormant' || state === 'turning';
 
+  // Only meaningful on a dormant tier: that is the one state whose surface says
+  // "press me" on its own. Turning and overseen already read as inert without help,
+  // and idle offers no button either way.
+  const heldBack = state === 'dormant' && oversight !== null && oversight.isGated;
+
   return (
     <article
       className={isUnlocked ? 'stage-node' : 'stage-node stage-node--sealed'}
       aria-label={isUnlocked ? undefined : copy.sealed}
       data-motion={reduced ? 'reduced' : 'full'}
       data-oversight={state}
+      {...(heldBack ? { 'data-gated': 'true' } : {})}
       style={{ ...tint, ['--surge-index' as string]: surgeIndex }}
     >
       <div className="stage-node__medallion">
