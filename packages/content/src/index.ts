@@ -4,7 +4,6 @@ export {
   ACHIEVEMENT_IDS,
   OVERSEER_IDS,
   SMITE_UPGRADE_IDS,
-  TOUR_STEP_IDS,
   DOMINION_BEAT_IDS,
   MALICE_BEAT_IDS,
   isTierId,
@@ -20,7 +19,6 @@ export type {
   AchievementId,
   OverseerId,
   SmiteUpgradeId,
-  TourStepId,
   DominionBeatId,
   MaliceBeatId,
 } from './ids.ts';
@@ -57,8 +55,6 @@ export type {
   DeedsCopy,
   LedgerCopy,
   ErrorCopy,
-  TourCopy,
-  TourStepCopy,
   OnboardingCopy,
   GoadLine,
 } from './copy.ts';
