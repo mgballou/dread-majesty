@@ -1,7 +1,7 @@
 import Decimal from 'break_eternity.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CURRENT, CURRENT_ONBOARDING, v1Copy } from '@dm/content';
-import type { DominionBeatId, OnboardingBeat, TierId } from '@dm/content';
+import type { DominionBeatId, MaliceBeatId, OnboardingBeat, TierId } from '@dm/content';
 import { createState, nextCost } from '@dm/engine';
 import type { GameState } from '@dm/engine';
 import {
@@ -462,12 +462,10 @@ describe('onboardingDecision', () => {
 });
 
 describe('supersededBeat', () => {
-  const bandCount = v1Copy.smite.bands.length;
-
-  function superseded(state: GameState, consumed: readonly string[]) {
+  function superseded(state: GameState, consumed: readonly MaliceBeatId[]) {
     return supersededBeat({
       track: malice,
-      consumed: consumed as readonly (typeof malice)[number]['id'][],
+      consumed,
       state,
       content,
       bandCount,

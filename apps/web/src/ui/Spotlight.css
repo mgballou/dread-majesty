@@ -14,7 +14,6 @@
      across the words explaining it. */
   z-index: 4;
   pointer-events: none;
-  overflow: hidden;
 }
 
 .spotlight__band {
@@ -35,7 +34,7 @@
 }
 
 /* Line work, not an action: the ring says "here"; the control underneath is what
-   does something. Gold at full strength would spend the screen's one action colour
+   does something. Gold at full strength would spend the screen's one action color
    on pointing rather than on acting. */
 .spotlight__ring {
   position: fixed;
