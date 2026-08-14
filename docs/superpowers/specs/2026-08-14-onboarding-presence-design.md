@@ -112,7 +112,7 @@ the modal tour could not do.
 Four bands and a ring, the geometry the deleted tour used, pointed at the live control rather than
 at a card. The bands are four plain rectangles — no mask, no spread shadow, nothing to composite —
 and the ring is drawn in `--accent-line`, which is line work rather than the accent itself. **The
-scrim never takes the screen's one action colour**; the lit control keeps whatever it already had.
+scrim never takes the screen's one action color**; the lit control keeps whatever it already had.
 
 The ring pulses. Under `prefers-reduced-motion` it is static and still present — the ring is what
 carries the pointing, and the pulse is only emphasis, so nothing visible goes missing.
@@ -146,7 +146,7 @@ So **a gated beat opens the panel its target lives in**. `Deck` owns its open ta
 today and gains an optional requested tab: when that changes, the deck opens it. Absent, the deck
 behaves exactly as it does now.
 
-This is a real behaviour change — a beat can move the player's open tab — and it is the point. The
+This is a real behavior change — a beat can move the player's open tab — and it is the point. The
 alternative is pointing at nothing.
 
 The target is also scrolled into view, smoothly under full motion and instantly under reduced.
