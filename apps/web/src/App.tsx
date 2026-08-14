@@ -11,6 +11,7 @@ import {
   hasSeenOnboarding,
   isGatedOut,
   markOnboardingSeen,
+  shouldRetire,
   showingBeat,
   type ClearingAction,
   type GatedControl,
@@ -135,18 +136,47 @@ export function App(): ReactNode {
     [dominionBeat, maliceBeat],
   );
 
+  /**
+   * Give up on the beat on screen, unread.
+   *
+   * The consumed id is appended straight to the track's list rather than passed through
+   * `acted`. `clearsBeat` answers "did the player do the thing?", and retirement is the
+   * case where they did not — routing one through the other silently does nothing for
+   * any beat that clears on something other than a dismissal.
+   */
+  const retire = useCallback((): void => {
+    if (dominionBeat) {
+      setDoneDominion((done) => [...done, dominionBeat.id]);
+      return;
+    }
+    if (maliceBeat) setDoneMalice((done) => [...done, maliceBeat.id]);
+  }, [dominionBeat, maliceBeat]);
+
+  /**
+   * The retirement clock, wound on the beat that is actually on screen.
+   *
+   * The stamp is cleared when nothing is showing and re-taken whenever the showing beat
+   * is not the one recorded. Both matter: Dominion takes the bar from Malice mid-track,
+   * and a stale stamp would leave the crowded-out beat holding a timestamp from minutes
+   * earlier, to be retired unread on the frame it came back.
+   */
   useEffect(() => {
-    if (!beat || beat.retireAfterMs === null) return;
+    if (!beat) {
+      shownAt.current = null;
+      return;
+    }
 
     if (shownAt.current?.id !== beat.id) {
       shownAt.current = { id: beat.id, atMs: state.stats.playTimeMs };
       return;
     }
 
-    if (state.stats.playTimeMs - shownAt.current.atMs >= beat.retireAfterMs) {
-      acted({ kind: 'dismiss' });
+    if (
+      shouldRetire({ beat, shownAtMs: shownAt.current.atMs, playTimeMs: state.stats.playTimeMs })
+    ) {
+      retire();
     }
-  }, [beat, state.stats.playTimeMs, acted]);
+  }, [beat, state.stats.playTimeMs, retire]);
 
   useEffect(() => {
     if (running && doneDominion.length === onboarding.dominion.length) markOnboardingSeen();
@@ -154,6 +184,14 @@ export function App(): ReactNode {
 
   // Passed only while a beat is showing, so after onboarding the prop is absent and the
   // controls are exactly what they were.
+  //
+  // The three gated regions are the chain, the muster and the miscreants. The malice
+  // panel's ladders take no gate and `GatedControl` has no case for a rung, which holds
+  // only because the cheapest climb is 3e6 Evil against a Dominion track that is over in
+  // about eleven minutes — the player cannot reach a rung while a beat is still showing.
+  // **That rests on a balance number.** Make the first rung cheap enough to reach during
+  // the tutorial and a second control goes live beside the gated one, which is the
+  // near-tie the accent has no hysteresis to survive. Gate the panel if that number moves.
   const isGated = beat
     ? (control: GatedControl): boolean => isGatedOut(beat.gate, control)
     : undefined;
@@ -364,10 +402,15 @@ export function App(): ReactNode {
           </div>
         </main>
 
-        <div className="shell__prompt">
-          {beat && (
+        {/* Pinned to the foot of the viewport, and mounted only when there is something
+            to say. The first instruction of a first run cannot be below the fold, and
+            the page is taller than a laptop viewport from the opening frame. Nothing
+            moves when it lands or clears: it is out of flow, and the shell reserves the
+            room under the footer permanently. See `.shell__prompt`. */}
+        {beat && (
+          <div className="shell__prompt">
             <Prompt
-              line={lineFor(copy, beat.id, state.smiteApathy)}
+              line={lineFor({ copy, beatId: beat.id, apathy: state.smiteApathy })}
               voice={beat.voice}
               label={
                 beat.voice === 'her' ? copy.onboarding.herLabel : copy.onboarding.narratorLabel
@@ -391,8 +434,8 @@ export function App(): ReactNode {
                   }
                 : {})}
             />
-          )}
-        </div>
+          </div>
+        )}
 
         <footer className="shell__foot">
           {/* One control, so no landmark around it. The old footer wrapped two in a
@@ -422,7 +465,15 @@ export function App(): ReactNode {
             soundEnabled={sound.enabled}
             onToggleSound={sound.toggle}
             onExport={session.exportBlob}
-            onImport={session.importBlob}
+            /* A loaded save ends onboarding on the spot. The import swaps the state in
+               place with no reload, so without this the opening beat would go on gating
+               a mid-game realm down to Rouse Minion — and "Load save" is offered on that
+               very beat, so it is the ordinary path, not a corner. */
+            onImport={(blob) => {
+              const imported = session.importBlob(blob);
+              if (imported) stopOnboarding();
+              return imported;
+            }}
             onAbdicate={session.abdicate}
           />
         </Sheet>
@@ -459,7 +510,15 @@ export function App(): ReactNode {
  * typechecker knows it. No cast, and a beat added to either track without copy fails
  * typecheck rather than rendering an empty bar.
  */
-function lineFor(copy: Copy, beatId: DominionBeatId | MaliceBeatId, apathy: number): string {
+function lineFor({
+  copy,
+  beatId,
+  apathy,
+}: {
+  copy: Copy;
+  beatId: DominionBeatId | MaliceBeatId;
+  apathy: number;
+}): string {
   if (beatId === 'goad') return goadLine(copy.onboarding.goad, apathy);
   if (beatId === 'first-blow') return copy.onboarding.malice['first-blow'];
   if (beatId === 'apathy') return copy.onboarding.malice.apathy;

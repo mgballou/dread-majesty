@@ -137,6 +137,32 @@ export function clearsBeat(beat: OnboardingBeat<string>, action: ClearingAction)
 }
 
 /**
+ * Whether the beat on screen has stood unanswered long enough to give up on.
+ *
+ * Retirement is deliberately **not** expressed through `clearsBeat`. That function asks
+ * what the player did; this is the case where they did nothing, and the two must not be
+ * confused. `goad` clears on a smite, so a retirement dressed up as a dismissal matches
+ * nothing, leaves her line on screen for the rest of the session and blocks the beat
+ * queued behind her. A retiring beat is consumed whatever would otherwise have cleared it.
+ *
+ * `shownAtMs` is when the beat reached the screen, not when it became ready — a beat
+ * waiting behind another must not burn its window in the queue. Both figures are play
+ * time, so a backgrounded tab retires nothing.
+ */
+export function shouldRetire({
+  beat,
+  shownAtMs,
+  playTimeMs,
+}: {
+  beat: OnboardingBeat<string>;
+  shownAtMs: number;
+  playTimeMs: number;
+}): boolean {
+  if (beat.retireAfterMs === null) return false;
+  return playTimeMs - shownAtMs >= beat.retireAfterMs;
+}
+
+/**
  * Which of her lines she is on.
  *
  * The list is total — its last threshold is negative — so the loop always returns and
