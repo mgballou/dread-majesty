@@ -446,3 +446,71 @@ describe('onboarding retires a beat nobody answered', () => {
     expect(screen.queryByRole('status', { name: onboarding.herLabel })).not.toBeInTheDocument();
   });
 });
+
+/*
+ * The Malice track's two endings, per the 2026-08-14 design spec §2.1: caving twice
+ * hands the bar to the narrator, and resisting lets her walk down to her window and
+ * give up. Neither could be reached before this task — she was consumed by the first
+ * strike, which put the narrator's reply permanently out of reach.
+ *
+ * `struckBlob` starts with the opening strike already behind it — one smite, Apathy at
+ * 1 — which is exactly `first-blow`'s own readiness. With `first-blow` marked consumed,
+ * `goad` is showing from the first render. Each cooldown wait bleeds some of that
+ * Apathy away (twenty seconds against a forty-five-second point), so a second cave from
+ * there lands short of band 2 and a third is what crosses it — matching §2.2's own
+ * account of the ordering. Waiting a full cooldown between clicks, rather than reasoning
+ * about an exact number, is also what keeps these tests honest against the small
+ * real-time catch-up the save-load path always runs.
+ */
+describe('the Malice conversation resolves', () => {
+  const onboarding = CURRENT_COPY.onboarding;
+  const smiteName = new RegExp(`^${CURRENT_COPY.smite.action}\\.`);
+
+  beforeEach(() => forgetOnboarding());
+
+  afterEach(() => {
+    vi.useRealTimers();
+    forgetOnboarding();
+    vi.restoreAllMocks();
+  });
+
+  function wind(ms: number): void {
+    act(() => {
+      vi.advanceTimersByTime(ms);
+    });
+  }
+
+  async function findsHer(): Promise<void> {
+    vi.useFakeTimers({ toFake: ['performance', 'requestAnimationFrame', 'cancelAnimationFrame'] });
+    writeOnboarding({ dominion: ['stir'], malice: ['first-blow'], done: false });
+    vi.spyOn(storage, 'readSave').mockResolvedValue(struckBlob());
+    render(<App />);
+    await screen.findByRole('status', { name: onboarding.herLabel });
+  }
+
+  it('keeps her on the bar after a single strike', async () => {
+    await findsHer();
+    wind(10_000);
+    await userEvent.click(screen.getByRole('button', { name: smiteName }));
+    wind(21_000);
+
+    expect(screen.getByRole('status', { name: onboarding.herLabel })).toBeInTheDocument();
+  });
+
+  it('hands the bar to the narrator once the realm stops looking', async () => {
+    await findsHer();
+    await userEvent.click(screen.getByRole('button', { name: smiteName }));
+    wind(21_000);
+    await userEvent.click(screen.getByRole('button', { name: smiteName }));
+
+    expect(await screen.findByText(onboarding.malice.apathy)).toBeInTheDocument();
+  });
+
+  it('lets her give up when the player resists', async () => {
+    await findsHer();
+    wind(121_000);
+
+    expect(screen.queryByRole('status', { name: onboarding.herLabel })).not.toBeInTheDocument();
+    expect(screen.queryByText(onboarding.malice.apathy)).not.toBeInTheDocument();
+  });
+});
