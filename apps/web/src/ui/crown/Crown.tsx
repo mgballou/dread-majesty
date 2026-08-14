@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import type { Content, Copy } from '@dm/content';
 import { globalMultiplier, overseenProductionPerSecond, smitePhase } from '@dm/engine';
 import type { GameState } from '@dm/engine';
-import { formatNumber } from '../format.ts';
+import { formatNumber, formatWhole } from '../format.ts';
 import './Crown.css';
 
 interface CrownProps {
@@ -37,7 +37,7 @@ export function Crown({ state, content, copy }: CrownProps): ReactNode {
           color — lighting the whole line would say the whole line had changed. */}
       <p className="crown__rate">
         <span className="crown__figure" data-smite={smite.kind}>
-          {formatNumber(rate)} {copy.evil.name} per second
+          {formatWhole(rate)} {copy.evil.name} per second
         </span>
         <span className="crown__dot" aria-hidden="true" />
         <span className="crown__standing">{standing(smite, copy.smite, content)}</span>
