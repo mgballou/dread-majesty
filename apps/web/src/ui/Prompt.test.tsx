@@ -130,3 +130,23 @@ describe('the voices stay visually distinct from each other', () => {
     expect(both).not.toMatch(/--accent(?!-)/);
   });
 });
+
+/**
+ * Playtest read the bar as furniture, and the 2026-08-14 spec §3.4 answers with larger
+ * type, a heavier ground and more room. Nothing above can see any of that — the words,
+ * the voices and the buttons are all identical at either weight — so a revert of that
+ * step would be silent without these three.
+ */
+describe('the bar reads as a thing being said', () => {
+  it('sets the line above the reading size', () => {
+    expect(rule('.prompt__line')).toMatch(/font-size:\s*var\(--text-lg\)/);
+  });
+
+  it('stands on a heavier ground than the strip it sits on', () => {
+    expect(rule('.prompt')).toMatch(/background:\s*var\(--surface-panel\)/);
+  });
+
+  it('gives the line room on every side', () => {
+    expect(rule('.prompt')).toMatch(/padding:\s*var\(--space-4\)/);
+  });
+});
