@@ -9,6 +9,7 @@ import type {
 } from '@dm/content';
 import { nextCost } from '@dm/engine';
 import type { GameState } from '@dm/engine';
+import { bandIndex } from './apathy.ts';
 
 const SEEN_KEY = 'dread-majesty:onboarding-seen';
 
@@ -22,20 +23,18 @@ export type GatedControl =
 export type ClearingAction =
   GatedControl | { readonly kind: 'smite' } | { readonly kind: 'dismiss' };
 
-/**
- * How tired the realm reads as, on the three-band scale the stage already draws.
- *
- * The floor of Apathy, because the cap is 3 and there are three bands. Kept as one
- * function so the beat condition and the stage can never disagree about where a band
- * starts.
- */
-function band(state: GameState, content: Content): number {
-  const share = state.smiteApathy / content.smite.apathy.cap;
-  return Math.min(2, Math.floor(share * 3));
-}
-
 /** Whether a beat's condition holds on this state, right now. */
-export function isBeatReady(ready: BeatReady, state: GameState, content: Content): boolean {
+export function isBeatReady({
+  ready,
+  state,
+  content,
+  bandCount,
+}: {
+  ready: BeatReady;
+  state: GameState;
+  content: Content;
+  bandCount: number;
+}): boolean {
   switch (ready.kind) {
     case 'always':
       return true;
@@ -75,7 +74,7 @@ export function isBeatReady(ready: BeatReady, state: GameState, content: Content
       return state.stats.smites >= 1 && state.smiteActiveMs <= 0 && state.smiteCooldownMs <= 0;
 
     case 'band-at-least':
-      return band(state, content) >= ready.band;
+      return bandIndex(state.smiteApathy, content.smite.apathy.cap, bandCount) >= ready.band;
   }
 }
 
@@ -92,15 +91,17 @@ export function showingBeat<Id extends string>({
   consumed,
   state,
   content,
+  bandCount,
 }: {
   track: readonly OnboardingBeat<Id>[];
   consumed: readonly Id[];
   state: GameState;
   content: Content;
+  bandCount: number;
 }): OnboardingBeat<Id> | null {
   const next = track.find((beat) => !consumed.includes(beat.id));
   if (!next) return null;
-  return isBeatReady(next.ready, state, content) ? next : null;
+  return isBeatReady({ ready: next.ready, state, content, bandCount }) ? next : null;
 }
 
 /**
@@ -154,7 +155,7 @@ export function goadLine(lines: readonly GoadLine[], apathy: number): string {
  *
  * `localStorage` rather than the save, on purpose. This is not game state: it survives
  * abdication, it has no place in a save blob, and putting it there would mean a
- * migration and a field the engine has to carry and ignore for ever.
+ * migration and a field the engine has to carry and ignore forever.
  *
  * A blocked or absent store reports "seen". That is the safer way to be wrong: a
  * returning player whose browser refuses storage gets no tutorial rather than the same

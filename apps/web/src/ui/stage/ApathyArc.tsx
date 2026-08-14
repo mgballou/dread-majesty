@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { apathyShare } from '../../game/apathy.ts';
 import { CYCLE_SEGMENTS } from '../segments.ts';
 import './ApathyArc.css';
 
@@ -70,16 +71,6 @@ export function ApathyArc({ apathy, cap }: ApathyArcProps): ReactNode {
       </svg>
     </span>
   );
-}
-
-/**
- * How far along its cap Apathy stands, 0 to 1.
- *
- * Exported because the arc draws this and the control it sits inside speaks it, and two
- * copies of a clamp are two chances to disagree about what a cap of zero means.
- */
-export function apathyShare(apathy: number, cap: number): number {
-  return cap > 0 ? Math.min(1, Math.max(0, apathy / cap)) : 0;
 }
 
 /** One segment's arc, as an SVG path from its start angle across `span` degrees. */

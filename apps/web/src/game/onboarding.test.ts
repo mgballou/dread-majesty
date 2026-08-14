@@ -9,6 +9,7 @@ import {
   forgetOnboarding,
   goadLine,
   hasSeenOnboarding,
+  isBeatReady,
   isGatedOut,
   markOnboardingSeen,
   showingBeat,
@@ -17,6 +18,7 @@ import {
 const content = CURRENT;
 const dominion = CURRENT_ONBOARDING.dominion;
 const malice = CURRENT_ONBOARDING.malice;
+const bandCount = v1Copy.smite.bands.length;
 
 function fresh(): GameState {
   return createState(content);
@@ -26,7 +28,7 @@ function showing(
   state: GameState,
   consumed: readonly DominionBeatId[],
 ): OnboardingBeat<DominionBeatId> | null {
-  return showingBeat({ track: dominion, consumed, state, content });
+  return showingBeat({ track: dominion, consumed, state, content, bandCount });
 }
 
 function affordable(state: GameState, tierId: TierId): boolean {
@@ -71,6 +73,133 @@ describe('showingBeat', () => {
   });
 });
 
+describe('isBeatReady', () => {
+  it('is ready once a tier is owned and idle', () => {
+    const state = fresh();
+    state.gens.minion.owned = new Decimal(1);
+    expect(
+      isBeatReady({
+        ready: { kind: 'owned-and-idle', tierId: 'minion' },
+        state,
+        content,
+        bandCount,
+      }),
+    ).toBe(true);
+  });
+
+  it('withholds owned-and-idle while the cycle runs', () => {
+    const state = fresh();
+    state.gens.minion.owned = new Decimal(1);
+    state.gens.minion.running = true;
+    expect(
+      isBeatReady({
+        ready: { kind: 'owned-and-idle', tierId: 'minion' },
+        state,
+        content,
+        bandCount,
+      }),
+    ).toBe(false);
+  });
+
+  it('is ready once a tier has cycled', () => {
+    const state = fresh();
+    state.gens.minion.lifetimeProduced = new Decimal(1);
+    expect(
+      isBeatReady({ ready: { kind: 'cycled', tierId: 'minion' }, state, content, bandCount }),
+    ).toBe(true);
+  });
+
+  it('withholds cycled before a tier has ever paid out', () => {
+    const state = fresh();
+    expect(
+      isBeatReady({ ready: { kind: 'cycled', tierId: 'minion' }, state, content, bandCount }),
+    ).toBe(false);
+  });
+
+  it('withholds can-afford-overseer until the post is affordable', () => {
+    const state = fresh();
+    state.resources.evil = new Decimal(1199);
+    expect(
+      isBeatReady({
+        ready: { kind: 'can-afford-overseer', overseerId: 'minion-hand' },
+        state,
+        content,
+        bandCount,
+      }),
+    ).toBe(false);
+  });
+
+  it('is ready once an overseer post is affordable', () => {
+    const state = fresh();
+    state.resources.evil = new Decimal(1200);
+    expect(
+      isBeatReady({
+        ready: { kind: 'can-afford-overseer', overseerId: 'minion-hand' },
+        state,
+        content,
+        bandCount,
+      }),
+    ).toBe(true);
+  });
+
+  it('withholds smites-at-least below the count', () => {
+    const state = fresh();
+    state.stats.smites = 2;
+    expect(
+      isBeatReady({ ready: { kind: 'smites-at-least', count: 3 }, state, content, bandCount }),
+    ).toBe(false);
+  });
+
+  it('is ready at smites-at-least the count', () => {
+    const state = fresh();
+    state.stats.smites = 3;
+    expect(
+      isBeatReady({ ready: { kind: 'smites-at-least', count: 3 }, state, content, bandCount }),
+    ).toBe(true);
+  });
+
+  it('withholds blow-ready-after-first before a first blow lands', () => {
+    const state = fresh();
+    expect(
+      isBeatReady({ ready: { kind: 'blow-ready-after-first' }, state, content, bandCount }),
+    ).toBe(false);
+  });
+
+  it('is ready for the next blow once the first has cleared its cooldown', () => {
+    const state = fresh();
+    state.stats.smites = 1;
+    state.smiteActiveMs = 0;
+    state.smiteCooldownMs = 0;
+    expect(
+      isBeatReady({ ready: { kind: 'blow-ready-after-first' }, state, content, bandCount }),
+    ).toBe(true);
+  });
+
+  it('withholds band-at-least just under the band', () => {
+    const state = fresh();
+    state.smiteApathy = 1.999;
+    expect(
+      isBeatReady({ ready: { kind: 'band-at-least', band: 2 }, state, content, bandCount }),
+    ).toBe(false);
+  });
+
+  it('is ready for band-at-least exactly at the band', () => {
+    const state = fresh();
+    state.smiteApathy = 2.0;
+    expect(
+      isBeatReady({ ready: { kind: 'band-at-least', band: 2 }, state, content, bandCount }),
+    ).toBe(true);
+  });
+
+  it('stays ready for band-at-least at the cap', () => {
+    const state = fresh();
+    state.smiteApathy = 3.0;
+    expect(
+      isBeatReady({ ready: { kind: 'band-at-least', band: 2 }, state, content, bandCount }),
+    ).toBe(true);
+  });
+});
+
 describe('the gate never strands the player', () => {
   it('shows nothing after appointing when the Warren is still out of reach', () => {
     const state = fresh();
@@ -102,6 +231,20 @@ describe('the gate never strands the player', () => {
         const beat = showing(state, consumed);
         if (beat?.gate.kind !== 'buy') continue;
         expect(affordable(state, beat.gate.tierId)).toBe(true);
+      }
+    }
+  });
+
+  it('gates every purchase on affording that same purchase, by construction', () => {
+    for (const beat of [...dominion, ...malice]) {
+      if (beat.gate.kind === 'buy') {
+        expect(beat.ready).toEqual({ kind: 'can-afford-tier', tierId: beat.gate.tierId });
+      }
+      if (beat.gate.kind === 'appoint') {
+        expect(beat.ready).toEqual({
+          kind: 'can-afford-overseer',
+          overseerId: beat.gate.overseerId,
+        });
       }
     }
   });
@@ -173,6 +316,10 @@ describe('goadLine', () => {
 
   it('takes the boundary as belonging to the line below it', () => {
     expect(goadLine(lines, 0.45)).toBe(lines[1]?.line);
+  });
+
+  it('takes the second boundary as belonging to the line below it too', () => {
+    expect(goadLine(lines, 0.2)).toBe(lines[2]?.line);
   });
 });
 
