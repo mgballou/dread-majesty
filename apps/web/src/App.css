@@ -1,9 +1,21 @@
 /* The frame. See App.tsx. */
 
+/*
+ * The bottom padding is the room the pinned prompt stands in, so the bar can never
+ * cover the footer. Permanent rather than added when a beat arrives: it sits below the
+ * last thing on the page, where nobody can see it, and toggling it would reintroduce
+ * exactly the shift the pinning removed.
+ *
+ * 16rem is measured, not guessed. The tallest bar in the game is `first-blow` — two
+ * hundred and fifteen characters over the narrowest phone — which comes to 226px at a
+ * 320px viewport and 204px at 390px. This clears the worst of those by 30px. Re-measure
+ * it if a longer line is ever written.
+ */
 .shell {
   max-width: 72rem;
   margin: 0 auto;
   padding: var(--space-4);
+  padding-block-end: calc(16rem + env(safe-area-inset-bottom));
   min-height: 100vh;
 }
 
@@ -81,16 +93,41 @@
 }
 
 /*
- * The prompt's row, held whether or not a beat is showing.
+ * The prompt, pinned to the foot of the viewport.
  *
- * Held rather than mounted on demand, for the reason `.shell__marker` is: a row that
- * appeared when the first beat arrived would shove the footer down the page mid-play.
- * The row is exactly as tall as the prompt at every width, including where it wraps on
- * a phone, so nothing moves when a beat lands or clears.
+ * In flow it sat at y=1000 on a 603px-tall laptop viewport, because the page is taller
+ * than the window from the opening frame — a new player's first instruction was below
+ * the fold and had to be scrolled to. Pinned, it is where the design asked for it: one
+ * place the player always knows to look, whatever they have scrolled to.
+ *
+ * Out of flow means it can never move the footer, which is why there is no held row
+ * here and why the element is mounted only when there is a beat. A reserved row would
+ * have to guess a height — and guess it again for `first-blow`, which runs to five
+ * wrapped lines above its own button on a phone — and would leave every returning
+ * player looking at a permanent empty band. `.shell` carries the room under the footer
+ * instead, permanently, so nothing shifts either way.
+ *
+ * The z-index sits under the return summary's 10: a save that has been away is not a
+ * first run, and while that summary is up it is the screen.
  */
 .shell__prompt {
-  margin-block-start: var(--space-4);
-  min-height: 3.5rem;
+  position: fixed;
+  inset-inline: 0;
+  inset-block-end: 0;
+  z-index: 5;
+  padding-block: var(--space-3);
+  /* The bar is full-bleed but its line is not: the card stays on the shell's measure so
+     the text does not run the width of a monitor. */
+  padding-inline: max(var(--space-4), env(safe-area-inset-left))
+    max(var(--space-4), env(safe-area-inset-right));
+  padding-block-end: max(var(--space-3), env(safe-area-inset-bottom));
+  border-block-start: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.shell__prompt > .prompt {
+  max-width: 72rem;
+  margin-inline: auto;
 }
 
 /*
@@ -118,7 +155,10 @@
   .shell {
     padding: var(--space-2);
     padding-block-start: max(var(--space-2), env(safe-area-inset-top));
-    padding-block-end: max(var(--space-2), env(safe-area-inset-bottom));
+    /* The prompt wraps further on a phone and its actions row goes full width, so the
+       room it stands in is the same reserve as on a laptop, not the narrower gutter the
+       rest of this rule sets. */
+    padding-block-end: calc(16rem + env(safe-area-inset-bottom));
     padding-inline-start: max(var(--space-2), env(safe-area-inset-left));
     padding-inline-end: max(var(--space-2), env(safe-area-inset-right));
   }
