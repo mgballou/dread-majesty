@@ -36,7 +36,7 @@ export function TitleScreen({ title, copy, onStart }: TitleScreenProps): ReactNo
     <div className="title" role="dialog" aria-modal="true" aria-labelledby="title-name">
       <div className="title__sheet">
         <span className="title__mark">
-          <TierArt slot="mark/dread-majesty" size={72} decorative />
+          <TierArt slot="mark/dread-majesty" decorative />
         </span>
 
         <h1 className="title__name" id="title-name">
