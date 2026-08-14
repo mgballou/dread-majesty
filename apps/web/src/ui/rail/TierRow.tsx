@@ -68,7 +68,6 @@ export function TierRow({
   copy,
 }: TierRowProps): ReactNode {
   const gen = state.gens[tier.id];
-  const shortfall = purchase.cost.sub(state.resources[tier.costResource]);
   const progress = milestoneProgress(state, content, tier.id);
   const label = milestoneLabel({ progress, plural: tier.plural, copy: copy.milestone });
 
@@ -81,16 +80,8 @@ export function TierRow({
           <Banner as="h3" weight="secondary" className="rail__name">
             {tier.plural}
           </Banner>
-          {emphasis === 'saving' && <span className="rail__flag">{copy.rail.saving}</span>}
-          <span className="rail__owned">{copy.rail.held(formatWhole(gen.owned))}</span>
+          <span className="rail__purchased">{copy.rail.purchased(formatWhole(gen.purchased))}</span>
         </div>
-
-        {/* Always mounted, even with nothing to say. The cascade crosses the
-            purchased count without warning, and a line that mounts on that
-            crossing would move the price and the bar under it. */}
-        <p className="rail__bought">
-          {gen.purchased.lt(gen.owned) && copy.rail.bought(formatWhole(gen.purchased))}
-        </p>
 
         <p className="rail__line">
           <ProduceLine state={state} tier={tier} content={content} />
@@ -116,10 +107,6 @@ export function TierRow({
           <span aria-hidden="true">{quantityLabel(quantity)}</span>
           <span aria-hidden="true">{formatWhole(purchase.cost)}</span>
         </button>
-
-        <span className="rail__shortfall">
-          {purchase.affordable ? '' : copy.rail.shortfall(formatWhole(shortfall))}
-        </span>
       </div>
     </li>
   );

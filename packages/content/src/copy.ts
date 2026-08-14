@@ -234,20 +234,16 @@ export interface RailCopy {
   readonly title: string;
   /** Names the run of generators to anyone who cannot see it laid out. */
   readonly list: string;
-  /** Sits on the one row a panel names as a goal, and only when nothing there is affordable. */
-  readonly saving: string;
   readonly locked: string;
   readonly lockedHint: string;
-  /** The count on a row. `count` arrives formatted. */
-  readonly held: (count: string) => string;
+  /** What the row's buy actions have bought, not what the cascade has bred. `count` arrives formatted. */
+  readonly purchased: (count: string) => string;
   /** The buy button, spoken in full. Every part arrives formatted. */
   readonly buy: (args: {
     readonly count: string;
     readonly tier: string;
     readonly cost: string;
   }) => string;
-  /** Said when a row cannot be afforded yet. `amount` arrives formatted. */
-  readonly shortfall: (amount: string) => string;
   readonly quantity: string;
   /** Names one numeric quantity option. `count` arrives formatted. */
   readonly quantityOption: (count: string) => string;
@@ -258,13 +254,6 @@ export interface RailCopy {
   readonly upcomingTitle: string;
   /** That row's line. Both parts arrive formatted; `tier` is the plural. */
   readonly upcoming: (args: { readonly tier: string; readonly cost: string }) => string;
-  /**
-   * Said beside the owned count when the two differ. `count` arrives formatted.
-   *
-   * Only when they differ. A row where every unit was bought would be saying the
-   * same number twice, and the line is there to explain a price, not to decorate.
-   */
-  readonly bought: (count: string) => string;
   /**
    * Added to the lifted control's spoken name, never shown.
    *
