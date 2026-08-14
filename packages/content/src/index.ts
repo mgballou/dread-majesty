@@ -49,6 +49,7 @@ export type {
   MaliceCopy,
   MilestoneCopy,
   PrestigeCopy,
+  StartCopy,
   OfflineCopy,
   EmptyCopy,
   RailCopy,

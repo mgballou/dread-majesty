@@ -196,6 +196,21 @@ export interface PrestigeCopy {
   readonly owedAction: string;
 }
 
+/**
+ * The screen before the first frame of play.
+ *
+ * No heading of its own — the game's name is `Copy['title']`, and two places holding it is two
+ * places to disagree. This is what the title screen says *besides* its name.
+ */
+export interface StartCopy {
+  /** Who the player is, in one line. */
+  readonly lede: string;
+  /** What they are starting with. Carried here so the first tutorial beat need not. */
+  readonly premise: string;
+  /** The one action, and the way out. */
+  readonly begin: string;
+}
+
 export interface OfflineCopy {
   readonly heading: string;
   readonly summary: (duration: string) => string;
@@ -447,6 +462,7 @@ export interface Copy {
   readonly malice: MaliceCopy;
   readonly milestone: MilestoneCopy;
   readonly prestige: PrestigeCopy;
+  readonly start: StartCopy;
   readonly offline: OfflineCopy;
   readonly empty: EmptyCopy;
   readonly rail: RailCopy;
