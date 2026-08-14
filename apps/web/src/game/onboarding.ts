@@ -4,15 +4,14 @@ import type {
   BeatReady,
   Content,
   DominionBeatId,
-  GoadLine,
   MaliceBeatId,
   OnboardingBeat,
   OverseerId,
   TierId,
+  WaitingLine,
 } from '@dm/content';
 import { nextCost } from '@dm/engine';
 import type { GameState } from '@dm/engine';
-import { bandIndex } from './apathy.ts';
 
 const PROGRESS_KEY = 'dread-majesty:onboarding-seen';
 
@@ -31,12 +30,10 @@ export function isBeatReady({
   ready,
   state,
   content,
-  bandCount,
 }: {
   ready: BeatReady;
   state: GameState;
   content: Content;
-  bandCount: number;
 }): boolean {
   switch (ready.kind) {
     case 'always':
@@ -75,13 +72,22 @@ export function isBeatReady({
 
     case 'blow-ready-after-first':
       return state.stats.smites >= 1 && state.smiteActiveMs <= 0 && state.smiteCooldownMs <= 0;
-
-    case 'band-at-least':
-      return (
-        bandIndex({ apathy: state.smiteApathy, cap: content.smite.apathy.cap, bandCount }) >=
-        ready.band
-      );
   }
+}
+
+/**
+ * Whether this beat stays put once it has been shown.
+ *
+ * Withdrawal — a beat leaving when its `ready` stops holding — is what stops a gated beat
+ * stranding the player on a purchase they can no longer afford. It protects nothing on a beat
+ * that gates no control and is ended by a button, and on one of those it is a defect: the
+ * shipped verdict beat was on screen for five seconds against a fourteen-word line. See the
+ * spec §1.1.
+ *
+ * Derived rather than declared, so it cannot be set on a gated beat by mistake.
+ */
+export function latches(beat: OnboardingBeat<string>): boolean {
+  return beat.gate.kind === 'none' && beat.clearedBy === 'dismiss';
 }
 
 /**
@@ -91,23 +97,28 @@ export function isBeatReady({
  * every earlier beat consumed, and ready now. The second is what makes "one at a time,
  * in order" structural — `find` walks the track in order and the first unconsumed beat
  * is the only candidate, so a later beat can never jump the queue however ready it is.
+ *
+ * A latching beat is the exception to "ready now": once shown, it stays until consumed,
+ * whatever its `ready` does afterward. See `latches`.
  */
 export function showingBeat<Id extends string>({
   track,
   consumed,
   state,
   content,
-  bandCount,
+  shownId,
 }: {
   track: readonly OnboardingBeat<Id>[];
   consumed: readonly Id[];
   state: GameState;
   content: Content;
-  bandCount: number;
+  /** The beat that was on screen last frame, or null. */
+  shownId: Id | null;
 }): OnboardingBeat<Id> | null {
   const next = track.find((beat) => !consumed.includes(beat.id));
   if (!next) return null;
-  return isBeatReady({ ready: next.ready, state, content, bandCount }) ? next : null;
+  if (next.id === shownId && latches(next)) return next;
+  return isBeatReady({ ready: next.ready, state, content }) ? next : null;
 }
 
 /**
@@ -132,6 +143,10 @@ export function isGatedOut(gate: BeatGate, control: GatedControl): boolean {
 
 /** Whether this action consumes the beat. */
 export function clearsBeat(beat: OnboardingBeat<string>, action: ClearingAction): boolean {
+  // A supersession is the state moving on, never something the player did. `supersededBeat`
+  // is what answers for it.
+  if (typeof beat.clearedBy !== 'string') return false;
+
   switch (beat.clearedBy) {
     case 'smite':
       return action.kind === 'smite';
@@ -139,8 +154,6 @@ export function clearsBeat(beat: OnboardingBeat<string>, action: ClearingAction)
       return action.kind === 'dismiss';
     case 'gated-action':
       return action.kind !== 'smite' && action.kind !== 'dismiss' && !isGatedOut(beat.gate, action);
-    case 'next-ready':
-      return false;
   }
 }
 
@@ -149,7 +162,7 @@ export function clearsBeat(beat: OnboardingBeat<string>, action: ClearingAction)
  *
  * Retirement is deliberately **not** expressed through `clearsBeat`. That function asks
  * what the player did; this is the case where they did nothing, and the two must not be
- * confused. `goad` clears when the next beat in her track is ready, so a retirement
+ * confused. `goad` clears when her own supersession condition comes true, so a retirement
  * dressed up as that would match nothing until the player produced it — leaving her line
  * on screen for the rest of the session and blocking the beat queued behind her. A
  * retiring beat is consumed whatever would otherwise have cleared it.
@@ -172,62 +185,88 @@ export function shouldRetire({
 }
 
 /**
- * The beat on screen that its successor is ready to take over from.
+ * The beat on screen whose own supersession condition has come true.
  *
  * The third answer to "what ends a beat", beside the player acting (`clearsBeat`) and
- * nobody acting for long enough (`shouldRetire`). This one is neither: it is one line
- * handing over to the next because the state has moved far enough to earn it.
+ * nobody acting for long enough (`shouldRetire`). This one is neither: the state has moved
+ * far enough that the beat has said its piece.
  *
- * Deliberately narrow: it only ever reports the first *unconsumed* beat, and only when
- * that beat asks to be cleared this way, so a beat deeper in the track cannot be skipped
- * by its successor becoming ready early.
+ * The condition rides on the beat rather than on whether its successor is ready. That
+ * earlier shape coupled two beats through a condition neither of them stated, and it
+ * forced a subtle rule about not requiring the beat being cleared to be ready — she is
+ * only ready when the cooldown is clear, and the cave that supersedes her restarts it, so
+ * asking for her readiness here deadlocked. Nothing asks now.
  *
- * **It must not require that beat to be ready, and this is load-bearing.** `goad`'s own
- * readiness needs the smite cooldown clear, and a cave restarts that cooldown — so the
- * very strike that pushes Apathy over the line for her successor is the strike that hides
- * her. Ask for her to be ready here and the handover can never fire: she is only ready
- * when the state that would supersede her has decayed away. Requiring readiness reads as
- * the tidier rule and is a deadlock.
+ * Still deliberately narrow: only the first *unconsumed* beat is ever reported, so a beat
+ * deeper in the track cannot be skipped.
  */
 export function supersededBeat<Id extends string>({
   track,
   consumed,
   state,
   content,
-  bandCount,
 }: {
   track: readonly OnboardingBeat<Id>[];
   consumed: readonly Id[];
   state: GameState;
   content: Content;
-  bandCount: number;
 }): Id | null {
-  const index = track.findIndex((beat) => !consumed.includes(beat.id));
-  if (index < 0) return null;
+  const showing = track.find((beat) => !consumed.includes(beat.id));
+  if (!showing) return null;
 
-  const showing = track[index];
-  if (!showing || showing.clearedBy !== 'next-ready') return null;
+  const clearedBy = showing.clearedBy;
+  if (typeof clearedBy === 'string') return null;
 
-  const next = track[index + 1];
-  if (!next) return null;
-
-  return isBeatReady({ ready: next.ready, state, content, bandCount }) ? showing.id : null;
+  return isBeatReady({ ready: clearedBy.when, state, content }) ? showing.id : null;
 }
 
 /**
- * Which of her lines she is on.
+ * Which of her lines she is on in the cooldown after a blow.
+ *
+ * Indexed by lifetime blows and clamped at both ends, so it only ever moves forward. The
+ * shipped single list was keyed to Apathy, which rises when the player caves, and so walked
+ * her backwards through lines she had already said.
+ */
+export function urgingLine(lines: readonly string[], smites: number): string {
+  const index = Math.min(Math.max(smites, 1), lines.length) - 1;
+  return lines[index] ?? '';
+}
+
+/**
+ * Which of her lines she is on while she is being ignored.
  *
  * The list is total — its last threshold is negative — so the loop always returns for any
- * shipped copy and the empty string below it is unreachable and untested. It is there
- * because the type cannot say the list is total, and the content test that pins the last
- * threshold below zero is what actually holds it. A threshold is exclusive, so Apathy
- * sitting exactly on a boundary takes the calmer line below it.
+ * shipped copy and the empty string below it is unreachable and untested. It is there because
+ * the type cannot say the list is total, and the content test that pins the last threshold
+ * below zero is what actually holds it. A threshold is exclusive, so Apathy sitting exactly on
+ * a boundary takes the calmer line below it.
  */
-export function goadLine(lines: readonly GoadLine[], apathy: number): string {
+export function waitingLine(lines: readonly WaitingLine[], apathy: number): string {
   for (const entry of lines) {
     if (apathy > entry.aboveApathy) return entry.line;
   }
   return '';
+}
+
+/**
+ * What she is saying right now.
+ *
+ * The cooldown is the whole switch: while it runs she is answering the blow that started it,
+ * and once it clears she is asking for the next one. Two lists rather than one, because those
+ * are two different kinds of line and one descending threshold cannot pick between them.
+ */
+export function herLine({
+  urging,
+  waiting,
+  state,
+}: {
+  urging: readonly string[];
+  waiting: readonly WaitingLine[];
+  state: GameState;
+}): string {
+  return state.smiteCooldownMs > 0
+    ? urgingLine(urging, state.stats.smites)
+    : waitingLine(waiting, state.smiteApathy);
 }
 
 /**
@@ -242,13 +281,15 @@ export interface OnboardingProgress {
   readonly malice: readonly MaliceBeatId[];
   /** Walked to the end of Dominion, skipped, or never owed at all. */
   readonly done: boolean;
+  /** Whether she got what she asked for. Decides which line the verdict carries. */
+  readonly caved: boolean;
 }
 
 /** Nothing left to show, and nothing left to remember about how it ended. */
-const FINISHED: OnboardingProgress = { dominion: [], malice: [], done: true };
+const FINISHED: OnboardingProgress = { dominion: [], malice: [], done: true, caved: false };
 
 /** The opening state of a first run: both tracks whole, nothing walked. */
-const UNTOUCHED: OnboardingProgress = { dominion: [], malice: [], done: false };
+const UNTOUCHED: OnboardingProgress = { dominion: [], malice: [], done: false, caved: false };
 
 /**
  * What this boot should do about onboarding.
@@ -319,6 +360,7 @@ export function readOnboarding(): OnboardingProgress | null {
     dominion: consumedIds(DOMINION_BEAT_IDS, 'dominion' in parsed ? parsed.dominion : null),
     malice: consumedIds(MALICE_BEAT_IDS, 'malice' in parsed ? parsed.malice : null),
     done: 'done' in parsed && parsed.done === true,
+    caved: 'caved' in parsed && parsed.caved === true,
   };
 }
 
