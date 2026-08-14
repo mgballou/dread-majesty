@@ -15,6 +15,7 @@ import {
   readOnboarding,
   shouldRetire,
   showingBeat,
+  supersededBeat,
   writeOnboarding,
 } from './onboarding.ts';
 
@@ -296,6 +297,10 @@ describe('clearsBeat', () => {
   it('leaves goad alone on a purchase', () => {
     expect(goad && clearsBeat(goad, { kind: 'buy', tierId: 'minion' })).toBe(false);
   });
+
+  it('leaves goad alone on a dismissal', () => {
+    expect(goad && clearsBeat(goad, { kind: 'dismiss' })).toBe(false);
+  });
 });
 
 describe('shouldRetire', () => {
@@ -453,5 +458,57 @@ describe('onboardingDecision', () => {
     const decision = onboardingDecision({ stored: midway, fresh: false });
     const consumed = decision.kind === 'run' ? decision.progress.dominion : [];
     expect(showing(state, consumed)?.id).toBe('muster');
+  });
+});
+
+describe('supersededBeat', () => {
+  const bandCount = v1Copy.smite.bands.length;
+
+  function superseded(state: GameState, consumed: readonly string[]) {
+    return supersededBeat({
+      track: malice,
+      consumed: consumed as readonly (typeof malice)[number]['id'][],
+      state,
+      content,
+      bandCount,
+    });
+  }
+
+  function struck(apathy: number): GameState {
+    const state = fresh();
+    state.stats.smites = 1;
+    state.smiteApathy = apathy;
+    return state;
+  }
+
+  it('leaves her talking while the realm still flinches', () => {
+    expect(superseded(struck(1.5), ['first-blow'])).toBeNull();
+  });
+
+  it('hands over once the realm has stopped looking', () => {
+    expect(superseded(struck(2.1), ['first-blow'])).toBe('goad');
+  });
+
+  it('takes the boundary as belonging to the narrator', () => {
+    expect(superseded(struck(2), ['first-blow'])).toBe('goad');
+  });
+
+  it('supersedes nothing when the showing beat waits on the player', () => {
+    expect(superseded(struck(2.1), [])).toBeNull();
+  });
+
+  it('supersedes nothing once she is already consumed', () => {
+    expect(superseded(struck(2.1), ['first-blow', 'goad'])).toBeNull();
+  });
+
+  it('supersedes nothing when no beat is showing', () => {
+    expect(superseded(fresh(), ['first-blow', 'goad', 'apathy'])).toBeNull();
+  });
+
+  it('hands over even while she is hidden by her own cooldown', () => {
+    const state = struck(2.1);
+    state.smiteCooldownMs = 20_000;
+    state.smiteActiveMs = 15_000;
+    expect(superseded(state, ['first-blow'])).toBe('goad');
   });
 });
