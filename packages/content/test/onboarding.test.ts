@@ -49,7 +49,7 @@ describe('the Malice track', () => {
     expect(v1Onboarding.malice.find((beat) => beat.id === 'goad')?.voice).toBe('her');
   });
 
-  it('answers her in the narrator’s voice', () => {
+  it("answers her in the narrator's voice", () => {
     expect(v1Onboarding.malice.find((beat) => beat.id === 'apathy')?.voice).toBe('narrator');
   });
 
@@ -80,6 +80,12 @@ describe('every beat names something that exists', () => {
   it('clears a gated beat by its own gated action', () => {
     for (const beat of beats.filter((candidate) => candidate.gate.kind !== 'none')) {
       expect(beat.clearedBy).toBe('gated-action');
+    }
+  });
+
+  it('gates a beat that clears by a gated action', () => {
+    for (const beat of beats.filter((candidate) => candidate.clearedBy === 'gated-action')) {
+      expect(beat.gate.kind).not.toBe('none');
     }
   });
 });

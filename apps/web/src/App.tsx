@@ -7,12 +7,14 @@ import { useSound } from './audio/useSound.ts';
 import { DevBar } from './dev/DevBar.tsx';
 import {
   clearsBeat,
+  finishOnboarding,
   goadLine,
-  hasSeenOnboarding,
   isGatedOut,
-  markOnboardingSeen,
+  onboardingDecision,
+  readOnboarding,
   shouldRetire,
   showingBeat,
+  writeOnboarding,
   type ClearingAction,
   type GatedControl,
 } from './game/onboarding.ts';
@@ -81,14 +83,15 @@ export function App(): ReactNode {
   const closeLedger = useCallback(() => setLedgerOpen(false), []);
 
   /**
-   * Onboarding, for a first run and only a first run.
+   * Onboarding, for a first run and whatever is left of it afterwards.
    *
-   * Two conditions, and both are needed. `fresh` is this visit: a save on disk means a
-   * returning player, whatever they have or have not been told. `hasSeenOnboarding` is
-   * every visit before it, and it covers the player who arrived, skipped and closed the
-   * tab before the first autosave ten seconds later — `fresh` alone would show it again.
+   * The decision is `onboardingDecision`'s; this holds the answer. Latched into state
+   * rather than read every render, so onboarding cannot reappear mid-session.
    *
-   * Latched into state rather than read every render, so it cannot reappear mid-session.
+   * The consumed lists are seeded from what is written down, so a reload eleven minutes
+   * into an eleven-minute tutorial comes back to the beat the player was on rather than
+   * to nothing at all. The autosave lands after ten seconds, so without this the second
+   * visit of every first run would find a save on disk and end the tutorial at beat two.
    */
   const [running, setRunning] = useState(false);
   const decided = useRef(false);
@@ -100,11 +103,18 @@ export function App(): ReactNode {
   useEffect(() => {
     if (!session.ready || decided.current) return;
     decided.current = true;
-    if (session.fresh && !hasSeenOnboarding()) setRunning(true);
+
+    const decision = onboardingDecision({ stored: readOnboarding(), fresh: session.fresh });
+    if (decision.kind === 'retire') finishOnboarding();
+    if (decision.kind !== 'run') return;
+
+    setDoneDominion(decision.progress.dominion);
+    setDoneMalice(decision.progress.malice);
+    setRunning(true);
   }, [session.ready, session.fresh]);
 
   const stopOnboarding = useCallback(() => {
-    markOnboardingSeen();
+    finishOnboarding();
     setRunning(false);
   }, []);
 
@@ -178,9 +188,25 @@ export function App(): ReactNode {
     }
   }, [beat, state.stats.playTimeMs, retire]);
 
+  /**
+   * Writes the tracks down on every consumption, not once at the end.
+   *
+   * An effect over the two lists rather than a call in each handler: retirement, a gated
+   * action and a dismissal all consume a beat by appending to one of these, and a fourth
+   * way to consume one added later would be written down by this without being told to.
+   *
+   * Walking the last Dominion beat is finishing, whatever the Malice track still has to
+   * say — she is welcome to keep talking for the rest of this session, but a later visit
+   * owes the player nothing.
+   */
   useEffect(() => {
-    if (running && doneDominion.length === onboarding.dominion.length) markOnboardingSeen();
-  }, [running, doneDominion.length, onboarding.dominion.length]);
+    if (!running) return;
+    writeOnboarding({
+      dominion: doneDominion,
+      malice: doneMalice,
+      done: doneDominion.length === onboarding.dominion.length,
+    });
+  }, [running, doneDominion, doneMalice, onboarding.dominion.length]);
 
   // Passed only while a beat is showing, so after onboarding the prop is absent and the
   // controls are exactly what they were.
@@ -269,7 +295,8 @@ export function App(): ReactNode {
           {...(isGated ? { isGated } : {})}
           onPurchase={(tierId, buying) => {
             const result = dispatch({ kind: 'purchase', tierId, quantity: buying });
-            if (result.ok) sound.play('purchase');
+            if (!result.ok) return;
+            sound.play('purchase');
             acted({ kind: 'buy', tierId });
           }}
         />
@@ -290,7 +317,8 @@ export function App(): ReactNode {
           {...(isGated ? { isGated } : {})}
           onAppoint={(overseerId) => {
             const result = dispatch({ kind: 'appoint', overseerId });
-            if (result.ok) sound.play('unlock');
+            if (!result.ok) return;
+            sound.play('unlock');
             acted({ kind: 'appoint', overseerId });
           }}
         />
@@ -332,7 +360,11 @@ export function App(): ReactNode {
   ];
 
   return (
-    <div className="shell">
+    /* The modifier carries the room the pinned prompt stands in, so a player who is not
+       being taught anything does not scroll past 16rem of nothing under the footer. It
+       is latched, so it changes at most once a session — and only while nothing is
+       pinned and the room is below the fold anyway. See App.css. */
+    <div className={running ? 'shell shell--onboarding' : 'shell'}>
       <div className="shell__frame" inert={behindTheSummary}>
         {session.saveRefused && (
           <p className="shell__refusal" role="status">
@@ -358,7 +390,8 @@ export function App(): ReactNode {
             {...(isGated ? { isGated } : {})}
             onRouse={(tierId) => {
               const result = dispatch({ kind: 'rouse', tierId });
-              if (result.ok) sound.play('rouse');
+              if (!result.ok) return;
+              sound.play('rouse');
               acted({ kind: 'rouse', tierId });
             }}
             onSmite={() => {
@@ -406,7 +439,8 @@ export function App(): ReactNode {
             to say. The first instruction of a first run cannot be below the fold, and
             the page is taller than a laptop viewport from the opening frame. Nothing
             moves when it lands or clears: it is out of flow, and the shell reserves the
-            room under the footer permanently. See `.shell__prompt`. */}
+            room under the footer for as long as onboarding is running. See
+            `.shell__prompt`. */}
         {beat && (
           <div className="shell__prompt">
             <Prompt

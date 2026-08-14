@@ -76,8 +76,13 @@ export function EvilNode({
   const shown = formatWhole(total);
   const ready = phase.kind === 'ready';
   const band =
-    copy.bands[bandIndex(state.smiteApathy, content.smite.apathy.cap, copy.bands.length)] ??
-    copy.bands[0];
+    copy.bands[
+      bandIndex({
+        apathy: state.smiteApathy,
+        cap: content.smite.apathy.cap,
+        bandCount: copy.bands.length,
+      })
+    ] ?? copy.bands[0];
 
   return (
     <div className="evil-node" data-motion={reduced ? 'reduced' : 'full'} data-smite={phase.kind}>

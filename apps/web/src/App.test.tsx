@@ -1,18 +1,30 @@
+import Decimal from 'break_eternity.js';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { CURRENT, CURRENT_COPY } from '@dm/content';
 import { createState, exportSave, serialize, type SaveBlob } from '@dm/engine';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { App } from './App.tsx';
-import { forgetOnboarding, hasSeenOnboarding, markOnboardingSeen } from './game/onboarding.ts';
+import {
+  finishOnboarding,
+  forgetOnboarding,
+  readOnboarding,
+  writeOnboarding,
+} from './game/onboarding.ts';
 import * as storage from './game/storage.ts';
 
 function savedBlob(): SaveBlob {
   return serialize(createState(CURRENT), Date.now());
 }
 
+function midRunBlob(): SaveBlob {
+  const state = createState(CURRENT);
+  state.gens.minion.lifetimeProduced = new Decimal(5);
+  return serialize(state, Date.now());
+}
+
 describe('the deck and the records', () => {
-  beforeEach(() => markOnboardingSeen());
+  beforeEach(() => finishOnboarding());
   afterEach(() => forgetOnboarding());
 
   it('shows four tabs', async () => {
@@ -74,12 +86,57 @@ describe('first-run onboarding', () => {
   });
 
   it('says nothing to a player who has seen it before', async () => {
-    markOnboardingSeen();
+    finishOnboarding();
     vi.spyOn(storage, 'readSave').mockResolvedValue(null);
     render(<App />);
     await screen.findAllByRole('tab');
 
     expect(screen.queryByText(CURRENT_COPY.onboarding.dominion.stir)).not.toBeInTheDocument();
+  });
+
+  it('says nothing to a player holding the legacy flag', async () => {
+    localStorage.setItem('dread-majesty:onboarding-seen', '1');
+    vi.spyOn(storage, 'readSave').mockResolvedValue(null);
+    render(<App />);
+    await screen.findAllByRole('tab');
+
+    expect(screen.queryByText(CURRENT_COPY.onboarding.dominion.stir)).not.toBeInTheDocument();
+  });
+
+  it('writes off a returning player who predates onboarding', async () => {
+    vi.spyOn(storage, 'readSave').mockResolvedValue(savedBlob());
+    render(<App />);
+    await screen.findAllByRole('tab');
+
+    expect(readOnboarding()?.done).toBe(true);
+  });
+
+  it('resumes mid-track for a player who reloaded during the tutorial', async () => {
+    writeOnboarding({ dominion: ['stir'], malice: [], done: false });
+    vi.spyOn(storage, 'readSave').mockResolvedValue(midRunBlob());
+    render(<App />);
+
+    expect(await screen.findByText(CURRENT_COPY.onboarding.dominion.orders)).toBeInTheDocument();
+  });
+
+  it('leaves the resumed beat off the bar once it has been consumed', async () => {
+    writeOnboarding({ dominion: ['stir'], malice: [], done: false });
+    vi.spyOn(storage, 'readSave').mockResolvedValue(midRunBlob());
+    render(<App />);
+    await screen.findByText(CURRENT_COPY.onboarding.dominion.orders);
+
+    expect(screen.queryByText(CURRENT_COPY.onboarding.dominion.stir)).not.toBeInTheDocument();
+  });
+
+  it('writes down a beat the moment it is consumed', async () => {
+    vi.spyOn(storage, 'readSave').mockResolvedValue(null);
+    const minions = CURRENT.tiers.find((tier) => tier.id === 'minion')?.plural ?? '';
+    render(<App />);
+    await userEvent.click(
+      await screen.findByRole('button', { name: CURRENT_COPY.overseer.rouse(minions) }),
+    );
+
+    expect(readOnboarding()?.dominion).toEqual(['stir']);
   });
 
   it('clears every prompt when the player skips', async () => {
@@ -99,7 +156,7 @@ describe('first-run onboarding', () => {
       await screen.findByRole('button', { name: CURRENT_COPY.onboarding.skip }),
     );
 
-    expect(hasSeenOnboarding()).toBe(true);
+    expect(readOnboarding()?.done).toBe(true);
   });
 });
 

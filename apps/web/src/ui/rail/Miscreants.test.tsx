@@ -297,20 +297,20 @@ describe('Miscreants', () => {
       unlockAndAffordEveryPost();
 
       const { container } = draw(() => true, gateAllButMinionHandAppoint);
-      const others = [...container.querySelectorAll('.miscreant__post')].filter(
+      const others = [...container.querySelectorAll<HTMLButtonElement>('.miscreant__post')].filter(
         (button) => !button.textContent?.includes(OVERSEER.names['minion-hand']),
       );
 
-      expect(others.every((button) => (button as HTMLButtonElement).disabled)).toBe(true);
+      expect(others.every((button) => button.disabled)).toBe(true);
     });
 
     it('leaves affordability alone deciding when nothing is gated', () => {
       unlockAndAffordEveryPost();
 
       const { container } = draw();
-      const buttons = [...container.querySelectorAll('.miscreant__post')];
+      const buttons = [...container.querySelectorAll<HTMLButtonElement>('.miscreant__post')];
 
-      expect(buttons.every((button) => !(button as HTMLButtonElement).disabled)).toBe(true);
+      expect(buttons.every((button) => !button.disabled)).toBe(true);
     });
 
     function gateMinionHandAppoint(control: GatedControl): boolean {

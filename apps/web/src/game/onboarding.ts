@@ -1,8 +1,11 @@
+import { DOMINION_BEAT_IDS, MALICE_BEAT_IDS } from '@dm/content';
 import type {
   BeatGate,
   BeatReady,
   Content,
+  DominionBeatId,
   GoadLine,
+  MaliceBeatId,
   OnboardingBeat,
   OverseerId,
   TierId,
@@ -11,7 +14,7 @@ import { nextCost } from '@dm/engine';
 import type { GameState } from '@dm/engine';
 import { bandIndex } from './apathy.ts';
 
-const SEEN_KEY = 'dread-majesty:onboarding-seen';
+const PROGRESS_KEY = 'dread-majesty:onboarding-seen';
 
 /** An action the interface can offer and a beat can gate. Smite is deliberately absent. */
 export type GatedControl =
@@ -74,7 +77,10 @@ export function isBeatReady({
       return state.stats.smites >= 1 && state.smiteActiveMs <= 0 && state.smiteCooldownMs <= 0;
 
     case 'band-at-least':
-      return bandIndex(state.smiteApathy, content.smite.apathy.cap, bandCount) >= ready.band;
+      return (
+        bandIndex({ apathy: state.smiteApathy, cap: content.smite.apathy.cap, bandCount }) >=
+        ready.band
+      );
   }
 }
 
@@ -165,9 +171,11 @@ export function shouldRetire({
 /**
  * Which of her lines she is on.
  *
- * The list is total — its last threshold is negative — so the loop always returns and
- * there is no fallback to leave untested. A threshold is exclusive, so Apathy sitting
- * exactly on a boundary takes the calmer line below it.
+ * The list is total — its last threshold is negative — so the loop always returns for any
+ * shipped copy and the empty string below it is unreachable and untested. It is there
+ * because the type cannot say the list is total, and the content test that pins the last
+ * threshold below zero is what actually holds it. A threshold is exclusive, so Apathy
+ * sitting exactly on a boundary takes the calmer line below it.
  */
 export function goadLine(lines: readonly GoadLine[], apathy: number): string {
   for (const entry of lines) {
@@ -177,27 +185,105 @@ export function goadLine(lines: readonly GoadLine[], apathy: number): string {
 }
 
 /**
- * Whether onboarding has already been walked, skipped or finished.
+ * How far through the two tracks the player got, as it is written down.
  *
  * `localStorage` rather than the save, on purpose. This is not game state: it survives
  * abdication, it has no place in a save blob, and putting it there would mean a
  * migration and a field the engine has to carry and ignore forever.
- *
- * A blocked or absent store reports "seen". That is the safer way to be wrong: a
- * returning player whose browser refuses storage gets no tutorial rather than the same
- * tutorial on every single visit, which is the failure they would actually notice.
  */
-export function hasSeenOnboarding(): boolean {
-  try {
-    return localStorage.getItem(SEEN_KEY) !== null;
-  } catch {
-    return true;
-  }
+export interface OnboardingProgress {
+  readonly dominion: readonly DominionBeatId[];
+  readonly malice: readonly MaliceBeatId[];
+  /** Walked to the end of Dominion, skipped, or never owed at all. */
+  readonly done: boolean;
 }
 
-export function markOnboardingSeen(): void {
+/** Nothing left to show, and nothing left to remember about how it ended. */
+const FINISHED: OnboardingProgress = { dominion: [], malice: [], done: true };
+
+/** The opening state of a first run: both tracks whole, nothing walked. */
+const UNTOUCHED: OnboardingProgress = { dominion: [], malice: [], done: false };
+
+/**
+ * What this boot should do about onboarding.
+ *
+ * Pure, so every branch is a plain assertion. Only two facts go in: what is written
+ * down, and whether this visit found a save.
+ */
+export type OnboardingDecision =
+  | { readonly kind: 'run'; readonly progress: OnboardingProgress }
+  /** Never owed it — an existing player from before onboarding. Write it off. */
+  | { readonly kind: 'retire' }
+  | { readonly kind: 'nothing' };
+
+/**
+ * Start, resume, or leave the player alone.
+ *
+ * Starting takes both facts: nothing written down **and** no save on disk. Either alone
+ * is wrong — the key alone would hand the tutorial to somebody who has played for weeks
+ * on a browser that lost its storage, and `fresh` alone would restart it for anybody who
+ * skipped and closed the tab before the first autosave ten seconds later.
+ *
+ * Resuming takes only the first. A player who is eleven minutes into an eleven-minute
+ * tutorial has a save on disk by definition, so `fresh` must not be consulted again once
+ * there is progress to resume from — that is the whole reason this is written down per
+ * beat rather than once at the end.
+ */
+export function onboardingDecision({
+  stored,
+  fresh,
+}: {
+  stored: OnboardingProgress | null;
+  fresh: boolean;
+}): OnboardingDecision {
+  if (stored === null) return fresh ? { kind: 'run', progress: UNTOUCHED } : { kind: 'retire' };
+  if (stored.done) return { kind: 'nothing' };
+  return { kind: 'run', progress: stored };
+}
+
+/**
+ * Reads the progress back, or null when there is none.
+ *
+ * A blocked store, unreadable data and the legacy `'1'` all read as finished. That is the
+ * safer way to be wrong: a player whose browser refuses storage gets no tutorial rather
+ * than the same tutorial on every single visit, which is the failure they would actually
+ * notice — and `'1'` is exactly what a player who already dismissed it is holding.
+ */
+export function readOnboarding(): OnboardingProgress | null {
+  let raw: string | null = null;
   try {
-    localStorage.setItem(SEEN_KEY, '1');
+    raw = localStorage.getItem(PROGRESS_KEY);
+  } catch {
+    return FINISHED;
+  }
+
+  if (raw === null) return null;
+  if (raw === '1') return FINISHED;
+
+  let parsed: unknown = null;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return FINISHED;
+  }
+
+  if (typeof parsed !== 'object' || parsed === null) return FINISHED;
+
+  return {
+    dominion: consumedIds(DOMINION_BEAT_IDS, 'dominion' in parsed ? parsed.dominion : null),
+    malice: consumedIds(MALICE_BEAT_IDS, 'malice' in parsed ? parsed.malice : null),
+    done: 'done' in parsed && parsed.done === true,
+  };
+}
+
+/** Writes both tracks off: skipped, walked to the end, or never owed in the first place. */
+export function finishOnboarding(): void {
+  writeOnboarding(FINISHED);
+}
+
+export function writeOnboarding(progress: OnboardingProgress): void {
+  try {
+    localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress));
   } catch {
     // Nothing to do and nothing worth saying. It showed; it may show again.
   }
@@ -206,8 +292,22 @@ export function markOnboardingSeen(): void {
 /** Only the tests need this. Nothing in the game forgets onboarding on purpose. */
 export function forgetOnboarding(): void {
   try {
-    localStorage.removeItem(SEEN_KEY);
+    localStorage.removeItem(PROGRESS_KEY);
   } catch {
     // As above.
   }
+}
+
+/**
+ * The ids of a track that the stored list says are consumed.
+ *
+ * Filtered from the track's own id list rather than read out of the store, so anything
+ * the store holds that is not an id of this track — a renamed beat, a hand-edited value —
+ * simply does not appear, and the result is typed without a cast. Order does not matter:
+ * every reader asks `includes`.
+ */
+function consumedIds<Id extends string>(known: readonly Id[], stored: unknown): readonly Id[] {
+  if (!Array.isArray(stored)) return [];
+  const entries: readonly unknown[] = stored;
+  return known.filter((id) => entries.includes(id));
 }

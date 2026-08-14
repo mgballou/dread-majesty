@@ -1,6 +1,6 @@
 # Onboarding
 
-**Status:** approved, not built
+**Status:** built
 **Supersedes:** the first-run tour of `first-run-tour` / PR #8, in full
 
 A new player is taught the compounding loop by being walked through it, one action at a
@@ -230,9 +230,9 @@ second clause is the mechanic.
 
 | Apathy | Roughly | Line |
 | ------ | ------- | ---- |
-| > 0.45 | t = 20–33s | "Oh, that was *good*. Again — while they are still trembling. Don't let them settle." |
-| 0.2 – 0.45 | t = 33–42s | "You are being careful. I do like that in you. But careful is not the same as strong." |
-| 0 – 0.2 | t = 42–45s | "No? Then I'll wait with you. I have nothing else. Neither, in the end, do you." |
+| > 0.45 | t = 20–24.75s | "Oh, that was *good*. Again — while they are still trembling. Don't let them settle." |
+| 0.2 – 0.45 | t = 24.75–36s | "You are being careful. I do like that in you. But careful is not the same as strong." |
+| 0 – 0.2 | t = 36–45s | "No? Then I'll wait with you. I have nothing else. Neither, in the end, do you." |
 | 0 | t ≥ 45s | "There. They have forgotten you entirely. *That* is the moment — take it, and take all of it." |
 
 The first flatters and manufactures urgency. The second reads the resistance, agrees with
@@ -397,15 +397,24 @@ of this exists.
 ### 7.2 Web
 
 - **`apps/web/src/game/onboarding.ts`** (new, replaces `tour.ts`) — pure functions over
-  `GameState`: which beat of a track is showing, and what it gates. Plus one seen-flag per
-  track in `localStorage`. A blocked store reports "seen", so a player with storage
-  disabled is never given the tutorial on every visit — the rule `tour.ts` already
-  follows.
+  `GameState`: which beat of a track is showing, and what it gates. Plus the progress
+  record in `localStorage` — the beats each track has consumed and whether the walk is
+  over — written on every consumption, so a reload resumes at the beat the player was on.
+  It has to be written per beat rather than once at the end: the autosave lands ten
+  seconds in, and a tutorial that runs for eleven minutes would otherwise be ended by its
+  own first save on the next visit. A blocked store reports "done", so a player with
+  storage disabled is never given the tutorial on every visit — the rule `tour.ts`
+  already follows.
 
 - **`apps/web/src/ui/Prompt.tsx`** and **`Prompt.css`** (new) — the bar at the foot of the
-  frame, above the footer. It holds its row from first paint whether or not a beat is
-  showing, so nothing on the page shifts when one appears. This is the trick
-  `shell__marker` already uses for the prestige notice, and the reason is the same.
+  frame, pinned over the footer rather than in flow, and mounted only when there is a beat
+  to show. In flow it sat below the fold on a laptop from the opening frame, because the
+  page is taller than the window before anything is bought. Out of flow it can never move
+  the footer, so it needs no held row — and a held row would have to guess a height, guess
+  it again for the longest line, and leave every returning player looking at an empty
+  band. The shell reserves the room under the footer for the length of onboarding instead,
+  which is the one thing that does have to be latched: it is below the last thing on the
+  page where nobody can see it change.
 
 - **`App.tsx`** threads a gate predicate into `ChainStage`, `BuyRail` and `Miscreants`, in
   the same shape those components already take `isUnlocked`, `isRousable` and

@@ -1,22 +1,30 @@
 /* The frame. See App.tsx. */
 
+.shell {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: var(--space-4);
+  min-height: 100vh;
+}
+
 /*
- * The bottom padding is the room the pinned prompt stands in, so the bar can never
- * cover the footer. Permanent rather than added when a beat arrives: it sits below the
- * last thing on the page, where nobody can see it, and toggling it would reintroduce
- * exactly the shift the pinning removed.
+ * The room the pinned prompt stands in, so the bar can never cover the footer.
+ *
+ * It rides the same latch the prompt does rather than being permanent, because `.shell`
+ * is `min-height: 100vh` under `border-box` and permanent meant every returning player
+ * scrolling past 230px of nothing below the footer — over a third of a phone viewport,
+ * for a bar they will never be shown. Held for the whole of onboarding rather than for
+ * the beats themselves: the latch turns over at most once a session, while a beat lands
+ * and clears a dozen times, and toggling it per beat would reintroduce exactly the shift
+ * the pinning removed. Nothing can see it move — it is below the last thing on the page.
  *
  * 16rem is measured, not guessed. The tallest bar in the game is `first-blow` — two
  * hundred and fifteen characters over the narrowest phone — which comes to 226px at a
  * 320px viewport and 204px at 390px. This clears the worst of those by 30px. Re-measure
  * it if a longer line is ever written.
  */
-.shell {
-  max-width: 72rem;
-  margin: 0 auto;
-  padding: var(--space-4);
+.shell--onboarding {
   padding-block-end: calc(16rem + env(safe-area-inset-bottom));
-  min-height: 100vh;
 }
 
 /*
@@ -104,8 +112,8 @@
  * here and why the element is mounted only when there is a beat. A reserved row would
  * have to guess a height — and guess it again for `first-blow`, which runs to five
  * wrapped lines above its own button on a phone — and would leave every returning
- * player looking at a permanent empty band. `.shell` carries the room under the footer
- * instead, permanently, so nothing shifts either way.
+ * player looking at a permanent empty band. `.shell--onboarding` carries the room under
+ * the footer instead, for the length of onboarding, so nothing shifts either way.
  *
  * The z-index sits under the return summary's 10: a save that has been away is not a
  * first run, and while that summary is up it is the screen.
@@ -155,12 +163,15 @@
   .shell {
     padding: var(--space-2);
     padding-block-start: max(var(--space-2), env(safe-area-inset-top));
-    /* The prompt wraps further on a phone and its actions row goes full width, so the
-       room it stands in is the same reserve as on a laptop, not the narrower gutter the
-       rest of this rule sets. */
-    padding-block-end: calc(16rem + env(safe-area-inset-bottom));
     padding-inline-start: max(var(--space-2), env(safe-area-inset-left));
     padding-inline-end: max(var(--space-2), env(safe-area-inset-right));
+  }
+
+  /* The shorthand above resets the reserve, so it is set again here. The prompt wraps
+     further on a phone and its actions row goes full width, so the room it stands in is
+     the same reserve as on a laptop, not the narrower gutter the rest of that rule sets. */
+  .shell--onboarding {
+    padding-block-end: calc(16rem + env(safe-area-inset-bottom));
   }
 
   .shell__body {
