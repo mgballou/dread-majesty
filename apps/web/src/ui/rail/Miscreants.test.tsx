@@ -273,6 +273,14 @@ describe('Miscreants', () => {
     expect(screen.getByRole('dialog').textContent?.includes(OVERSEER.effect.automate)).toBe(true);
   });
 
+  it('names which post it is, so the tutorial can point at it', () => {
+    draw();
+
+    expect(
+      screen.getByRole('button', { name: new RegExp(OVERSEER.names['minion-hand']) }),
+    ).toHaveAttribute('data-overseer', 'minion-hand');
+  });
+
   describe('the onboarding gate', () => {
     function gateAllButMinionHandAppoint(control: GatedControl): boolean {
       return !(control.kind === 'appoint' && control.overseerId === 'minion-hand');
