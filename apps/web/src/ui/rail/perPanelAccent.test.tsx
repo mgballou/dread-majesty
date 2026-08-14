@@ -91,17 +91,4 @@ describe('each panel wears exactly one accent, and never the other panel', () =>
     const lifted = rail.querySelector('.rail__row--best button');
     expect(lifted?.getAttribute('aria-label')).toContain(CURRENT_COPY.rail.lifted);
   });
-
-  it('puts no flag beside the name of the lifted row', () => {
-    state.resources.evil = new Decimal(5200);
-    const { rail } = renderScreen(draw());
-    expect(rail.querySelector('.rail__row--best .rail__flag')).toBeNull();
-  });
-
-  it('puts no flag beside the name of the lifted post', () => {
-    state.gens.minion.owned = new Decimal(400);
-    state.resources.evil = new Decimal(2000);
-    const { miscreants } = renderScreen(draw());
-    expect(miscreants.querySelector('.miscreant__post--best .miscreant__flag')).toBeNull();
-  });
 });

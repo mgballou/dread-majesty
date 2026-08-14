@@ -167,8 +167,7 @@ describe('the lines that take a number', () => {
   });
 
   it('substitutes into the rest of the rail lines', () => {
-    expect(v1Copy.rail.held('12')).toContain('12');
-    expect(v1Copy.rail.shortfall('2.4K')).toContain('2.4K');
+    expect(v1Copy.rail.purchased('12')).toContain('12');
     expect(v1Copy.rail.quantityOption('10')).toContain('10');
   });
 
@@ -218,9 +217,8 @@ describe('every line that takes a number', () => {
     v1Copy.offline.summary('2h 11m'),
     v1Copy.offline.capped('4h'),
     v1Copy.rail.cost('1.2M'),
-    v1Copy.rail.held('12'),
+    v1Copy.rail.purchased('12'),
     v1Copy.rail.buy({ count: '10', tier: 'Minions', cost: '1.2M Evil' }),
-    v1Copy.rail.shortfall('2.4K'),
     v1Copy.rail.quantityOption('10'),
     v1Copy.rail.upcoming({ tier: 'Warrens', cost: '2.5K Evil' }),
     v1Copy.overseer.rouse('Minions'),

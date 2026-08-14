@@ -86,10 +86,12 @@ describe('BuyRail', () => {
     expect(screen.getByRole('list', { name: CURRENT_COPY.rail.list })).toBeInTheDocument();
   });
 
-  it('says how many of a tier are held', () => {
-    draw();
+  it('says how many of a tier were purchased', () => {
+    const { container } = draw();
 
-    expect(screen.getByText(CURRENT_COPY.rail.held('1'))).toBeInTheDocument();
+    const purchased = container.querySelector('[data-tier="minion"] .rail__purchased');
+
+    expect(purchased).toHaveTextContent(CURRENT_COPY.rail.purchased('0'));
   });
 
   it('enables an affordable row without saying so in words', () => {
@@ -98,14 +100,6 @@ describe('BuyRail', () => {
     draw();
 
     expect(screen.getByRole('button', { name: buyNameStart('minion', 1) })).not.toBeDisabled();
-  });
-
-  it('leaves the shortfall silent once a row is affordable', () => {
-    state.resources.evil = new Decimal(5200);
-
-    const { container } = draw();
-
-    expect(container.querySelector('[data-tier="minion"] .rail__shortfall')).toHaveTextContent('');
   });
 
   it('lifts exactly one spend to the accent', () => {
@@ -132,30 +126,12 @@ describe('BuyRail', () => {
     ).toBeInTheDocument();
   });
 
-  it('names what to save toward when nothing is affordable', () => {
-    draw();
-
-    expect(screen.getByText(CURRENT_COPY.rail.saving)).toBeInTheDocument();
-  });
-
   it('disables a row the player cannot afford', () => {
     state.resources.evil = new Decimal(200);
 
     draw();
 
     expect(screen.getByRole('button', { name: buyName('warren', 1) })).toBeDisabled();
-  });
-
-  it('says how far short an unaffordable row is', () => {
-    state.resources.evil = new Decimal(200);
-
-    draw();
-
-    const short = formatNumber(
-      (bulkCost(state, CURRENT, 'warren', 1) ?? new Decimal(0)).sub(state.resources.evil),
-    );
-
-    expect(screen.getByText(CURRENT_COPY.rail.shortfall(short))).toBeInTheDocument();
   });
 
   it('keeps every other control on the rail at secondary weight', () => {
@@ -361,30 +337,15 @@ describe('BuyRail', () => {
     expect(container.querySelectorAll('.rail__row--best')).toHaveLength(1);
   });
 
-  it('says how many of a tier were bought when the cascade has made more', () => {
-    state.gens.minion.purchased = new Decimal(12);
-    state.gens.minion.owned = new Decimal(4000);
-
-    draw();
-
-    expect(screen.getByText(/12 bought/)).toBeInTheDocument();
-  });
-
-  it('says nothing about purchases when every unit was bought', () => {
-    state.gens.minion.purchased = new Decimal(12);
-    state.gens.minion.owned = new Decimal(12);
-
-    draw();
-
-    expect(screen.queryByText(/bought/)).not.toBeInTheDocument();
-  });
-
-  it('says which count the price follows when bred units outnumber bought ones', () => {
+  it('shows the purchased count rather than the owned one once the cascade has bred more', () => {
     state.gens.minion.owned = new Decimal(30);
     state.gens.minion.purchased = new Decimal(10);
-    draw();
 
-    expect(screen.getByText(CURRENT_COPY.rail.bought('10'))).toBeInTheDocument();
+    const { container } = draw();
+
+    const purchased = container.querySelector('[data-tier="minion"] .rail__purchased');
+
+    expect(purchased).toHaveTextContent(CURRENT_COPY.rail.purchased('10'));
   });
 
   it("states a swollen row's doubled yield, not the raw one", () => {
