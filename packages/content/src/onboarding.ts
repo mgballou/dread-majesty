@@ -43,8 +43,15 @@ export type BeatGate =
 /** Who is speaking. A property of the beat, because two narrator beats sit in the Malice track. */
 export type BeatVoice = 'narrator' | 'her';
 
-/** What consumes a beat, besides retiring unread. */
-export type BeatClearedBy = 'gated-action' | 'smite' | 'dismiss';
+/**
+ * What consumes a beat, besides retiring unread.
+ *
+ * `next-ready` means the beat is consumed when the next unconsumed beat in its track has
+ * a `ready` that holds — one line handing over to the next rather than the player ending
+ * it. It is what lets a beat keep talking across several player actions instead of being
+ * spent by the first one.
+ */
+export type BeatClearedBy = 'gated-action' | 'smite' | 'dismiss' | 'next-ready';
 
 export interface OnboardingBeat<Id extends string> {
   readonly id: Id;

@@ -414,7 +414,7 @@ export const v1Copy = {
     narratorLabel: 'A word of advice',
     herLabel: 'She has something to say',
     dominion: {
-      stir: 'One Minion, and a grievance. Set it about some wickedness.',
+      stir: 'One Minion, big dreams, and the favor of an otherworldly abomination. Set it about some wickedness.',
       orders:
         'Once they finish a task, they await further orders. Initiative seems a rare quality.',
       muster: 'One is not a host. Evil buys more of them, and more of them is more Evil.',

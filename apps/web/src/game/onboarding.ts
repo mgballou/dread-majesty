@@ -139,6 +139,8 @@ export function clearsBeat(beat: OnboardingBeat<string>, action: ClearingAction)
       return action.kind === 'dismiss';
     case 'gated-action':
       return action.kind !== 'smite' && action.kind !== 'dismiss' && !isGatedOut(beat.gate, action);
+    case 'next-ready':
+      return false;
   }
 }
 

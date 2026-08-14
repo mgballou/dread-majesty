@@ -53,8 +53,8 @@ describe('the Malice track', () => {
     expect(v1Onboarding.malice.find((beat) => beat.id === 'apathy')?.voice).toBe('narrator');
   });
 
-  it('clears goad on the next blow', () => {
-    expect(v1Onboarding.malice.find((beat) => beat.id === 'goad')?.clearedBy).toBe('smite');
+  it('clears goad when the next beat is ready', () => {
+    expect(v1Onboarding.malice.find((beat) => beat.id === 'goad')?.clearedBy).toBe('next-ready');
   });
 });
 
@@ -112,5 +112,38 @@ describe('the onboarding copy', () => {
 
   it('offers both bail actions on the opening beat', () => {
     expect([copy.skip, copy.loadSave].every((label) => label.length > 0)).toBe(true);
+  });
+
+  it('plants her in the opening line', () => {
+    expect(copy.dominion.stir).toContain('otherworldly abomination');
+  });
+});
+
+describe('the Malice track resolves', () => {
+  const malice = v1Onboarding.malice;
+  const beat = (id: string) => malice.find((candidate) => candidate.id === id);
+
+  it('keeps her talking across strikes', () => {
+    expect(beat('goad')?.clearedBy).toBe('next-ready');
+  });
+
+  it('lets the narrator answer her rather than a timer', () => {
+    expect(beat('apathy')?.retireAfterMs).toBeNull();
+  });
+
+  it('never expires the opening explanation', () => {
+    expect(beat('first-blow')?.retireAfterMs).toBeNull();
+  });
+
+  it('leaves her the one beat that gives up on its own', () => {
+    const timed = malice.filter((candidate) => candidate.retireAfterMs !== null);
+    expect(timed.map((candidate) => candidate.id)).toEqual(['goad']);
+  });
+
+  it('gives every beat that clears on the next one a successor to wait for', () => {
+    for (const track of [v1Onboarding.dominion, v1Onboarding.malice]) {
+      const last = track.at(-1);
+      expect(last?.clearedBy).not.toBe('next-ready');
+    }
   });
 });

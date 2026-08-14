@@ -77,35 +77,39 @@ export const v1Onboarding: Onboarding = {
   ],
   malice: [
     {
+      // Dismiss-only. It is the longest line in the tutorial — about 38 words, some
+      // twelve seconds of reading — so a window that retired it would be a coin toss on
+      // whether the player finished it. It has a button; that is what ends it.
       id: 'first-blow',
       ready: { kind: 'smites-at-least', count: 1 },
       gate: { kind: 'none' },
       voice: 'narrator',
       clearedBy: 'dismiss',
-      retireAfterMs: 12 * SECOND,
+      retireAfterMs: null,
     },
     {
-      // She arrives when the first blow has worn off and the button has relit — twenty
-      // seconds after the strike on the shipped numbers. Two minutes of play time, then
-      // she gives up, so a player who strikes once and never again is not left with a
-      // permanent bar.
+      // She is not spent by one strike. Her lines are chosen from Apathy, and Apathy
+      // *rises* when the player caves — so caving lands her back on "Again", which is the
+      // insistence. What ends her is the narrator: when Apathy crosses band 2 on the
+      // second cave, `apathy` becomes ready and takes the bar from her. If the player
+      // resists instead, she walks down to her honest line and gives up at her window,
+      // which is the only ending she has that is not an interruption.
       id: 'goad',
       ready: { kind: 'blow-ready-after-first' },
       gate: { kind: 'none' },
       voice: 'her',
-      clearedBy: 'smite',
+      clearedBy: 'next-ready',
       retireAfterMs: 120 * SECOND,
     },
     {
-      // Band 2, not band 1. Bands are the floor of Apathy against a cap of 3, so band 1
-      // arrives on the *second* rapid blow — scolding a player for taking her advice
-      // exactly once. Band 2 lands on the third. See the spec §5.3 for the walk.
+      // Band 2, not band 1 — see the 2026-08-13 spec §5.3 for the strike-by-strike walk.
+      // Dismiss-only: it is the answer to her, and the player should close it themselves.
       id: 'apathy',
       ready: { kind: 'band-at-least', band: 2 },
       gate: { kind: 'none' },
       voice: 'narrator',
       clearedBy: 'dismiss',
-      retireAfterMs: 12 * SECOND,
+      retireAfterMs: null,
     },
   ],
 };
