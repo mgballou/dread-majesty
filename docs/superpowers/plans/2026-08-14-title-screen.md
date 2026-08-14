@@ -380,7 +380,7 @@ export function TitleScreen({ title, copy, onStart }: TitleScreenProps): ReactNo
   }, []);
 
   return (
-    <div className="title" role="dialog" aria-modal="true" aria-labeledby="title-name">
+    <div className="title" role="dialog" aria-modal="true" aria-labelledby="title-name">
       <div className="title__sheet">
         <span className="title__mark">
           <TierArt slot="mark/dread-majesty" size={72} decorative />
