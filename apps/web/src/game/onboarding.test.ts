@@ -520,20 +520,28 @@ describe('shouldRetire', () => {
 describe('urgingLine', () => {
   const lines = v1Copy.onboarding.urging;
 
-  it('is on the first line after the first blow', () => {
-    expect(urgingLine(lines, 1)).toBe(lines[0]);
+  it('opens on the first line, answering the blow that summoned her', () => {
+    expect(urgingLine({ lines, smites: 1, shownAtSmites: 1 })).toBe(lines[0]);
   });
 
-  it('is on the second line after the second blow', () => {
-    expect(urgingLine(lines, 2)).toBe(lines[1]);
+  it('moves to the second line on the first cave', () => {
+    expect(urgingLine({ lines, smites: 2, shownAtSmites: 1 })).toBe(lines[1]);
   });
 
-  it('clamps to the last line however many blows have landed', () => {
-    expect(urgingLine(lines, 9)).toBe(lines[lines.length - 1]);
+  it('opens on the first line however many blows preceded her', () => {
+    expect(urgingLine({ lines, smites: 40, shownAtSmites: 40 })).toBe(lines[0]);
   });
 
-  it('reads the first line rather than nothing before any blow has landed', () => {
-    expect(urgingLine(lines, 0)).toBe(lines[0]);
+  it('moves to the second line on the first cave, however many preceded her', () => {
+    expect(urgingLine({ lines, smites: 41, shownAtSmites: 40 })).toBe(lines[1]);
+  });
+
+  it('clamps to the last line however many caves have landed', () => {
+    expect(urgingLine({ lines, smites: 9, shownAtSmites: 0 })).toBe(lines[lines.length - 1]);
+  });
+
+  it('reads the first line rather than nothing before her arrival is recorded', () => {
+    expect(urgingLine({ lines, smites: 40, shownAtSmites: null })).toBe(lines[0]);
   });
 });
 
@@ -557,14 +565,29 @@ describe('herLine', () => {
     const state = fresh();
     state.smiteCooldownMs = 1;
     state.stats.smites = 1;
-    expect(herLine({ urging, waiting, state })).toBe(urging[0]);
+    expect(herLine({ urging, waiting, state, shownAtSmites: 1 })).toBe(urging[0]);
+  });
+
+  it('urges on the next line once the player has caved', () => {
+    const state = fresh();
+    state.smiteCooldownMs = 1;
+    state.stats.smites = 2;
+    expect(herLine({ urging, waiting, state, shownAtSmites: 1 })).toBe(urging[1]);
   });
 
   it('waits once the cooldown has cleared', () => {
     const state = fresh();
     state.smiteCooldownMs = 0;
     state.smiteApathy = 0.5;
-    expect(herLine({ urging, waiting, state })).toBe(waiting[0]?.line);
+    expect(herLine({ urging, waiting, state, shownAtSmites: 1 })).toBe(waiting[0]?.line);
+  });
+
+  it('reads apathy rather than her arrival while she is being ignored', () => {
+    const state = fresh();
+    state.smiteCooldownMs = 0;
+    state.smiteApathy = 0.5;
+    state.stats.smites = 40;
+    expect(herLine({ urging, waiting, state, shownAtSmites: null })).toBe(waiting[0]?.line);
   });
 });
 

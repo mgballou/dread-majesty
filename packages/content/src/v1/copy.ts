@@ -433,11 +433,15 @@ export const v1Copy = {
           'You outlasted her. She has nothing else to do but wait. Let them rest and the fear returns.',
       },
     },
-    // What she says in the twenty seconds after a blow. Indexed by lifetime blows, so it
-    // only ever moves forward — the old single list was keyed to Apathy, which rises when
-    // the player caves, and so walked her backwards through her own lines.
+    // What she says in the twenty seconds after a blow. Indexed by caves since she arrived,
+    // so it only ever moves forward — the old single list was keyed to Apathy, which rises
+    // when the player caves, and so walked her backwards through her own lines.
     //
-    // Two entries against a three-blow supersession: the third blow ends her turn on the
+    // The first entry answers the blow that summoned her, which is the first thing she saw.
+    // Counting from the player's lifetime instead started her partway down the list for
+    // anyone who struck before rousing anything, and then repeated it. See the spec §2.1.
+    //
+    // Two entries against a two-cave supersession: the second cave ends her turn on the
     // frame it lands, so a third line would be unreachable. The picker clamps.
     urging: [
       "Oh, that was good. Again — while they are still trembling. Don't let them settle.",

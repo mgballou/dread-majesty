@@ -430,7 +430,7 @@ export interface OnboardingCopy {
       readonly resisted: string;
     };
   };
-  /** What she says in the cooldown after a blow, indexed by lifetime blows and clamped. */
+  /** What she says in the cooldown after a blow, indexed by caves since she arrived. */
   readonly urging: readonly string[];
   /** What she says while she is being ignored, chosen by descending Apathy. */
   readonly waiting: readonly WaitingLine[];

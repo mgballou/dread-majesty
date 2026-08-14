@@ -122,17 +122,25 @@ quickly slipped away into the second," and it is a copy structure fault, not a t
 
 Two lists, each keyed to something that only moves one way while it is being read:
 
-**`urging`** — what she says in the cooldown after a blow, indexed by lifetime blows and
-clamped to the list. Shown while `smiteCooldownMs > 0`. Monotonic in blows, so it never
+**`urging`** — what she says in the cooldown after a blow, indexed by **caves since she
+arrived** and clamped to the list. Shown while `smiteCooldownMs > 0`. Monotonic, so it never
 repeats and never walks backwards.
 
-| Blows | Line |
-| ----- | ---- |
-| 1 | "Oh, that was good. Again — while they are still trembling. Don't let them settle." |
-| 2 | "There. You felt that, didn't you? Once more and they will not settle for a week." |
+| Caves since she arrived | Line |
+| ----------------------- | ---- |
+| 0 | "Oh, that was good. Again — while they are still trembling. Don't let them settle." |
+| 1 | "There. You felt that, didn't you? Once more and they will not settle for a week." |
 
-Two entries, because the third blow supersedes her on the frame it lands. A third line would be
-unreachable.
+Two entries, because the second cave supersedes her on the frame it lands. A third line would
+be unreachable.
+
+Counted from her arrival for the reason §2.1 gives, and it is the same reason: she is a
+character reacting to what she has watched, and the blow that summoned her is the first thing
+she saw — so it is answered by her opening line, whoever struck what before she could appear. A
+lifetime index started her partway down the list for anybody who struck before rousing anything,
+and then, since the clamp had nowhere further to go, gave them that same line again on their
+next cave. Splitting `urging` from `waiting` was meant to end exactly that repeat; leaving the
+index on a lifetime count kept a narrower version of it alive.
 
 **`waiting`** — what she says once the cooldown is clear and she is being ignored, chosen by
 descending Apathy exactly as `goadLine` does now. Thresholds retuned against her real arrival:
@@ -359,7 +367,8 @@ she is asking for, which was the gap that would have justified one.
 - **Cadence independence**: blows spaced far enough apart that Apathy never leaves band 0 still
   reach the caved ending. This is the §2 defect, and it fails on the shipped code.
 - **The window restarts**: a blow at t=70s leaves her on screen at t=100s.
-- **The two lists are covered separately** — `urging` by blow count with the clamp, `waiting` by
+- **The two lists are covered separately** — `urging` by caves since she arrived, including the
+  clamp and a player who struck before rousing anything; `waiting` by
   descending Apathy including the boundary case where the threshold is exact.
 - **Priority**: a beat on each track ready at once puts Malice on the bar, and does not while the
   opening Dominion beat is showing.
@@ -382,8 +391,7 @@ testers rather than players.
 her turn on the frame it lands. If supersession ever moves, the clamp keeps the last line rather
 than reading off the end.
 
-**`urging` is still indexed by lifetime blows, and §2.1 did not change it.** A player who struck
-before rousing anything therefore starts partway down her list and, once clamped, repeats her
-last line — the symptom §4 was written to kill, in a narrower form. It is a line choice rather
-than a lock, and moving it means deciding whether her first cooldown line belongs to the first
-blow ever struck or to the first cave of her own turn. Left open deliberately, not overlooked.
+**Nothing in her track reads a lifetime blow count any more.** Her arrival ends her turn (§2.1)
+and her arrival indexes her lines (§4). The one place `state.stats.smites` is still read raw is
+`goad.ready` — `smites-at-least: 1`, which is the condition for her to exist at all, and a
+lifetime count is the right question there.

@@ -273,9 +273,9 @@ describe("the engine's answer decides, not the click", () => {
   const rouseMinions = CURRENT_COPY.overseer.rouse(minions);
   const smiteName = new RegExp(`^${CURRENT_COPY.smite.action}\\.`);
   /* Her two lists. `struckBlob` leaves the cooldown clear and Apathy at 1, so she opens on
-     the calmest waiting line; a second blow starts a cooldown and moves her to the urging
-     line for two lifetime blows. No blow consumes a beat any more, so the line she is on is
-     what reports whether the dispatch ran. */
+     the calmest waiting line; a blow starts a cooldown and moves her to the urging line one
+     cave past her arrival. No blow consumes a beat any more, so the line she is on is what
+     reports whether the dispatch ran. */
   const herWaitingLine = onboarding.waiting[0]?.line ?? '';
   const herUrgingLine = onboarding.urging[1] ?? '';
 
@@ -871,8 +871,18 @@ describe('her turn is counted from her arrival', () => {
    *
    * The opening beat gates the rouse and nothing else, so this is an ordinary way to play:
    * press the one control that visibly does something, then get on with the tutorial.
+   *
+   * `thenWaits` decides whether the last blow's cooldown is waited out before she is reached.
+   * She says a different kind of line either side of that: answering the blow while it runs,
+   * asking for the next one once it has cleared.
    */
-  async function strikesBeforeRousing(times: number): Promise<void> {
+  async function strikesBeforeRousing({
+    times,
+    thenWaits,
+  }: {
+    times: number;
+    thenWaits: boolean;
+  }): Promise<void> {
     vi.useFakeTimers({ toFake: ['performance', 'requestAnimationFrame', 'cancelAnimationFrame'] });
     vi.spyOn(storage, 'readSave').mockResolvedValue(null);
     render(<App />);
@@ -880,7 +890,7 @@ describe('her turn is counted from her arrival', () => {
 
     for (let blow = 0; blow < times; blow += 1) {
       await strike();
-      wind(21_000);
+      if (thenWaits || blow < times - 1) wind(21_000);
     }
 
     await userEvent.click(screen.getByRole('button', { name: rouseMinions }));
@@ -889,13 +899,13 @@ describe('her turn is counted from her arrival', () => {
   }
 
   it('gives her a turn to a player who struck three times before rousing anything', async () => {
-    await strikesBeforeRousing(3);
+    await strikesBeforeRousing({ times: 3, thenWaits: true });
 
     expect(await screen.findByRole('status', { name: onboarding.herLabel })).toBeInTheDocument();
   });
 
   it('leaves her talking after one cave, whatever came before her', async () => {
-    await strikesBeforeRousing(2);
+    await strikesBeforeRousing({ times: 2, thenWaits: true });
     await screen.findByRole('status', { name: onboarding.herLabel });
     await strike();
     wind(21_000);
@@ -903,8 +913,30 @@ describe('her turn is counted from her arrival', () => {
     expect(screen.getByRole('status', { name: onboarding.herLabel })).toBeInTheDocument();
   });
 
+  /*
+   * Her lines belong to her turn too. The blow that summoned her is the first thing she saw,
+   * so it is answered by her opening line however many blows preceded it — and the next one
+   * she says is the next line, not the same one over again. Indexed by lifetime blows she
+   * started partway down the list and then repeated its last entry, which is the repeat the
+   * two lists were split apart to stop.
+   */
+  it('opens on her first line however many blows came before her', async () => {
+    await strikesBeforeRousing({ times: 2, thenWaits: false });
+    await screen.findByRole('status', { name: onboarding.herLabel });
+
+    expect(await screen.findByText(onboarding.urging[0] ?? '')).toBeInTheDocument();
+  });
+
+  it('moves to her next line on the first cave, not back to the same one', async () => {
+    await strikesBeforeRousing({ times: 2, thenWaits: true });
+    await screen.findByRole('status', { name: onboarding.herLabel });
+    await strike();
+
+    expect(await screen.findByText(onboarding.urging[1] ?? '')).toBeInTheDocument();
+  });
+
   it('reaches the narrator on the second cave after she arrives', async () => {
-    await strikesBeforeRousing(2);
+    await strikesBeforeRousing({ times: 2, thenWaits: true });
     await screen.findByRole('status', { name: onboarding.herLabel });
     await strike();
     wind(21_000);
