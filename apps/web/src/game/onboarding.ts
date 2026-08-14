@@ -10,7 +10,7 @@ import type {
   TierId,
   WaitingLine,
 } from '@dm/content';
-import { canAppoint, findOverseer, hasPost, nextCost } from '@dm/engine';
+import { canAppoint, findOverseer, hasPost, isAppointed, nextCost } from '@dm/engine';
 import type { GameState } from '@dm/engine';
 
 const PROGRESS_KEY = 'dread-majesty:onboarding-seen';
@@ -25,15 +25,23 @@ export type GatedControl =
 export type ClearingAction =
   GatedControl | { readonly kind: 'smite' } | { readonly kind: 'dismiss' };
 
-/** Whether a beat's condition holds on this state, right now. */
+/**
+ * Whether a beat's condition holds on this state, right now.
+ *
+ * `shownAtSmites` is the lifetime blow count at the moment this beat reached the screen, and
+ * null when it has not been shown. Only `smites-since-shown` reads it; every other condition
+ * is a fact about the state alone and cannot tell whether anybody has seen the beat.
+ */
 export function isBeatReady({
   ready,
   state,
   content,
+  shownAtSmites,
 }: {
   ready: BeatReady;
   state: GameState;
   content: Content;
+  shownAtSmites: number | null;
 }): boolean {
   switch (ready.kind) {
     case 'always':
@@ -69,6 +77,12 @@ export function isBeatReady({
 
     case 'smites-at-least':
       return state.stats.smites >= ready.count;
+
+    // Never true for a beat nobody has been shown. That is the whole point of the variant:
+    // there is no arrival to count from, so there is no answer, and the safe answer to "have
+    // they struck twice since she asked" when she has not asked is no.
+    case 'smites-since-shown':
+      return shownAtSmites !== null && state.stats.smites - shownAtSmites >= ready.count;
 
     case 'blow-ready-after-first':
       return state.stats.smites >= 1 && state.smiteActiveMs <= 0 && state.smiteCooldownMs <= 0;
@@ -107,6 +121,7 @@ export function showingBeat<Id extends string>({
   state,
   content,
   shownId,
+  shownAtSmites,
 }: {
   track: readonly OnboardingBeat<Id>[];
   consumed: readonly Id[];
@@ -114,11 +129,35 @@ export function showingBeat<Id extends string>({
   content: Content;
   /** The beat that was on screen last frame, or null. */
   shownId: Id | null;
+  /** Lifetime blows when that beat arrived. Belongs to `shownId`, not to this track. */
+  shownAtSmites: number | null;
 }): OnboardingBeat<Id> | null {
   const next = track.find((beat) => !consumed.includes(beat.id));
   if (!next) return null;
   if (next.id === shownId && latches(next)) return next;
-  return isBeatReady({ ready: next.ready, state, content }) ? next : null;
+  return isBeatReady({
+    ready: next.ready,
+    state,
+    content,
+    ...arrival(next, shownId, shownAtSmites),
+  })
+    ? next
+    : null;
+}
+
+/**
+ * The arrival blow count, but only when the stamp is this beat's.
+ *
+ * The stamp names one beat. Handing its count to a different beat would say that beat had
+ * been on screen since a blow it was never present for — which is the same lie, one level
+ * down, that counting from zero told.
+ */
+function arrival(
+  beat: OnboardingBeat<string>,
+  shownId: string | null,
+  shownAtSmites: number | null,
+): { shownAtSmites: number | null } {
+  return { shownAtSmites: beat.id === shownId ? shownAtSmites : null };
 }
 
 /**
@@ -199,17 +238,27 @@ export function shouldRetire({
  *
  * Still deliberately narrow: only the first *unconsumed* beat is ever reported, so a beat
  * deeper in the track cannot be skipped.
+ *
+ * The stamp is passed through because a supersession condition may count from the beat's own
+ * arrival, and hers does. A beat nobody has been shown can then never be superseded, which is
+ * the point: she was being ended by blows struck before she spoke.
  */
 export function supersededBeat<Id extends string>({
   track,
   consumed,
   state,
   content,
+  shownId,
+  shownAtSmites,
 }: {
   track: readonly OnboardingBeat<Id>[];
   consumed: readonly Id[];
   state: GameState;
   content: Content;
+  /** The beat that was on screen last frame, or null. */
+  shownId: Id | null;
+  /** Lifetime blows when that beat arrived. Belongs to `shownId`, not to this track. */
+  shownAtSmites: number | null;
 }): Id | null {
   const showing = track.find((beat) => !consumed.includes(beat.id));
   if (!showing) return null;
@@ -217,7 +266,14 @@ export function supersededBeat<Id extends string>({
   const clearedBy = showing.clearedBy;
   if (typeof clearedBy === 'string') return null;
 
-  return isBeatReady({ ready: clearedBy.when, state, content }) ? showing.id : null;
+  return isBeatReady({
+    ready: clearedBy.when,
+    state,
+    content,
+    ...arrival(showing, shownId, shownAtSmites),
+  })
+    ? showing.id
+    : null;
 }
 
 /**
@@ -262,10 +318,11 @@ export function accomplishedBeat<Id extends string>({
 /**
  * Whether the action a gate names has already been performed and cannot be performed again.
  *
- * `hasPost` and `findOverseer` rather than `isAppointed`, which asks whether the *tier* runs
- * itself — a tier may hold several posts and only one of them automates, so it answers a
- * different question. Both of these are the engine's and already exported, so nothing about
- * who holds what is worked out twice.
+ * Both branches use the engine's own selectors, so nothing about who holds what is worked out
+ * twice — and they use *different* ones, because they ask different questions. `isAppointed`
+ * is "does this tier run itself", which is exactly the rouse case; `hasPost` with
+ * `findOverseer` is "is this one post filled", which is the appoint case. A tier may hold
+ * several posts and only one of them automates, so neither selector can stand in for the other.
  */
 function isGateAccomplished({
   gate,
@@ -282,10 +339,16 @@ function isGateAccomplished({
       return found !== undefined && hasPost(state, found.tier.id, found.post.id);
     }
 
-    // Not forgotten: neither rousing nor buying has a terminal state — a tier can be roused
-    // again the moment it stops and bought again for ever — so no beat of these kinds can be
-    // accomplished and stuck. A gate of `none` names no action to have accomplished.
+    // An automated tier cannot be roused: `rouse` refuses it outright, and appointing the
+    // automator sets `running` false — so `owned-and-idle` and `idle-after-cycle` both read
+    // ready while the button is dead for good. That is the `appoint` lock on `orders` and
+    // `rouse-warren`, and it is out of reach today only because the two posts cost 1200 Evil
+    // and 2.4e7. Prices are not rules.
     case 'rouse':
+      return isAppointed(state, content, gate.tierId);
+
+    // Not forgotten: buying has no terminal state — a tier can be bought again for ever — so
+    // no `buy` beat can be accomplished and stuck. A gate of `none` names no action at all.
     case 'buy':
     case 'none':
       return false;

@@ -60,9 +60,33 @@ forty-five seconds caves over and over and never crosses it — Apathy bleeds to
 blows — and so is handed the ending written for someone who resisted. The mechanism reads a
 rate and reports it as a choice.
 
-**The cave count is the honest predicate.** She is superseded at three lifetime blows: the one
-that summoned her, plus two caves. Monotonic, indifferent to cadence, and it is what the
-narrator's line actually claims happened.
+**The cave count is the honest predicate.** She is superseded by **two caves after she
+arrives**. Monotonic, indifferent to cadence, and it is what the narrator's line actually
+claims happened.
+
+### 2.1 Count from her arrival, not from zero
+
+This first read "three lifetime blows: the one that summoned her, plus two caves", which
+silently assumed exactly one blow precedes her. Nothing guarantees that. Smite is ungated
+throughout the opening beat and Malice may not take the bar until that beat is consumed (§6),
+so a player is free to strike as often as they like before she can appear — about forty seconds
+buys three blows at a twenty-second cooldown.
+
+Three lifetime blows was then satisfied on the frame she first rendered: she was superseded
+before she said a word, and the narrator delivered *"You listened to her"* to somebody who had
+never seen her. Two blows before rousing was the likelier shape and cost her all but one line.
+
+It is the same fault §2 was written to kill, one level down — a mechanism reading a count and
+reporting it as a choice. The count has to start where her conversation does.
+
+`BeatReady` gains `{ kind: 'smites-since-shown', count }`, a separate variant rather than an
+overload, and `isBeatReady` takes the blow count at the moment the beat was shown — `null` when
+it has not been shown, which reads as false. `goad` declares `smites-since-shown: 2`.
+
+The arrival count is a **distinct fact from the one the retirement clock keeps**. §4.1 re-takes
+that one on every blow, so it always equals the live count; a single field would make "caves
+since she arrived" permanently zero. Two fields, `arrivedAtSmites` and `clockFromSmites`, and
+only the first is ever read as a count.
 
 Apathy keeps the job it is good at — deciding **which** line she is on while she is being
 ignored, which is precisely "how far the realm has forgotten you." That is its honest use.
@@ -227,6 +251,21 @@ button, so the only beat it can answer is the one on the bar.
 claims ready for an impossible action is what turned the missing record above into a lock
 rather than a repeated lesson.
 
+**A beat whose gated action is already accomplished is consumed, not stalled.** The rule above
+closes the lock but opens a stall: a beat that is neither clearable nor ready stops the track
+where it stands — no control taken from anybody, but no more tutorial and `done` never written.
+`accomplishedBeat` is the fourth answer to "this beat's time is up", beside the player acting,
+nobody acting, and the state moving on. It reports the first *unconsumed* beat whose gate names
+an action that can no longer be performed, so ordering is untouched: the beat is still consumed
+in its turn, by a fact rather than by a click.
+
+Two gate kinds can reach that state, and both are read through the engine's own selectors.
+`appoint` — the post is filled. `rouse` — the tier has an automator, which refuses the rouse
+outright and leaves `running` false, so `owned-and-idle` and `idle-after-cycle` read ready
+against a permanently dead button. `buy` and `none` never can: buying has no terminal state and
+`none` names no action. The rouse case is out of reach today only because the two posts cost
+1200 Evil and 2.4e7, and prices are not rules.
+
 **One exception, and it is about the way out.** The opening Dominion beat carries the only Skip
 tutorial and Load save buttons in the game. Malice does not take the bar while it is showing —
 a player who strikes before rousing anything must not lose their exit for the next minute.
@@ -309,9 +348,14 @@ she is asking for, which was the gap that would have justified one.
 ## 9 Testing
 
 - **The five-second window is a regression test**: `verdict` shown, its `ready` made false,
-  still on screen.
-- **Both endings are named tests**: three blows and the narrator says the player listened; 75
-  seconds of silence and he says they outlasted her.
+  still on screen. Once `verdict.ready` became `always` no App-level test could shake it, so
+  what is asserted there instead is the §5 trap — the verdict holds **one line** while Apathy
+  bleeds to zero under it. The latch itself is pinned in `game/onboarding.test.ts`.
+- **Both endings are named tests**: two caves after she arrives and the narrator says the player
+  listened; 75 seconds of silence and he says they outlasted her.
+- **Her turn is hers**: blows struck before Malice may take the bar do not count towards ending
+  her. Three strikes before rousing anything still leaves her a full turn — §2.1, and it fails
+  on a lifetime count.
 - **Cadence independence**: blows spaced far enough apart that Apathy never leaves band 0 still
   reach the caved ending. This is the §2 defect, and it fails on the shipped code.
 - **The window restarts**: a blow at t=70s leaves her on screen at t=100s.
@@ -334,6 +378,12 @@ cost is a pause, and it buys a Malice conversation that finishes.
 so anyone mid-track sees that one beat again. It is onboarding, not save data, and it affects
 testers rather than players.
 
-**`urging` has two entries against a three-blow supersession.** Deliberate — the third blow ends
+**`urging` has two entries against a two-cave supersession.** Deliberate — the second cave ends
 her turn on the frame it lands. If supersession ever moves, the clamp keeps the last line rather
 than reading off the end.
+
+**`urging` is still indexed by lifetime blows, and §2.1 did not change it.** A player who struck
+before rousing anything therefore starts partway down her list and, once clamped, repeats her
+last line — the symptom §4 was written to kill, in a narrower form. It is a line choice rather
+than a lock, and moving it means deciding whether her first cooldown line belongs to the first
+blow ever struck or to the first cave of her own turn. Left open deliberately, not overlooked.

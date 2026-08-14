@@ -107,11 +107,20 @@ describe('Crown', () => {
     expect(container.querySelector('.crown__figure')).toHaveAttribute('data-smite', 'cooling');
   });
 
+  it('draws the standing beside the rate', () => {
+    const { container } = render(crown(struck()));
+
+    expect(container.querySelector('.crown__standing')).toBeInTheDocument();
+  });
+
   it('keeps the standing outside the figure the surge lights', () => {
     const { container } = render(crown(struck()));
     const figure = container.querySelector('.crown__figure');
     const standing = container.querySelector('.crown__standing');
 
+    // `contains` answers false for a missing node as readily as for a node somewhere else,
+    // so the standing has to be proved present before its position means anything.
+    expect(standing).toBeInTheDocument();
     expect(figure?.contains(standing)).toBe(false);
   });
 });
