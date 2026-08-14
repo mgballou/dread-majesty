@@ -2,7 +2,9 @@ import Decimal from 'break_eternity.js';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { CURRENT, CURRENT_COPY } from '@dm/content';
+import type { Content } from '@dm/content';
 import { createState, exportSave, serialize, type SaveBlob } from '@dm/engine';
+import type { Intent, IntentFailure, IntentResult } from '@dm/engine';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { App } from './App.tsx';
 import {
@@ -11,7 +13,44 @@ import {
   readOnboarding,
   writeOnboarding,
 } from './game/onboarding.ts';
+import type * as sessionModule from './game/useGameSession.ts';
+import type { Session } from './game/useGameSession.ts';
 import * as storage from './game/storage.ts';
+
+/*
+ * A dispatch the engine refuses, on demand.
+ *
+ * Every control in the game disables itself before it can send an intent the engine
+ * would turn down, so a refusal cannot be produced by clicking — which is exactly why
+ * "the beat is consumed by the dispatch, not by the click" had no test and drifted at
+ * four call sites. The session hook is the seam the App holds `dispatch` through, so it
+ * is the one thing swapped, and only for the tests that set `refuses`. The engine is
+ * untouched: it is the real one, running real state.
+ */
+const refusal = vi.hoisted(() => ({
+  refuses: null as { kind: Intent['kind']; reason: IntentFailure } | null,
+}));
+
+vi.mock('./game/useGameSession.ts', async (importOriginal) => {
+  const actual = await importOriginal<typeof sessionModule>();
+
+  return {
+    ...actual,
+    useGameSession: (content: Content): Session => {
+      const live = actual.useGameSession(content);
+      const refuses = refusal.refuses;
+      if (refuses === null) return live;
+
+      return {
+        ...live,
+        dispatch: (intent: Intent): IntentResult =>
+          intent.kind === refuses.kind
+            ? { ok: false, intent, reason: refuses.reason }
+            : live.dispatch(intent),
+      };
+    },
+  };
+});
 
 function savedBlob(): SaveBlob {
   return serialize(createState(CURRENT), Date.now());
@@ -20,6 +59,13 @@ function savedBlob(): SaveBlob {
 function midRunBlob(): SaveBlob {
   const state = createState(CURRENT);
   state.gens.minion.lifetimeProduced = new Decimal(5);
+  return serialize(state, Date.now());
+}
+
+function struckBlob(): SaveBlob {
+  const state = createState(CURRENT);
+  state.stats.smites = 1;
+  state.smiteApathy = 1;
   return serialize(state, Date.now());
 }
 
@@ -157,6 +203,61 @@ describe('first-run onboarding', () => {
     );
 
     expect(readOnboarding()?.done).toBe(true);
+  });
+});
+
+describe('a refused action consumes nothing', () => {
+  const onboarding = CURRENT_COPY.onboarding;
+  const minions = CURRENT.tiers.find((tier) => tier.id === 'minion')?.plural ?? '';
+  const rouseMinions = CURRENT_COPY.overseer.rouse(minions);
+  const smiteName = new RegExp(`^${CURRENT_COPY.smite.action}\\.`);
+  const herFirstLine = onboarding.goad[0]?.line ?? '';
+
+  beforeEach(() => forgetOnboarding());
+
+  afterEach(() => {
+    refusal.refuses = null;
+    forgetOnboarding();
+    vi.restoreAllMocks();
+  });
+
+  it('leaves the beat on the bar when the rouse is turned down', async () => {
+    refusal.refuses = { kind: 'rouse', reason: 'tier-not-owned' };
+    vi.spyOn(storage, 'readSave').mockResolvedValue(null);
+    render(<App />);
+    await userEvent.click(await screen.findByRole('button', { name: rouseMinions }));
+
+    expect(screen.getByText(onboarding.dominion.stir)).toBeInTheDocument();
+  });
+
+  it('writes nothing down when the rouse is turned down', async () => {
+    refusal.refuses = { kind: 'rouse', reason: 'tier-not-owned' };
+    vi.spyOn(storage, 'readSave').mockResolvedValue(null);
+    render(<App />);
+    await userEvent.click(await screen.findByRole('button', { name: rouseMinions }));
+
+    expect(readOnboarding()?.dominion).toEqual([]);
+  });
+
+  it('leaves her line on the bar when the blow is turned down', async () => {
+    refusal.refuses = { kind: 'smite', reason: 'smite-cooling' };
+    writeOnboarding({ dominion: ['stir'], malice: ['first-blow'], done: false });
+    vi.spyOn(storage, 'readSave').mockResolvedValue(struckBlob());
+    render(<App />);
+    await screen.findByText(herFirstLine);
+    await userEvent.click(screen.getByRole('button', { name: smiteName }));
+
+    expect(screen.getByText(herFirstLine)).toBeInTheDocument();
+  });
+
+  it('consumes her beat when the blow lands', async () => {
+    writeOnboarding({ dominion: ['stir'], malice: ['first-blow'], done: false });
+    vi.spyOn(storage, 'readSave').mockResolvedValue(struckBlob());
+    render(<App />);
+    await screen.findByText(herFirstLine);
+    await userEvent.click(screen.getByRole('button', { name: smiteName }));
+
+    expect(screen.queryByText(herFirstLine)).not.toBeInTheDocument();
   });
 });
 
