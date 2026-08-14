@@ -1,0 +1,57 @@
+/*
+ * The first-run spotlight. See Spotlight.tsx.
+ *
+ * Four plain rectangles around the hole rather than a mask or a spread shadow — they
+ * need no compositing and cost nothing to move on a phone. Every rule here is
+ * `pointer-events: none`: the control the ring surrounds, and everything else under
+ * the dim, stays genuinely clickable.
+ */
+
+.spotlight {
+  position: fixed;
+  inset: 0;
+  /* Below the prompt bar's 5 (App.css .shell__prompt): the dim must never fall
+     across the words explaining it. */
+  z-index: 4;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.spotlight__band {
+  position: fixed;
+  pointer-events: none;
+}
+
+/* A gated beat and its "no size yet" fallback dim at the same weight — the fallback
+   is a stand-in for the cutout, not a softer state. Only the narrative beat, which
+   points at nothing on purpose, is lighter. */
+.spotlight--cutout .spotlight__band,
+.spotlight--whole .spotlight__band {
+  background: var(--scrim);
+}
+
+.spotlight--soft .spotlight__band {
+  background: var(--scrim-soft);
+}
+
+/* Line work, not an action: the ring says "here"; the control underneath is what
+   does something. Gold at full strength would spend the screen's one action colour
+   on pointing rather than on acting. */
+.spotlight__ring {
+  position: fixed;
+  border: 1px solid var(--accent-line);
+  border-radius: var(--space-1);
+  pointer-events: none;
+}
+
+/* The ring is what carries the pointing, so it stays under reduced motion — only the
+   pulse, pure emphasis, drops. */
+.spotlight[data-motion='full'] .spotlight__ring {
+  animation: spotlight-pulse var(--duration-slow) ease-in-out infinite;
+}
+
+@keyframes spotlight-pulse {
+  50% {
+    opacity: 0.55;
+  }
+}
