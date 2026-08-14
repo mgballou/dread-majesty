@@ -73,6 +73,8 @@ interface ChainStageProps {
    * game after the first run.
    */
   isGated?: (control: GatedControl) => boolean;
+  /** Draw the eye to Smite. See App for when. */
+  beckon?: boolean;
   /** Start one manual cycle. */
   onRouse: (tierId: TierId) => void;
   /** Evoke. The chain runs the wave; the caller credits the Evil. */
@@ -117,6 +119,7 @@ export function ChainStage({
   isRousable,
   needsHand,
   isGated,
+  beckon,
   onRouse,
   onSmite,
 }: ChainStageProps): ReactNode {
@@ -190,6 +193,7 @@ export function ChainStage({
         content={content}
         state={state}
         feed={feedFrom({ producer: last, state, version })}
+        {...(beckon ? { beckon } : {})}
         /* Smite is never gated. `GatedControl` has no `smite` case on purpose: it is
            the one control that must stay live throughout the tutorial, since the
            second track only starts when the player smites of their own accord. */
