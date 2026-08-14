@@ -25,8 +25,7 @@ interface PromptProps {
  * One line at the foot of the frame, and at most one at a time.
  *
  * A `status` region rather than a dialog: it never takes focus, never traps it, and the
- * game behind it stays fully operable. The gating is done by the controls themselves,
- * which is what lets this be so much less machinery than the modal tour it replaced.
+ * game behind it stays fully operable. The gating is done by the controls themselves.
  *
  * `aria-live` is on the region so a beat arriving mid-play is announced without the
  * player being moved. The text is swapped in place rather than remounted, so a screen

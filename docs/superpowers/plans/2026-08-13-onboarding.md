@@ -1,5 +1,13 @@
 # Onboarding Implementation Plan
 
+> **Executed and closed.** This is a historical record, kept as written so the path is
+> legible. Its checkboxes were never ticked and its code listings are drafts — several
+> were changed during execution, most of all the `localStorage` surface, which ships as a
+> per-beat progress record rather than the `hasSeenOnboarding` / `markOnboardingSeen`
+> flag written here. **The shipped code and
+> `docs/superpowers/specs/2026-08-13-onboarding-design.md` are the truth.** Do not re-run
+> this plan or copy code out of it.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Replace the five-card modal first-run tour with two in-flow prompt tracks — Dominion, which gates one action at a time up to the first Warren, and Malice, a second voice that teaches Smite by tempting the player into misusing it.
@@ -48,9 +56,9 @@
 | `apps/web/src/ui/tokens.css` | `--raw-verdigris-400` and `--tone-malice`. |
 | `apps/web/src/ui/Prompt.tsx` *(new)* | The bar. Presentational only — it is handed a line, a voice and callbacks. |
 | `apps/web/src/ui/Prompt.css` *(new)* | Its styles, both voices. |
-| `apps/web/src/ui/stage/ChainStage.tsx` | Honours `isGated`. |
-| `apps/web/src/ui/rail/BuyRail.tsx` | Honours `isGated`. |
-| `apps/web/src/ui/rail/Miscreants.tsx` | Honours `isGated`. |
+| `apps/web/src/ui/stage/ChainStage.tsx` | Honors `isGated`. |
+| `apps/web/src/ui/rail/BuyRail.tsx` | Honors `isGated`. |
+| `apps/web/src/ui/rail/Miscreants.tsx` | Honors `isGated`. |
 | `apps/web/src/App.tsx` | Holds the consumed sets, threads `isGated`, renders `Prompt`. Deletes the tour wiring. |
 | `apps/web/src/App.css` | The prompt's reserved row. |
 | `README.md` | Rewrites the tour paragraph. |

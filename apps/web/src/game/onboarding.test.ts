@@ -1,19 +1,21 @@
 import Decimal from 'break_eternity.js';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CURRENT, CURRENT_ONBOARDING, v1Copy } from '@dm/content';
 import type { DominionBeatId, OnboardingBeat, TierId } from '@dm/content';
 import { createState, nextCost } from '@dm/engine';
 import type { GameState } from '@dm/engine';
 import {
   clearsBeat,
+  finishOnboarding,
   forgetOnboarding,
   goadLine,
-  hasSeenOnboarding,
   isBeatReady,
   isGatedOut,
-  markOnboardingSeen,
+  onboardingDecision,
+  readOnboarding,
   shouldRetire,
   showingBeat,
+  writeOnboarding,
 } from './onboarding.ts';
 
 const content = CURRENT;
@@ -356,15 +358,109 @@ describe('goadLine', () => {
   });
 });
 
-describe('the seen flag', () => {
+describe('what is written down', () => {
   beforeEach(() => forgetOnboarding());
 
-  it('starts unseen', () => {
-    expect(hasSeenOnboarding()).toBe(false);
+  afterEach(() => {
+    forgetOnboarding();
+    vi.restoreAllMocks();
   });
 
-  it('remembers once marked', () => {
-    markOnboardingSeen();
-    expect(hasSeenOnboarding()).toBe(true);
+  it('finds nothing before the first visit', () => {
+    expect(readOnboarding()).toBeNull();
+  });
+
+  it('reads back the beats that were consumed', () => {
+    writeOnboarding({ dominion: ['stir', 'orders'], malice: [], done: false });
+    expect(readOnboarding()?.dominion).toEqual(['stir', 'orders']);
+  });
+
+  it('reads back the Malice track too', () => {
+    writeOnboarding({ dominion: [], malice: ['first-blow'], done: false });
+    expect(readOnboarding()?.malice).toEqual(['first-blow']);
+  });
+
+  it('reads back an unfinished walk as unfinished', () => {
+    writeOnboarding({ dominion: ['stir'], malice: [], done: false });
+    expect(readOnboarding()?.done).toBe(false);
+  });
+
+  it('reads back a finished walk as finished', () => {
+    finishOnboarding();
+    expect(readOnboarding()?.done).toBe(true);
+  });
+
+  it('treats the legacy flag as finished', () => {
+    localStorage.setItem('dread-majesty:onboarding-seen', '1');
+    expect(readOnboarding()?.done).toBe(true);
+  });
+
+  it('treats unreadable data as finished', () => {
+    localStorage.setItem('dread-majesty:onboarding-seen', 'not json');
+    expect(readOnboarding()?.done).toBe(true);
+  });
+
+  it('drops an id no track owns', () => {
+    localStorage.setItem(
+      'dread-majesty:onboarding-seen',
+      JSON.stringify({ dominion: ['stir', 'renamed'], malice: [], done: false }),
+    );
+    expect(readOnboarding()?.dominion).toEqual(['stir']);
+  });
+
+  it('treats a store that refuses to be read as finished', () => {
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new Error('blocked');
+    });
+    expect(readOnboarding()?.done).toBe(true);
+  });
+
+  it('says nothing when a store that refuses to be written is written to', () => {
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('blocked');
+    });
+    expect(() => finishOnboarding()).not.toThrow();
+  });
+});
+
+describe('onboardingDecision', () => {
+  const midway = { dominion: ['stir', 'orders'], malice: [], done: false } as const;
+
+  it('starts a player with no save and nothing written down', () => {
+    expect(onboardingDecision({ stored: null, fresh: true }).kind).toBe('run');
+  });
+
+  it('starts that player at the top of the track', () => {
+    const decision = onboardingDecision({ stored: null, fresh: true });
+    expect(decision.kind === 'run' && decision.progress.dominion).toEqual([]);
+  });
+
+  it('writes off a player who has a save and predates onboarding', () => {
+    expect(onboardingDecision({ stored: null, fresh: false }).kind).toBe('retire');
+  });
+
+  it('resumes a walk that was interrupted, save or no save', () => {
+    const decision = onboardingDecision({ stored: midway, fresh: false });
+    expect(decision.kind === 'run' && decision.progress.dominion).toEqual(['stir', 'orders']);
+  });
+
+  it('says nothing to a player who finished or skipped', () => {
+    expect(
+      onboardingDecision({ stored: { dominion: [], malice: [], done: true }, fresh: false }).kind,
+    ).toBe('nothing');
+  });
+
+  it('says nothing to a finished player even on a save-less visit', () => {
+    expect(
+      onboardingDecision({ stored: { dominion: [], malice: [], done: true }, fresh: true }).kind,
+    ).toBe('nothing');
+  });
+
+  it('resumes at the beat the player was on', () => {
+    const state = fresh();
+    state.resources.evil = new Decimal(160);
+    const decision = onboardingDecision({ stored: midway, fresh: false });
+    const consumed = decision.kind === 'run' ? decision.progress.dominion : [];
+    expect(showing(state, consumed)?.id).toBe('muster');
   });
 });

@@ -1,9 +1,8 @@
 /**
  * How far along its cap Apathy stands, 0 to 1.
  *
- * Shared because three places read it — the arc that draws it, the strike control that
- * speaks it, and onboarding, which gates a beat on it — and two copies of a clamp are two
- * chances to disagree about what a cap of zero means.
+ * Shared because two places read it — the arc that draws it and the band lookup below —
+ * and two copies of a clamp are two chances to disagree about what a cap of zero means.
  */
 export function apathyShare(apathy: number, cap: number): number {
   return cap > 0 ? Math.min(1, Math.max(0, apathy / cap)) : 0;
@@ -17,6 +16,14 @@ export function apathyShare(apathy: number, cap: number): number {
  * always passes the length of the band copy it is about to read — the count and the
  * words it indexes into can never drift apart.
  */
-export function bandIndex(apathy: number, cap: number, bandCount: number): number {
+export function bandIndex({
+  apathy,
+  cap,
+  bandCount,
+}: {
+  apathy: number;
+  cap: number;
+  bandCount: number;
+}): number {
   return Math.min(bandCount - 1, Math.floor(apathyShare(apathy, cap) * bandCount));
 }

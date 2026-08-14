@@ -436,7 +436,7 @@ export const v1Copy = {
     goad: [
       {
         aboveApathy: 0.45,
-        line: 'Oh, that was good. Again — while they are still trembling. Don’t let them settle.',
+        line: "Oh, that was good. Again — while they are still trembling. Don't let them settle.",
       },
       {
         aboveApathy: 0.2,
@@ -444,7 +444,7 @@ export const v1Copy = {
       },
       {
         aboveApathy: 0,
-        line: 'No? Then I’ll wait with you. I have nothing else. Neither, in the end, do you.',
+        line: "No? Then I'll wait with you. I have nothing else. Neither, in the end, do you.",
       },
       {
         aboveApathy: -1,
