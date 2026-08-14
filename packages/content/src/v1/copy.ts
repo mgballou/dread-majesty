@@ -255,6 +255,12 @@ export const v1Copy = {
     owedAction: 'Go and count them',
   },
 
+  start: {
+    lede: 'You are a Dark Lord',
+    premise: 'One Minion, big dreams, and the favor of an otherworldly abomination.',
+    begin: 'Start Game',
+  },
+
   offline: {
     heading: 'In your absence',
     summary: (duration: string): string => `${duration} of work, done without you.`,
@@ -414,7 +420,7 @@ export const v1Copy = {
     narratorLabel: 'A word of advice',
     herLabel: 'She has something to say',
     dominion: {
-      stir: 'One Minion, big dreams, and the favor of an otherworldly abomination. Set it about some wickedness.',
+      stir: 'A trusted lackey who will do your bidding. Set it about some wickedness.',
       orders:
         'Once they finish a task, they await further orders. Initiative seems a rare quality.',
       muster: 'One is not a host. Evil buys more of them, and more of them is more Evil.',
