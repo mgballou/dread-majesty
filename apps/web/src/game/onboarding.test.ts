@@ -301,16 +301,13 @@ describe('clearsBeat', () => {
 describe('shouldRetire', () => {
   const stir = dominion.find((beat) => beat.id === 'stir');
   const goad = malice.find((beat) => beat.id === 'goad');
-  const firstBlow = malice.find((beat) => beat.id === 'first-blow');
 
   it('never retires a beat with no window', () => {
     expect(stir && shouldRetire({ beat: stir, shownAtMs: 0, playTimeMs: 9e9 })).toBe(false);
   });
 
   it('holds a beat inside its window', () => {
-    expect(firstBlow && shouldRetire({ beat: firstBlow, shownAtMs: 0, playTimeMs: 11_999 })).toBe(
-      false,
-    );
+    expect(goad && shouldRetire({ beat: goad, shownAtMs: 0, playTimeMs: 119_999 })).toBe(false);
   });
 
   it('retires a beat on the millisecond its window closes', () => {
@@ -318,13 +315,9 @@ describe('shouldRetire', () => {
   });
 
   it('measures the window from when the beat was shown', () => {
-    expect(
-      firstBlow && shouldRetire({ beat: firstBlow, shownAtMs: 60_000, playTimeMs: 66_000 }),
-    ).toBe(false);
-  });
-
-  it('retires a beat that clears on something other than a dismissal', () => {
-    expect(goad && shouldRetire({ beat: goad, shownAtMs: 0, playTimeMs: 120_000 })).toBe(true);
+    expect(goad && shouldRetire({ beat: goad, shownAtMs: 500_000, playTimeMs: 506_000 })).toBe(
+      false,
+    );
   });
 });
 

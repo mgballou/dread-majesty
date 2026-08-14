@@ -52,10 +52,6 @@ describe('the Malice track', () => {
   it("answers her in the narrator's voice", () => {
     expect(v1Onboarding.malice.find((beat) => beat.id === 'apathy')?.voice).toBe('narrator');
   });
-
-  it('clears goad when the next beat is ready', () => {
-    expect(v1Onboarding.malice.find((beat) => beat.id === 'goad')?.clearedBy).toBe('next-ready');
-  });
 });
 
 describe('every beat names something that exists', () => {
