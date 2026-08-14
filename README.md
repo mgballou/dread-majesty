@@ -100,13 +100,14 @@ it is bought off tier by tier.
 `apps/web` is the designed interface, not a shell: the live chain diagram, the buy
 rail with exactly one accented spend, the prestige panel, the deeds wall, the ledger,
 and the offline-return screen. Saves go to IndexedDB and export as a pasteable blob.
-Sound is synthesised in code and muted until asked for.
+Sound is synthesized in code and muted until asked for.
 
 A first run is walked one action at a time. A line at the foot of the screen names the
 next thing to do and holds back every other control until it is done, then clears and
-leaves the player alone until the next moment worth teaching — six of them, ending when
-the first Warren delivers five Minions nobody asked it for. It is skippable at the first
-prompt and never returns.
+leaves the player alone until the next moment worth teaching. Six moments are gated that
+way. A seventh line gates nothing and simply remarks on the five Minions the first Warren
+delivered without being asked, which is the whole cascade in one sentence. It is
+skippable at the first prompt and never returns.
 
 The first time you smite, something else starts talking. It wants you to do it again
 immediately, which is the wrong move, and it argues better the longer you refuse.
