@@ -41,11 +41,15 @@ function buyNameStart(tierId: TierId, count: number): RegExp {
   return new RegExp(`^${buyName(tierId, count).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`);
 }
 
-function draw(
-  isUnlocked: (id: TierId) => boolean = () => true,
-  quantity: BuyQuantity = 1,
-  isGated?: (control: GatedControl) => boolean,
-) {
+function draw({
+  isUnlocked = () => true,
+  quantity = 1,
+  isGated,
+}: {
+  isUnlocked?: (id: TierId) => boolean;
+  quantity?: BuyQuantity;
+  isGated?: (control: GatedControl) => boolean;
+} = {}) {
   const plan = railPlan({
     state,
     content: CURRENT,
@@ -163,19 +167,19 @@ describe('BuyRail', () => {
   });
 
   it('shows only the tiers the player has met, and one row beyond them', () => {
-    draw((id) => id === 'minion');
+    draw({ isUnlocked: (id) => id === 'minion' });
 
     expect(screen.getAllByRole('listitem')).toHaveLength(2);
   });
 
   it('names the tier beyond the last one met', () => {
-    draw((id) => id === 'minion');
+    draw({ isUnlocked: (id) => id === 'minion' });
 
     expect(screen.getByText(CURRENT_COPY.rail.upcomingTitle)).toBeInTheDocument();
   });
 
   it('says what the tier beyond the last one met costs', () => {
-    draw((id) => id === 'minion');
+    draw({ isUnlocked: (id) => id === 'minion' });
 
     const warren = CURRENT.tiers.find((tier) => tier.id === 'warren')!;
     const line = CURRENT_COPY.rail.upcoming({
@@ -189,13 +193,13 @@ describe('BuyRail', () => {
   it('offers nothing to buy on the row beyond the last tier met', () => {
     state.resources.evil = new Decimal('1e12');
 
-    draw((id) => id === 'minion');
+    draw({ isUnlocked: (id) => id === 'minion' });
 
     expect(screen.queryByRole('button', { name: buyName('warren', 1) })).not.toBeInTheDocument();
   });
 
   it('leaves no blank slots for the tiers further up the chain', () => {
-    draw((id) => id === 'minion');
+    draw({ isUnlocked: (id) => id === 'minion' });
 
     expect(screen.queryByText(CURRENT_COPY.rail.locked)).not.toBeInTheDocument();
   });
@@ -260,7 +264,7 @@ describe('BuyRail', () => {
   it('carries the chosen quantity into the callback', async () => {
     state.resources.evil = new Decimal(5200);
 
-    const { onPurchase } = draw(() => true, 10);
+    const { onPurchase } = draw({ quantity: 10 });
     await userEvent.click(screen.getByRole('button', { name: buyNameStart('minion', 10) }));
 
     expect(onPurchase).toHaveBeenCalledWith('minion', 10);
@@ -425,7 +429,7 @@ describe('BuyRail', () => {
     it('leaves the named row live', () => {
       state.resources.evil = new Decimal(5200);
 
-      draw(() => true, 1, gateAllButMinionBuy);
+      draw({ isGated: gateAllButMinionBuy });
 
       expect(screen.getByRole('button', { name: buyNameStart('minion', 1) })).not.toBeDisabled();
     });
@@ -433,7 +437,7 @@ describe('BuyRail', () => {
     it('disables a row the gate does not name', () => {
       state.resources.evil = new Decimal(5200);
 
-      draw(() => true, 1, gateAllButMinionBuy);
+      draw({ isGated: gateAllButMinionBuy });
 
       expect(screen.getByRole('button', { name: buyNameStart('warren', 1) })).toBeDisabled();
     });
@@ -453,7 +457,7 @@ describe('BuyRail', () => {
     it("never lets a gated row carry the rail's one accent", () => {
       state.resources.evil = new Decimal(5200);
 
-      const { container } = draw(() => true, 1, gateWarrenBuy);
+      const { container } = draw({ isGated: gateWarrenBuy });
 
       expect(container.querySelector('[data-tier="warren"] .button')).not.toHaveClass(
         'button--primary',
@@ -463,7 +467,7 @@ describe('BuyRail', () => {
     it("lifts the next legitimate row once the plan's own pick is gated", () => {
       state.resources.evil = new Decimal(5200);
 
-      const { container } = draw(() => true, 1, gateWarrenBuy);
+      const { container } = draw({ isGated: gateWarrenBuy });
 
       expect(container.querySelector('[data-tier="minion"] .button')).toHaveClass(
         'button--primary',

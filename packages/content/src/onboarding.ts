@@ -4,7 +4,7 @@ import type { DominionBeatId, MaliceBeatId, OverseerId, TierId } from './ids.ts'
  * When a beat is allowed on screen.
  *
  * A discriminated union rather than a predicate function, because content is data the
- * interface reads — a function here would put behaviour in the content package and make
+ * interface reads — a function here would put behavior in the content package and make
  * the tracks impossible to check without running them.
  *
  * For every beat that gates a purchase this is *can afford the named action*, which is

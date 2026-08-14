@@ -404,8 +404,7 @@ export interface GoadLine {
 /**
  * The first run, and the voice that interrupts it.
  *
- * Body text only — no titles. A standing order, not a card. The one place the shipped
- * tour's five titled cards survive is in what this replaced.
+ * Body text only — no titles. A standing order, not a card.
  */
 export interface OnboardingCopy {
   /** Leaves both tracks for good. Offered on the opening beat and nowhere else. */
