@@ -1,18 +1,28 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { CURRENT, CURRENT_COPY, type TierId } from '@dm/content';
+import { CURRENT, CURRENT_COPY, CURRENT_ONBOARDING, type TierId } from '@dm/content';
+import type { Copy, DominionBeatId, MaliceBeatId } from '@dm/content';
 import { isAppointed, isRousable, isTierUnlocked, prestigeGain } from '@dm/engine';
 import { useSound } from './audio/useSound.ts';
 import { DevBar } from './dev/DevBar.tsx';
+import {
+  clearsBeat,
+  goadLine,
+  hasSeenOnboarding,
+  isGatedOut,
+  markOnboardingSeen,
+  showingBeat,
+  type ClearingAction,
+  type GatedControl,
+} from './game/onboarding.ts';
 import { isPrestigeWorthShowing } from './game/reveals.ts';
-import { hasSeenTour, markTourSeen } from './game/tour.ts';
 import { useGameSession } from './game/useGameSession.ts';
 import { Ledger } from './screens/Ledger.tsx';
 import { OfflineSummary } from './screens/OfflineSummary.tsx';
 import { Trophies } from './screens/Trophies.tsx';
 import { Deck, type DeckTab } from './ui/Deck.tsx';
+import { Prompt } from './ui/Prompt.tsx';
 import { Sheet } from './ui/Sheet.tsx';
-import { TOUR_ANCHORS, Tour } from './ui/Tour.tsx';
 import { Crown } from './ui/crown/Crown.tsx';
 import { BuyRail } from './ui/rail/BuyRail.tsx';
 import { Miscreants } from './ui/rail/Miscreants.tsx';
@@ -56,6 +66,7 @@ import './App.css';
 export function App(): ReactNode {
   const content = CURRENT;
   const copy = CURRENT_COPY;
+  const onboarding = CURRENT_ONBOARDING;
   const session = useGameSession(content);
   const sound = useSound();
   // One owner for the setting. It prices every row of the muster and it prices the
@@ -69,32 +80,83 @@ export function App(): ReactNode {
   const closeLedger = useCallback(() => setLedgerOpen(false), []);
 
   /**
-   * The tour, for a first run and only a first run.
+   * Onboarding, for a first run and only a first run.
    *
    * Two conditions, and both are needed. `fresh` is this visit: a save on disk means a
-   * returning player, whatever they have or have not been told. `hasSeenTour` is every
-   * visit before it, and it is what covers the player who arrived, skipped the tour and
-   * closed the tab before the first autosave ten seconds later — `fresh` alone would
-   * show it to them again.
+   * returning player, whatever they have or have not been told. `hasSeenOnboarding` is
+   * every visit before it, and it covers the player who arrived, skipped and closed the
+   * tab before the first autosave ten seconds later — `fresh` alone would show it again.
    *
-   * Latched into state rather than read on every render, so finishing it cannot be
-   * undone by a re-render and the tour cannot reappear mid-session.
+   * Latched into state rather than read every render, so it cannot reappear mid-session.
    */
-  const [tourOpen, setTourOpen] = useState(false);
-  const tourDecided = useRef(false);
+  const [running, setRunning] = useState(false);
+  const decided = useRef(false);
+  const [doneDominion, setDoneDominion] = useState<readonly DominionBeatId[]>([]);
+  const [doneMalice, setDoneMalice] = useState<readonly MaliceBeatId[]>([]);
+  /** Play time at which the beat on screen appeared, for the retirement clock. */
+  const shownAt = useRef<{ id: string; atMs: number } | null>(null);
 
   useEffect(() => {
-    if (!session.ready || tourDecided.current) return;
-    tourDecided.current = true;
-    if (session.fresh && !hasSeenTour()) setTourOpen(true);
+    if (!session.ready || decided.current) return;
+    decided.current = true;
+    if (session.fresh && !hasSeenOnboarding()) setRunning(true);
   }, [session.ready, session.fresh]);
 
-  const finishTour = useCallback(() => {
-    markTourSeen();
-    setTourOpen(false);
+  const stopOnboarding = useCallback(() => {
+    markOnboardingSeen();
+    setRunning(false);
   }, []);
 
   const { state, dispatch } = session;
+
+  // How many bands the Apathy gauge is drawn in. Read from the copy rather than fixed at
+  // three, so the beat that waits for "the realm has stopped looking" and the gauge that
+  // says it can never disagree about where that band starts.
+  const bandCount = copy.smite.bands.length;
+
+  const dominionBeat = running
+    ? showingBeat({ track: onboarding.dominion, consumed: doneDominion, state, content, bandCount })
+    : null;
+  const maliceBeat =
+    running && dominionBeat === null
+      ? showingBeat({ track: onboarding.malice, consumed: doneMalice, state, content, bandCount })
+      : null;
+  const beat = dominionBeat ?? maliceBeat;
+
+  const acted = useCallback(
+    (action: ClearingAction): void => {
+      if (dominionBeat && clearsBeat(dominionBeat, action)) {
+        setDoneDominion((done) => [...done, dominionBeat.id]);
+      }
+      if (maliceBeat && clearsBeat(maliceBeat, action)) {
+        setDoneMalice((done) => [...done, maliceBeat.id]);
+      }
+    },
+    [dominionBeat, maliceBeat],
+  );
+
+  useEffect(() => {
+    if (!beat || beat.retireAfterMs === null) return;
+
+    if (shownAt.current?.id !== beat.id) {
+      shownAt.current = { id: beat.id, atMs: state.stats.playTimeMs };
+      return;
+    }
+
+    if (state.stats.playTimeMs - shownAt.current.atMs >= beat.retireAfterMs) {
+      acted({ kind: 'dismiss' });
+    }
+  }, [beat, state.stats.playTimeMs, acted]);
+
+  useEffect(() => {
+    if (running && doneDominion.length === onboarding.dominion.length) markOnboardingSeen();
+  }, [running, doneDominion.length, onboarding.dominion.length]);
+
+  // Passed only while a beat is showing, so after onboarding the prop is absent and the
+  // controls are exactly what they were.
+  const isGated = beat
+    ? (control: GatedControl): boolean => isGatedOut(beat.gate, control)
+    : undefined;
 
   // The engine mutates in place, so the state object's identity is stable and this
   // stays the same function for the life of the session. That is what makes the plan
@@ -166,9 +228,11 @@ export function App(): ReactNode {
           quantity={quantity}
           onQuantity={setQuantity}
           isUnlocked={unlocked}
+          {...(isGated ? { isGated } : {})}
           onPurchase={(tierId, buying) => {
             const result = dispatch({ kind: 'purchase', tierId, quantity: buying });
             if (result.ok) sound.play('purchase');
+            acted({ kind: 'buy', tierId });
           }}
         />
       ),
@@ -185,9 +249,11 @@ export function App(): ReactNode {
           copy={copy}
           state={state}
           plan={plan}
+          {...(isGated ? { isGated } : {})}
           onAppoint={(overseerId) => {
             const result = dispatch({ kind: 'appoint', overseerId });
             if (result.ok) sound.play('unlock');
+            acted({ kind: 'appoint', overseerId });
           }}
         />
       ),
@@ -251,13 +317,16 @@ export function App(): ReactNode {
             isAppointed={appointed}
             isRousable={rousable}
             needsHand={needsHand}
+            {...(isGated ? { isGated } : {})}
             onRouse={(tierId) => {
               const result = dispatch({ kind: 'rouse', tierId });
               if (result.ok) sound.play('rouse');
+              acted({ kind: 'rouse', tierId });
             }}
             onSmite={() => {
               dispatch({ kind: 'smite' });
               sound.play('smite');
+              acted({ kind: 'smite' });
             }}
           />
 
@@ -294,6 +363,36 @@ export function App(): ReactNode {
             </div>
           </div>
         </main>
+
+        <div className="shell__prompt">
+          {beat && (
+            <Prompt
+              line={lineFor(copy, beat.id, state.smiteApathy)}
+              voice={beat.voice}
+              label={
+                beat.voice === 'her' ? copy.onboarding.herLabel : copy.onboarding.narratorLabel
+              }
+              {...(beat.id === 'stir'
+                ? {
+                    bail: {
+                      skip: copy.onboarding.skip,
+                      loadSave: copy.onboarding.loadSave,
+                      onSkip: stopOnboarding,
+                      onLoadSave: () => setLedgerOpen(true),
+                    },
+                  }
+                : {})}
+              {...(beat.clearedBy === 'dismiss'
+                ? {
+                    dismiss: {
+                      label: copy.onboarding.dismiss,
+                      onDismiss: () => acted({ kind: 'dismiss' }),
+                    },
+                  }
+                : {})}
+            />
+          )}
+        </div>
 
         <footer className="shell__foot">
           {/* One control, so no landmark around it. The old footer wrapped two in a
@@ -344,12 +443,27 @@ export function App(): ReactNode {
           onDismiss={session.dismissOffline}
         />
       )}
-
-      {/* Last, and never at the same time as the return summary — a save that has been
-          away is not a first run. It handles its own inertness, being a modal dialog. */}
-      {tourOpen && <Tour copy={copy.tour} anchors={TOUR_ANCHORS} onFinish={finishTour} />}
     </div>
   );
+}
+
+/**
+ * The line a beat says.
+ *
+ * `goad` is the only beat whose line is not fixed — hers is chosen from Apathy as it
+ * bleeds, so the prompt mutates while the player resists and she works down her own
+ * argument. Every other beat has exactly one line.
+ *
+ * The three Malice ids are checked before the Dominion lookup, so the fall-through can
+ * only be reached by a Dominion id — and because the two unions are disjoint, the
+ * typechecker knows it. No cast, and a beat added to either track without copy fails
+ * typecheck rather than rendering an empty bar.
+ */
+function lineFor(copy: Copy, beatId: DominionBeatId | MaliceBeatId, apathy: number): string {
+  if (beatId === 'goad') return goadLine(copy.onboarding.goad, apathy);
+  if (beatId === 'first-blow') return copy.onboarding.malice['first-blow'];
+  if (beatId === 'apathy') return copy.onboarding.malice.apathy;
+  return copy.onboarding.dominion[beatId];
 }
 
 /**

@@ -102,10 +102,14 @@ rail with exactly one accented spend, the prestige panel, the deeds wall, the le
 and the offline-return screen. Saves go to IndexedDB and export as a pasteable blob.
 Sound is synthesised in code and muted until asked for.
 
-A new player gets a five-card tour on their first run: what Evil is for, that nothing
-turns until roused, and the one thing the interface cannot say on its own — that buying
-high on the chain speeds up everything under it within the same interval. It is
-skippable from the first card and never returns.
+A first run is walked one action at a time. A line at the foot of the screen names the
+next thing to do and holds back every other control until it is done, then clears and
+leaves the player alone until the next moment worth teaching — six of them, ending when
+the first Warren delivers five Minions nobody asked it for. It is skippable at the first
+prompt and never returns.
+
+The first time you smite, something else starts talking. It wants you to do it again
+immediately, which is the wrong move, and it argues better the longer you refuse.
 
 There is a dev workbench at the foot of the page — jump to any point of progression,
 set any resource, appoint or dismiss every Overseer, simulate an absence. It is

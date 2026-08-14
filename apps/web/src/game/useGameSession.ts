@@ -54,7 +54,7 @@ export interface Session {
    * Meaningless until `ready`, and it never changes afterwards: abdicating starts a new
    * realm but not a new session, and a save refused for being too old is still a save
    * that existed. Both of those are people who have played before, and the one caller
-   * for this is the first-run tour.
+   * for this is first-run onboarding.
    */
   fresh: boolean;
   /** What happened while the player was away. Null once dismissed. */

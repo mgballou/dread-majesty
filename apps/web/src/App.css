@@ -81,6 +81,19 @@
 }
 
 /*
+ * The prompt's row, held whether or not a beat is showing.
+ *
+ * Held rather than mounted on demand, for the reason `.shell__marker` is: a row that
+ * appeared when the first beat arrived would shove the footer down the page mid-play.
+ * The row is exactly as tall as the prompt at every width, including where it wraps on
+ * a phone, so nothing moves when a beat lands or clears.
+ */
+.shell__prompt {
+  margin-block-start: var(--space-4);
+  min-height: 3.5rem;
+}
+
+/*
  * The records live in the footer, not in the deck.
  *
  * The deck holds the things a player spends on, and four is what its tube fits. The

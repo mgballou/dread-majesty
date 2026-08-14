@@ -1,15 +1,19 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { CURRENT, CURRENT_COPY } from '@dm/content';
-import { createState, serialize } from '@dm/engine';
+import { createState, serialize, type SaveBlob } from '@dm/engine';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { App } from './App.tsx';
-import { forgetTour, markTourSeen } from './game/tour.ts';
+import { forgetOnboarding, hasSeenOnboarding, markOnboardingSeen } from './game/onboarding.ts';
 import * as storage from './game/storage.ts';
 
+function savedBlob(): SaveBlob {
+  return serialize(createState(CURRENT), Date.now());
+}
+
 describe('the deck and the records', () => {
-  beforeEach(() => markTourSeen());
-  afterEach(() => forgetTour());
+  beforeEach(() => markOnboardingSeen());
+  afterEach(() => forgetOnboarding());
 
   it('shows four tabs', async () => {
     render(<App />);
@@ -46,70 +50,55 @@ describe('the deck and the records', () => {
   });
 });
 
-describe('the first-run tour', () => {
-  const tour = CURRENT_COPY.tour;
+describe('first-run onboarding', () => {
+  beforeEach(() => forgetOnboarding());
 
   afterEach(() => {
-    forgetTour();
+    forgetOnboarding();
     vi.restoreAllMocks();
   });
 
-  function withSave(present: boolean): void {
-    vi.spyOn(storage, 'readSave').mockResolvedValue(
-      present ? serialize(createState(CURRENT), Date.now()) : null,
-    );
-  }
-
-  it('greets a player with no save', async () => {
-    withSave(false);
+  it('opens on the first beat for a new player', async () => {
+    vi.spyOn(storage, 'readSave').mockResolvedValue(null);
     render(<App />);
 
-    expect(
-      await screen.findByRole('heading', { name: tour.steps.premise.title }),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(CURRENT_COPY.onboarding.dominion.stir)).toBeInTheDocument();
   });
 
-  it('stays away from a returning save', async () => {
-    withSave(true);
+  it('says nothing to a returning player', async () => {
+    vi.spyOn(storage, 'readSave').mockResolvedValue(savedBlob());
     render(<App />);
     await screen.findAllByRole('tab');
 
-    expect(screen.queryByRole('heading', { name: tour.steps.premise.title })).toBeNull();
+    expect(screen.queryByText(CURRENT_COPY.onboarding.dominion.stir)).not.toBeInTheDocument();
   });
 
-  it('stays away from a player who has already seen it', async () => {
-    withSave(false);
-    markTourSeen();
+  it('says nothing to a player who has seen it before', async () => {
+    markOnboardingSeen();
+    vi.spyOn(storage, 'readSave').mockResolvedValue(null);
     render(<App />);
     await screen.findAllByRole('tab');
 
-    expect(screen.queryByRole('heading', { name: tour.steps.premise.title })).toBeNull();
+    expect(screen.queryByText(CURRENT_COPY.onboarding.dominion.stir)).not.toBeInTheDocument();
   });
 
-  it('does not come back after being skipped', async () => {
-    withSave(false);
+  it('clears every prompt when the player skips', async () => {
+    vi.spyOn(storage, 'readSave').mockResolvedValue(null);
     render(<App />);
-    await userEvent.click(await screen.findByRole('button', { name: tour.skip }));
-
-    await waitFor(() =>
-      expect(screen.queryByRole('heading', { name: tour.steps.premise.title })).toBeNull(),
+    await userEvent.click(
+      await screen.findByRole('button', { name: CURRENT_COPY.onboarding.skip }),
     );
+
+    expect(screen.queryByText(CURRENT_COPY.onboarding.dominion.stir)).not.toBeInTheDocument();
   });
 
-  it('records itself as seen once skipped', async () => {
-    withSave(false);
+  it('remembers a skip across visits', async () => {
+    vi.spyOn(storage, 'readSave').mockResolvedValue(null);
     render(<App />);
-    await userEvent.click(await screen.findByRole('button', { name: tour.skip }));
+    await userEvent.click(
+      await screen.findByRole('button', { name: CURRENT_COPY.onboarding.skip }),
+    );
 
-    const { hasSeenTour } = await import('./game/tour.ts');
-    expect(hasSeenTour()).toBe(true);
-  });
-
-  it('leaves the game reachable behind it', async () => {
-    withSave(false);
-    render(<App />);
-    await screen.findByRole('heading', { name: tour.steps.premise.title });
-
-    expect(await screen.findAllByRole('tab')).toHaveLength(4);
+    expect(hasSeenOnboarding()).toBe(true);
   });
 });
