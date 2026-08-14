@@ -170,7 +170,7 @@ describe('the title screen', () => {
   /**
    * Throws the realm away from the ledger, which is the one reset a player can reach.
    *
-   * Both buttons are labelled "Abdicate" — the one in the controls opens the confirmation and
+   * Both buttons are labeled "Abdicate" — the one in the controls opens the confirmation and
    * the one inside it does the deed — so they are told apart by their order, not their name.
    */
   async function abdicates(): Promise<void> {
