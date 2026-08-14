@@ -1123,7 +1123,7 @@ In `apps/web/src/ui/tokens.css`, add to the primitives block, after `--raw-ash-4
   /* Verdigris. Corroded bronze, and the only voice in the game that is spoken rather
      than written. Not gold, because gold means act and she never offers one; not ember,
      because ember is Evil; not ash, because ash is the gauge she is arguing against.
-     Measured 7.3:1 against --surface and 110° of hue from gold. */
+     Measured 6.59:1 against --surface, 110.4° of hue from gold and 106.8° from apathy. */
   --raw-verdigris-400: #3fa87e;
 ```
 
