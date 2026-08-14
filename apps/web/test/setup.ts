@@ -16,6 +16,23 @@ if (!globalThis.requestAnimationFrame) {
 }
 
 /**
+ * jsdom lays nothing out, so it ships no `ResizeObserver` — and `Spotlight` builds one
+ * to catch its target going from hidden to sized, which is the only way it can know a
+ * deck panel opened underneath it.
+ *
+ * A do-nothing stand-in, because nothing here has a box that can change: this only
+ * keeps the constructor from throwing in every test that renders the game. The test
+ * that pins the re-measurement replaces it with one it can drive by hand.
+ */
+if (!globalThis.ResizeObserver) {
+  globalThis.ResizeObserver = class ShimResizeObserver implements ResizeObserver {
+    observe(): void {}
+    unobserve(): void {}
+    disconnect(): void {}
+  };
+}
+
+/**
  * jsdom implements no part of `<dialog>`.
  *
  * ui-sensibility §13 says to use the platform's own primitive for dialogs, which

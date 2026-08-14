@@ -6,13 +6,14 @@ import type { Content } from '@dm/content';
 import { createState, exportSave, serialize, type SaveBlob } from '@dm/engine';
 import type { Intent, IntentFailure, IntentResult } from '@dm/engine';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { App, spotlightFor } from './App.tsx';
+import { App } from './App.tsx';
 import {
   finishOnboarding,
   forgetOnboarding,
   readOnboarding,
   writeOnboarding,
 } from './game/onboarding.ts';
+import { spotlightFor } from './game/spotlight.ts';
 import type * as sessionModule from './game/useGameSession.ts';
 import type { Session } from './game/useGameSession.ts';
 import * as storage from './game/storage.ts';
@@ -611,6 +612,14 @@ describe('the spotlight follows the beat', () => {
     await screen.findByText(onboarding.dominion.muster);
 
     expect(screen.getByRole('tab', { name: musterTab })).toHaveAttribute('aria-selected', 'true');
+  });
+
+  it('holds the dim back while the return summary is up', async () => {
+    await firstRun();
+    await userEvent.click(screen.getByRole('button', { name: 'Away 1h' }));
+    await screen.findByRole('dialog');
+
+    expect(screen.queryByTestId('spotlight')).toBeNull();
   });
 
   it('dims nothing once onboarding is over', async () => {

@@ -85,6 +85,34 @@ export function Spotlight({ target }: SpotlightProps): ReactNode {
     };
   }, [measure]);
 
+  /**
+   * Measures again when the target's own box changes, which is what the window's
+   * events cannot see.
+   *
+   * A beat that names a control inside a shut deck panel arrives one render before the
+   * deck opens that panel. The layout effect above therefore measures an element that
+   * is mounted but hidden, reads zero, and falls back to dimming everything — and
+   * opening a tab fires neither a resize nor a scroll, so nothing ever asks again. The
+   * `appoint` beat points into the miscreants, which is never the tab in front, so
+   * without this it dims the whole screen for the rest of the beat.
+   *
+   * A `ResizeObserver` rather than a poll or a frame loop: hidden to sized is exactly a
+   * box going from zero to a size, which is the one thing it reports, and it costs
+   * nothing while nothing moves. It is deliberately the element's box only — a target
+   * that merely *moves*, with no size change, is still the resize and scroll listeners'
+   * business.
+   */
+  useEffect(() => {
+    if (target === undefined) return undefined;
+
+    const element = document.querySelector(target);
+    if (element === null) return undefined;
+
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [measure, target]);
+
   const mode = target === undefined ? 'soft' : frame === null ? 'whole' : 'cutout';
 
   return (
