@@ -480,6 +480,7 @@ The spotlight must find *the Minion rung*, not *a rung*. `TierRow` already carri
 
 - Modify: `apps/web/src/ui/stage/TierNode.tsx`
 - Modify: `apps/web/src/ui/rail/Miscreants.tsx`
+- Modify: `apps/web/src/ui/stage/ChainStage.tsx` — `TierNode` turned out to carry no prop holding a `TierId`, so it gains a required `tierId` and its only caller must supply it
 - Test: `apps/web/src/ui/stage/TierNode.test.tsx`, `apps/web/src/ui/rail/Miscreants.test.tsx`
 
 **Interfaces:**
