@@ -437,14 +437,14 @@ describe('onboarding retires a beat nobody answered', () => {
     expect(screen.queryByRole('status', { name: onboarding.herLabel })).not.toBeInTheDocument();
   });
 
-  // Deliberately not repointed at goad. See the Task 1 report's note on this test: her
-  // own `ready` and the cooldown a cave restarts are the same clock, so caving to raise
-  // Apathy for `apathy` to take over also blanks the screen and resets the timer that
-  // would let her retire — the two preconditions this test wants can't hold at once
-  // under the current content. Task 2 or 3, whichever wires up `next-ready`, is what
-  // makes this reachable: a successor's readiness would consume her directly rather
-  // than through this retirement path.
-  it.todo('moves the track on to the next beat when one retires');
+  it('does not bring a retired beat back when it becomes ready again', async () => {
+    await revealsGoad();
+    wind(121_000);
+    await userEvent.click(screen.getByRole('button', { name: smiteName }));
+    wind(21_000);
+
+    expect(screen.queryByRole('status', { name: onboarding.herLabel })).not.toBeInTheDocument();
+  });
 
   it('retires a beat that clears on something other than a dismissal', async () => {
     await struckAndCrowdedOut();
