@@ -53,9 +53,11 @@ interface TierNodeProps {
   /**
    * The tier this rung stands for.
    *
-   * Read by nobody yet — it exists so the first-run tutorial can point its spotlight
-   * at a specific rung rather than at whichever one happens to render. Do not remove
-   * it as unused.
+   * Read by game/spotlight.ts, which builds a selector string from this value to point
+   * the first-run spotlight at a specific rung. TypeScript cannot see that dependency,
+   * so renaming this attribute loses the spotlight silently. The anchor test in
+   * App.test.tsx guards it by walking the shipped tracks and asserting every selector
+   * resolves.
    */
   tierId: TierId;
   /** Plural display name — the noun the player reasons in. */
