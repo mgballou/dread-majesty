@@ -5,6 +5,7 @@ import { CURRENT, CURRENT_COPY } from '@dm/content';
 import type { TierId } from '@dm/content';
 import { bulkCost, createState, type GameState } from '@dm/engine';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { GatedControl } from '../../game/onboarding.ts';
 import { setReducedMotion } from '../../../test/setup.ts';
 import { formatNumber } from '../format.ts';
 import { BuyRail } from './BuyRail.tsx';
@@ -40,7 +41,11 @@ function buyNameStart(tierId: TierId, count: number): RegExp {
   return new RegExp(`^${buyName(tierId, count).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`);
 }
 
-function draw(isUnlocked: (id: TierId) => boolean = () => true, quantity: BuyQuantity = 1) {
+function draw(
+  isUnlocked: (id: TierId) => boolean = () => true,
+  quantity: BuyQuantity = 1,
+  isGated?: (control: GatedControl) => boolean,
+) {
   const plan = railPlan({
     state,
     content: CURRENT,
@@ -62,6 +67,7 @@ function draw(isUnlocked: (id: TierId) => boolean = () => true, quantity: BuyQua
         quantity={quantity}
         onQuantity={onQuantity}
         isUnlocked={isUnlocked}
+        {...(isGated === undefined ? {} : { isGated })}
         onPurchase={onPurchase}
         copy={CURRENT_COPY}
       />,
@@ -409,5 +415,35 @@ describe('BuyRail', () => {
     const noun = container.querySelector('[data-tier="minion"] .rail__made');
 
     expect(noun).not.toHaveAttribute('aria-hidden');
+  });
+
+  describe('the onboarding gate', () => {
+    function gateAllButMinionBuy(control: GatedControl): boolean {
+      return !(control.kind === 'buy' && control.tierId === 'minion');
+    }
+
+    it('leaves the named row live', () => {
+      state.resources.evil = new Decimal(5200);
+
+      draw(() => true, 1, gateAllButMinionBuy);
+
+      expect(screen.getByRole('button', { name: buyNameStart('minion', 1) })).not.toBeDisabled();
+    });
+
+    it('disables a row the gate does not name', () => {
+      state.resources.evil = new Decimal(5200);
+
+      draw(() => true, 1, gateAllButMinionBuy);
+
+      expect(screen.getByRole('button', { name: buyNameStart('warren', 1) })).toBeDisabled();
+    });
+
+    it('leaves every row live when nothing is gated', () => {
+      state.resources.evil = new Decimal(5200);
+
+      draw();
+
+      expect(screen.getByRole('button', { name: buyNameStart('warren', 1) })).not.toBeDisabled();
+    });
   });
 });

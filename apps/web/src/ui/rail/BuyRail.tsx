@@ -2,6 +2,7 @@ import Decimal from 'break_eternity.js';
 import { useId, type ReactNode } from 'react';
 import type { Content, TierDef, TierId } from '@dm/content';
 import { nextCost, type GameState } from '@dm/engine';
+import type { GatedControl } from '../../game/onboarding.ts';
 import { Banner } from '../Banner.tsx';
 import { formatWhole } from '../format.ts';
 import { TierRow, type RailScreenCopy } from './TierRow.tsx';
@@ -27,6 +28,14 @@ interface BuyRailProps {
   onQuantity: (quantity: BuyQuantity) => void;
   /** Passed in rather than read off the state, so the rail owes nothing to its shape. */
   isUnlocked: (tierId: TierId) => boolean;
+  /**
+   * Whether onboarding is holding this control back.
+   *
+   * A predicate of the same shape as `isUnlocked` above it, so the rail owes nothing to
+   * how onboarding decides. Absent means nothing is gated, which is every state of the
+   * game after the first run.
+   */
+  isGated?: (control: GatedControl) => boolean;
   onPurchase: (tierId: TierId, quantity: BuyQuantity) => void;
   copy: RailScreenCopy;
 }
@@ -68,6 +77,7 @@ export function BuyRail({
   quantity,
   onQuantity,
   isUnlocked,
+  isGated,
   onPurchase,
   copy,
 }: BuyRailProps): ReactNode {
@@ -112,6 +122,7 @@ export function BuyRail({
               purchase={purchase}
               emphasis={spendEmphasis(plan, 'purchase', tier.id)}
               quantity={quantity}
+              isGated={isGated?.({ kind: 'buy', tierId: tier.id }) === true}
               onPurchase={onPurchase}
               copy={copy}
             />

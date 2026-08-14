@@ -1,4 +1,5 @@
 import type { ReactElement } from 'react';
+import Decimal from 'break_eternity.js';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { CURRENT, CURRENT_COPY } from '@dm/content';
@@ -6,6 +7,7 @@ import type { TierId } from '@dm/content';
 import { apply, createState, step } from '@dm/engine';
 import type { GameState } from '@dm/engine';
 import { describe, expect, it, vi } from 'vitest';
+import type { GatedControl } from '../../game/onboarding.ts';
 import { setReducedMotion } from '../../../test/setup.ts';
 import { ChainStage } from './ChainStage.tsx';
 
@@ -312,5 +314,50 @@ describe('ChainStage', () => {
     rerender(stage({ state, version: 2 }));
 
     expect(container.querySelector('[data-tier="warren"] .stage-node__fired')).toBeNull();
+  });
+
+  describe('the onboarding gate', () => {
+    function ownedTwo(): GameState {
+      const state = fresh();
+      state.gens.warren.owned = new Decimal(5);
+      return state;
+    }
+
+    function gateAllButMinionRouse(control: GatedControl): boolean {
+      return !(control.kind === 'rouse' && control.tierId === 'minion');
+    }
+
+    it('disables a rung the gate does not name', () => {
+      render(stage({ state: ownedTwo(), isGated: gateAllButMinionRouse }));
+
+      expect(screen.getByRole('button', { name: /Rouse the Warrens/ })).toHaveAttribute(
+        'aria-disabled',
+        'true',
+      );
+    });
+
+    it('leaves the named rung live', () => {
+      render(stage({ state: ownedTwo(), isGated: gateAllButMinionRouse }));
+
+      expect(screen.getByRole('button', { name: /Rouse the Minions/ })).toHaveAttribute(
+        'aria-disabled',
+        'false',
+      );
+    });
+
+    it('leaves every rung live when nothing is gated', () => {
+      render(stage({ state: ownedTwo() }));
+
+      expect(screen.getByRole('button', { name: /Rouse the Warrens/ })).toHaveAttribute(
+        'aria-disabled',
+        'false',
+      );
+    });
+
+    it('never gates Smite', () => {
+      render(stage({ isGated: () => true }));
+
+      expect(strike()).not.toBeDisabled();
+    });
   });
 });
