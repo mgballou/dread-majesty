@@ -1,7 +1,37 @@
+import { existsSync, readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { Prompt } from './Prompt.tsx';
+
+/**
+ * Walks up from the working directory rather than reading `import.meta.url`, which
+ * under jsdom is an http URL and cannot be turned into a path. Mirrors `tokens.test.ts`.
+ */
+function locate(relative: string): string {
+  let dir = process.cwd();
+  while (!existsSync(join(dir, relative))) {
+    const parent = dirname(dir);
+    if (parent === dir) throw new Error(`Could not find ${relative} above ${process.cwd()}`);
+    dir = parent;
+  }
+  return join(dir, relative);
+}
+
+const css = readFileSync(locate(join('apps', 'web', 'src', 'ui', 'Prompt.css')), 'utf8');
+
+function escapeForPattern(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/** The declaration body of a single CSS rule, found by its selector text. */
+function rule(selector: string): string {
+  const pattern = new RegExp(`${escapeForPattern(selector)}\\s*\\{([^}]*)\\}`);
+  const match = pattern.exec(css);
+  if (!match) throw new Error(`No rule found in Prompt.css for selector "${selector}"`);
+  return match[1] ?? '';
+}
 
 describe('Prompt', () => {
   it('shows the line it is given', () => {
@@ -64,5 +94,39 @@ describe('Prompt', () => {
     );
     await userEvent.click(screen.getByRole('button', { name: 'Understood' }));
     expect(onDismiss).toHaveBeenCalledOnce();
+  });
+});
+
+/**
+ * The narrator/her distinction has to survive on paper too: a screen reader gets it from
+ * `aria-label` (varied by the caller per beat, tested above), never from these rules. What
+ * these rules owe is the visual signal for anyone who cannot rely on hue. Delete the marker
+ * or the italic and every test above still passes, so the stylesheet needs its own contract.
+ */
+describe('the voices stay visually distinct from each other', () => {
+  it('gives the narrator a marker with real content', () => {
+    const before = rule('.prompt--narrator .prompt__line::before');
+    const content = /content:\s*(['"])(.*?)\1/.exec(before)?.[2] ?? '';
+    expect(content.length).toBeGreaterThan(0);
+  });
+
+  it('sets her voice in italic', () => {
+    expect(rule('.prompt--her .prompt__line')).toMatch(/font-style:\s*italic/);
+  });
+
+  it('ties her voice to --tone-malice', () => {
+    const her = rule('.prompt--her') + rule('.prompt--her .prompt__line');
+    expect(her).toMatch(/--tone-malice/);
+  });
+
+  it('keeps neither voice at the full-strength accent', () => {
+    const both = [
+      rule('.prompt--narrator .prompt__line'),
+      rule('.prompt--narrator .prompt__line::before'),
+      rule('.prompt--her'),
+      rule('.prompt--her .prompt__line'),
+    ].join('\n');
+
+    expect(both).not.toMatch(/--accent(?!-)/);
   });
 });
