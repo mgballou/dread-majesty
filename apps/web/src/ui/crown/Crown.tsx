@@ -32,10 +32,13 @@ export function Crown({ state, content, copy }: CrownProps): ReactNode {
 
   return (
     <header className="crown">
-      {/* One line, two facts. The countdown lives here rather than on the control,
-          because this line has nothing to its right to push about when it changes. */}
+      {/* The figure and its label in their own span, so the surge can light the thing it
+          actually changes. The standing beside it is a different fact and keeps its own
+          color — lighting the whole line would say the whole line had changed. */}
       <p className="crown__rate">
-        {formatNumber(rate)} {copy.evil.name} per second
+        <span className="crown__figure" data-smite={smite.kind}>
+          {formatNumber(rate)} {copy.evil.name} per second
+        </span>
         <span className="crown__dot" aria-hidden="true" />
         <span className="crown__standing">{standing(smite, copy.smite, content)}</span>
       </p>

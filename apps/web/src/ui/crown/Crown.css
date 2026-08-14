@@ -21,6 +21,21 @@
   color: var(--ink-muted);
 }
 
+/*
+ * The blow's whole effect is that production runs harder, and this is the one figure that
+ * reports production. Without this the number changes and nothing says why.
+ *
+ * `--tone-resource` is not a new choice: it is the Evil tone, and `EvilNode` already turns it
+ * on `[data-smite='active']`. The same tone in two places reads as one fact; two different
+ * highlights would read as two.
+ *
+ * Not carrying the state on its own — the standing on this same line reads "reigning" through
+ * the surge, so this is emphasis on something already said in words.
+ */
+.crown__figure[data-smite='active'] {
+  color: var(--tone-resource);
+}
+
 .crown__souls {
   margin: 0;
   font-family: var(--font-numeric);
