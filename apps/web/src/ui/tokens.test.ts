@@ -178,7 +178,13 @@ describe('contrast', () => {
   });
 
   it('holds every enumerated tone at AA against --surface', () => {
-    for (const name of ['--tone-positive', '--tone-danger', '--tone-resource', '--tone-apathy']) {
+    for (const name of [
+      '--tone-positive',
+      '--tone-danger',
+      '--tone-resource',
+      '--tone-apathy',
+      '--tone-malice',
+    ]) {
       expect(contrast(name, '--surface')).toBeGreaterThanOrEqual(4.5);
     }
   });
@@ -254,6 +260,14 @@ describe('nothing crowds the accent', () => {
         expect(hueDistance(one, other)).toBeGreaterThanOrEqual(30);
       }
     }
+  });
+
+  it('keeps her voice clear of gold', () => {
+    expect(hueDistance('--tone-malice', '--accent')).toBeGreaterThanOrEqual(45);
+  });
+
+  it('keeps her voice clear of apathy', () => {
+    expect(hueDistance('--tone-malice', '--tone-apathy')).toBeGreaterThanOrEqual(45);
   });
 });
 
