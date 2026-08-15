@@ -34,8 +34,15 @@
 }
 
 /* A beat that points without gating: the ring still names a control, but nothing is
-   held back, so the full scrim would claim a lock that is not there. */
-.spotlight--cutout[data-weight='soft'] .spotlight__band {
+   held back, so the full scrim would claim a lock that is not there.
+
+   The fallback carries the weight too. `whole` is what a cutout becomes for the frame or
+   two before its target has a measured box, and a beat that gates nothing does not start
+   holding the screen back just because the measurement has not landed yet — that would be
+   a flash of full dim over a rail the player can still use. The weight follows the beat,
+   not the measurement. */
+.spotlight--cutout[data-weight='soft'] .spotlight__band,
+.spotlight--whole[data-weight='soft'] .spotlight__band {
   background: var(--scrim-soft);
 }
 

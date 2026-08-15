@@ -302,9 +302,16 @@ describe('the stylesheet contract', () => {
   });
 
   it('dims a cutout that points without gating to the soft scrim', () => {
-    expect(rule(spotlightCss, ".spotlight--cutout[data-weight='soft'] .spotlight__band")).toMatch(
-      /background:\s*var\(--scrim-soft\)/,
-    );
+    expect(
+      rule(
+        spotlightCss,
+        ".spotlight--cutout[data-weight='soft'] .spotlight__band,\n.spotlight--whole[data-weight='soft'] .spotlight__band",
+      ),
+    ).toMatch(/background:\s*var\(--scrim-soft\)/);
+  });
+
+  it('carries the soft weight into the unmeasured fallback', () => {
+    expect(spotlightCss).toContain(".spotlight--whole[data-weight='soft'] .spotlight__band");
   });
 
   it('sits beneath the prompt bar', () => {
