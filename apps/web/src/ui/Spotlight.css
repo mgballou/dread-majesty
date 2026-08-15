@@ -33,6 +33,12 @@
   background: var(--scrim-soft);
 }
 
+/* A beat that points without gating: the ring still names a control, but nothing is
+   held back, so the full scrim would claim a lock that is not there. */
+.spotlight--cutout[data-weight='soft'] .spotlight__band {
+  background: var(--scrim-soft);
+}
+
 /* Line work, not an action: the ring says "here"; the control underneath is what
    does something. Gold at full strength would spend the screen's one action color
    on pointing rather than on acting. */
