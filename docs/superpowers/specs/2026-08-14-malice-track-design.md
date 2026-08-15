@@ -1,6 +1,6 @@
 # The Malice Track, Repaired
 
-**Status:** drafted
+**Status:** built
 **Extends:** `2026-08-13-onboarding-design.md` and `2026-08-14-onboarding-presence-design.md`.
 The beat model, the Dominion track and the presence work all stand. This changes the Malice
 track's timing, its endings, how her lines are chosen, and what happens when both tracks want

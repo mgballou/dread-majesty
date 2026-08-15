@@ -1,5 +1,7 @@
 # Stage and rail polish — design
 
+**Status:** built
+
 Amends `2026-08-03-dread-majesty-design.md` §6 and `docs/reference/ui-sensibility.md` §3.
 Everything here is interface. No engine file changes; no balance number changes.
 

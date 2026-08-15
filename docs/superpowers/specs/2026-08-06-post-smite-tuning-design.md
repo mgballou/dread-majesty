@@ -1,7 +1,7 @@
 # Post-Smite Tuning — Design Spec
 
 **Date:** 2026-08-06
-**Status:** approved, not yet implemented
+**Status:** built
 **Follows:** `2026-08-04-smite-as-a-system-design.md`, whose §8 deferred exactly this.
 
 ---

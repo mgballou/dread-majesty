@@ -1,7 +1,7 @@
 # Economy Retune — Design Spec
 
 **Date:** 2026-08-04
-**Status:** approved, ready for planning
+**Status:** built
 **Amends:** `2026-08-03-dread-majesty-design.md` §4.7, §5.2, §5.4, §5.6, §7
 
 ---
