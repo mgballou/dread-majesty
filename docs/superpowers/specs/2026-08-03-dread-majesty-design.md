@@ -1,7 +1,8 @@
 # Dread Majesty — Design Spec
 
 **Date:** 2026-08-03
-**Status:** approved, ready for implementation
+**Status:** built through M4. See §"Where things stand" — M5 and M6 have not been started.
+Later specs amend this one in places and say so at their head.
 **Audience:** the agent or developer building M1 onward
 
 ---

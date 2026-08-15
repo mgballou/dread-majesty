@@ -1,7 +1,7 @@
 # Smite as a System — Design Spec
 
 **Date:** 2026-08-04
-**Status:** approved, ready for planning
+**Status:** built
 **Amends:** `2026-08-03-dread-majesty-design.md` §5.5; `2026-08-04-economy-retune-design.md` §10
 
 **This is Spec B.** A is delivered, C is delivered. D — the guided tour — is still
