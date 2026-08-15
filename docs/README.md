@@ -1,16 +1,20 @@
 # Docs
 
-Three kinds of document, and they are not equal in authority.
+Three documents govern this repo, and nothing else does.
 
-| | What it is | Authority |
-|---|---|---|
-| [`superpowers/specs/`](superpowers/specs/) | What was decided and why | **Normative.** The record. |
-| [`superpowers/plans/`](superpowers/plans/) | How a spec was carried out, step by step | Historical. Spent once. |
-| [`reference/`](reference/) | Notes that predate the code | Background. Superseded in places. |
+| | What it governs |
+|---|---|
+| [**The design spec**](superpowers/specs/2026-08-03-dread-majesty-design.md) | What the game is, and why each decision went the way it did |
+| [**`ui-sensibility.md`**](ui-sensibility.md) | What the interface has to produce |
+| [**`../CLAUDE.md`**](../CLAUDE.md) | How to write the code |
 
-**Start with [`specs/2026-08-03-dread-majesty-design.md`](superpowers/specs/2026-08-03-dread-majesty-design.md).**
-It holds the design and the reasoning. [`../CLAUDE.md`](../CLAUDE.md) holds how to write code
-here. The two together are the whole brief.
+Everything under [`superpowers/`](superpowers/) is the record of how those three were arrived at:
+one spec per change, one plan per spec. Read the design spec first — the rest amends it.
+
+There is no `reference/` directory. The planning documents that predated the code specified a
+server-authoritative Laravel engine that this project reversed, so they were deleted rather than
+left to be half-believed. Everything of theirs that survived was folded into the design spec,
+which says so where it happened.
 
 ---
 
@@ -52,18 +56,14 @@ record what the work actually cost, not because they are worth reading first.
 [title screen](superpowers/plans/2026-08-14-title-screen.md) ·
 [card and cadence](superpowers/plans/2026-08-14-card-and-cadence.md)
 
-## Reference
+## The interface document
 
-Written before the code, and kept for the parts that survived.
+[`ui-sensibility.md`](ui-sensibility.md) is normative for everything in `apps/web`, and about
+thirty source files cite it by section number — `tokens.css` §4, `controls.css` §3,
+`TierNode.css` §8, `tokens.test.ts` §13, and so on.
 
-| Document | Standing |
-|---|---|
-| [ui-sensibility.md](reference/ui-sensibility.md) | **Normative.** The interface bar: one accent per screen, nothing rebuilds to show it is loading, reduced motion is designed rather than stripped. |
-| [dark_lord_game_spec.md](reference/dark_lord_game_spec.md) | Good on game design. Its numbers are superseded by `packages/content`. |
-| [incremental_game_architecture.md](reference/incremental_game_architecture.md) | Its server-authoritative architecture was dropped; the design spec says where and why. |
-| [project_init.md](reference/project_init.md) | The original brief. Same caveat: the sync and server sections did not survive. |
-| [local-art-generation.md](reference/local-art-generation.md) | How art gets made in a lab on one machine. Nothing in the build may depend on it. |
-| [architectural-sensibility.md](reference/architectural-sensibility.md) | House style for Laravel, carried in from another project. Nothing here is Laravel — kept for the reasoning, not the rules. |
+**Section numbers are stable.** A section may be rewritten, but renumbering one silently breaks
+every citation pointing at it. Add at the end, or add a decimal under an existing number.
 
 ## Assets
 

@@ -134,7 +134,7 @@ Vitest. Tests mirror source paths.
 
 ## Interface
 
-`docs/reference/ui-sensibility.md` is normative. Read it. The rules it forces that the
+`docs/ui-sensibility.md` is normative. Read it. The rules it forces that the
 genre usually breaks:
 
 - **One accent per screen.** The rail carries every generator at secondary weight and

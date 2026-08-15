@@ -3,9 +3,8 @@
  *
  * Every slot has a fallback that renders with no image file present, so the game
  * looks finished with zero assets. Adding real art is dropping files into
- * `apps/web/public/art/` and setting `src` here. Nothing in the build may ever
- * depend on the Draw Things lab being reachable — see
- * docs/reference/local-art-generation.md.
+ * `apps/web/public/art/` and setting `src` here. Art is generated out of band and
+ * committed: nothing in the build may ever depend on an art tool being reachable.
  */
 export interface ArtSlot {
   /** Path under the web app's public root, or null while unfilled. */

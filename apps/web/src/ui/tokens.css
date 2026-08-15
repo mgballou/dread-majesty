@@ -2,7 +2,7 @@
  * Three tiers, one direction: primitives -> semantic -> component.
  *
  * Nothing outside this file may name a primitive. Screens and components consume
- * the semantic layer only. See docs/reference/ui-sensibility.md §4.
+ * the semantic layer only. See docs/ui-sensibility.md §4.
  *
  * One theme block, forced dark. A gothic game commits to a look. The parity test
  * stays anyway — it costs nothing and pins the contract if a second theme arrives.

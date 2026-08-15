@@ -43,15 +43,13 @@ These were settled during design. Reopen them only with a reason, not a preferen
 | Persistence | IndexedDB + export/import blob | localStorage caps at 5MB and blocks the main thread. The export blob is also the bug-report format. |
 | Prestige | Damned Souls, flat multiplier | Proven, cheap to balance, trivial to explain. Deepen later. |
 | Main screen | Live chain diagram + buy rail | Shows the cascade, which is the game's actual novelty. See §6. |
-| Theme | Forced dark, single theme | Correct for a gothic game; sanctioned by `architectural-sensibility.md` §9.5. |
+| Theme | Forced dark, single theme | Correct for a gothic game. The token-parity test stays regardless — it costs nothing and pins the contract. |
 | Language | TypeScript everywhere | The engine must run on the client. A PHP engine would be a second implementation. |
 
-**A note on the reference docs.** `docs/reference/` holds the earlier planning
-documents. They contain the game design, the worked example in §4.1 and a good
-Laravel house style — all still useful. Their *architecture* is superseded: they
-specify a server-authoritative Laravel engine, which §2 above reverses.
-`architectural-sensibility.md` remains normative for the eventual Laravel meta-plane
-(§9) and for nothing else. `ui-sensibility.md` remains normative in full.
+**A note on the planning documents that preceded this one.** They specified a
+server-authoritative Laravel engine, which §2 above reverses, and they have been
+deleted rather than left to be half-believed. Everything of theirs that survived is
+here: the game design in §5, the worked example in §4.3, and the ordering rule in §4.1. `docs/ui-sensibility.md` remains normative in full.
 
 ---
 
@@ -114,12 +112,12 @@ Read-snapshot / write-delta means **nothing produced within a slice can affect
 anything else within that same slice**. Tier iteration order therefore does not
 matter, and there is no tie-break rule to define, document or get wrong.
 
-> **This corrects the reference docs.** `project_init.md` §10 specifies
-> higher-tier-first ordering, which contradicts its own worked example: at t=120s
-> both a Warren and the Minion tier complete, and higher-tier-first would pay 205
-> minions rather than the 105 the example states. The example is right — those
-> minions did not exist during the shift that just ended. Snapshot semantics produce
-> the example's answer and remove the question.
+> **Why not higher-tier-first.** The obvious alternative is to order the tiers and
+> resolve the top one before the ones beneath it. It gets §4.3 wrong. At t=120s both a
+> Warren and the Minion tier complete; higher-tier-first pays 205 Minions where the
+> right answer is 105, because the 100 Minions that Warren delivers did not exist
+> during the shift that just ended. Snapshot semantics produce 105 and remove the
+> question — which is why there is no ordering rule here to get wrong.
 
 ### 4.2 Timing semantics, stated exactly
 
@@ -584,8 +582,8 @@ Also required:
 - **Placeholder art is a manifest, not a gap.** `content` maps each tier to an art
   slot, and every slot has a generated SVG fallback, so the game looks finished with
   zero image files. Adding real art later is copying files and editing one map.
-  Nothing in the build may ever depend on the Draw Things lab being reachable — see
-  `docs/reference/local-art-generation.md`.
+  **Nothing in the build may ever depend on an art tool being reachable.** Art is
+  generated out of band and committed; the build reads files or draws the fallback.
 
 ---
 
@@ -637,7 +635,7 @@ correct is an hour spent on a moving foundation.
 
 Not in v1. Recorded so M6 does not get redesigned from scratch.
 
-Laravel + Filament, governed by `architectural-sensibility.md` in full. It owns
+Laravel + Filament, governed by whatever house style is current when it starts. It owns
 accounts, save-blob sync, balance-config publishing with audit, player inspection,
 purchase receipts and analytics. **It never simulates.** The client remains the only
 place the game runs.

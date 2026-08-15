@@ -201,6 +201,6 @@ this file, which are the same drawings the game ships.
 1. [**The design spec**](docs/superpowers/specs/2026-08-03-dread-majesty-design.md) — the
    decisions and why each one went the way it did. Everything else amends it.
 2. [**`CLAUDE.md`**](CLAUDE.md) — how to write code here. The five engine rules, in full.
-3. [**`docs/reference/ui-sensibility.md`**](docs/reference/ui-sensibility.md) — the interface
-   rules the genre usually breaks, and why this one keeps them.
+3. [**`docs/ui-sensibility.md`**](docs/ui-sensibility.md) — the interface rules the genre
+   usually breaks, and why this one keeps them. Normative for `apps/web`.
 4. [**`docs/`**](docs/) — every spec and plan, indexed, with what each one still governs.
