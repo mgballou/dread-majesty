@@ -1,5 +1,5 @@
 import Decimal from 'break_eternity.js';
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { CURRENT, CURRENT_COPY, CURRENT_ONBOARDING } from '@dm/content';
 import type { Content } from '@dm/content';
@@ -345,7 +345,13 @@ describe('first-run onboarding', () => {
     render(<App />);
     await screen.findAllByRole('tab');
 
-    expect(readOnboarding()?.done).toBe(true);
+    // The only storage assertion here not preceded by a click. Every other one follows a
+    // `userEvent` call, which flushes effects before it returns; this one waits on the tabs
+    // being in the DOM, and the effect that writes the decision down runs after that commit.
+    // A bare read races it — green on a fast machine, red on a loaded CI runner.
+    await waitFor(() => {
+      expect(readOnboarding()?.done).toBe(true);
+    });
   });
 
   it('resumes mid-track for a player who reloaded during the tutorial', async () => {
