@@ -1,4 +1,4 @@
-# Netlify build. The repo stays private; the site is public.
+# Netlify build.
 #
 # pnpm is picked up from `packageManager` in the root package.json via corepack, so
 # the version here and the version in CI cannot drift.

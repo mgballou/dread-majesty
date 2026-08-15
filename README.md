@@ -204,3 +204,11 @@ this file, which are the same drawings the game ships.
 3. [**`docs/ui-sensibility.md`**](docs/ui-sensibility.md) — the interface rules the genre
    usually breaks, and why this one keeps them. Normative for `apps/web`.
 4. [**`docs/`**](docs/) — every spec and plan, indexed, with what each one still governs.
+
+---
+
+## Using this
+
+**No license, on purpose.** The source is here to be read, not reused: all rights reserved.
+Read it, learn from it, quote it with attribution. If you want to do something else with it,
+ask.
