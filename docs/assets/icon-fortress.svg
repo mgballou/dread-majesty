@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="A black fortress of clustered spires">
+  <mask id="void" maskUnits="userSpaceOnUse" x="0" y="0" width="48" height="48">
+    <rect width="48" height="48" fill="#fff" />
+    <path d="M21 46 L21 39 A3 3 0 0 1 27 39 L27 46 Z" />
+    <rect x="22.5" y="18" width="3" height="7" />
+    <rect x="9" y="24" width="3" height="5" />
+    <rect x="36" y="24" width="3" height="5" />
+  </mask>
+  <g mask="url(#void)" fill="#a85a76">
+    <rect x="2" y="36" width="44" height="10" opacity="0.5" />
+    <g opacity="0.5">
+      <rect x="2" y="32" width="5" height="5" />
+      <rect x="10" y="32" width="5" height="5" />
+      <rect x="33" y="32" width="5" height="5" />
+      <rect x="41" y="32" width="5" height="5" />
+    </g>
+    <rect x="6" y="18" width="9" height="28" opacity="0.74" />
+    <path d="M3.5 18 L10.5 7 L17.5 18 Z" opacity="0.74" />
+    <rect x="33" y="18" width="9" height="28" opacity="0.74" />
+    <path d="M30.5 18 L37.5 7 L44.5 18 Z" opacity="0.74" />
+    <rect x="17" y="12" width="14" height="34" />
+    <path d="M24 0 L16 13 L32 13 Z" />
+  </g>
+</svg>

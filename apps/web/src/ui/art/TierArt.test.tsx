@@ -1,3 +1,5 @@
+import { existsSync, readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { render, screen } from '@testing-library/react';
 import { ART } from '@dm/content';
 import { describe, expect, it } from 'vitest';
@@ -76,5 +78,70 @@ describe('TierArt', () => {
     expect(
       container.querySelector('[fill]:not([fill="currentColor"]):not([fill="none"])'),
     ).toBeNull();
+  });
+});
+
+/**
+ * Walks up from the working directory rather than reading `import.meta.url`, which
+ * under jsdom is an http URL and cannot be turned into a path. Mirrors `tokens.test.ts`.
+ */
+function locate(relative: string): string {
+  let dir = process.cwd();
+  while (!existsSync(join(dir, relative))) {
+    const parent = dirname(dir);
+    if (parent === dir) throw new Error(`Could not find ${relative} above ${process.cwd()}`);
+    dir = parent;
+  }
+  return join(dir, relative);
+}
+
+/** Every `d` attribute in a piece of SVG markup, in no particular order. */
+function outlines(markup: string): Set<string> {
+  return new Set(Array.from(markup.matchAll(/\sd="([^"]+)"/g), (match) => match[1] ?? ''));
+}
+
+function drawn(slot: string): Set<string> {
+  const { container, unmount } = render(<TierArt slot={slot} />);
+  const markup = container.querySelector('svg')?.innerHTML ?? '';
+  unmount();
+  return outlines(markup);
+}
+
+function committed(file: string): Set<string> {
+  return outlines(readFileSync(locate(join('docs', 'assets', file)), 'utf8'));
+}
+
+/*
+ * The README's copies of the art.
+ *
+ * GitHub strips inline `<svg>` out of markdown, so the marks the README shows have to be
+ * committed files rather than the components themselves. That is a second copy of every
+ * silhouette, and a second copy is how the muster's hammer and the title screen's drifted
+ * apart in the first place — the fix there was to share one drawing, which is not
+ * available across a directory GitHub reads and a bundle it does not.
+ *
+ * So the drawings are pinned instead. Each committed file must carry exactly the outlines
+ * its component draws: edit a tier's shape and the README's copy fails here until it is
+ * brought along. Only `d` attributes are compared — the standalone files differ on purpose
+ * in what surrounds them, punching their voids through a `<mask>` so they sit on GitHub's
+ * own background instead of the game's, and naming a tone where the component names a token.
+ */
+describe('the marks the README draws', () => {
+  const copies: ReadonlyArray<readonly [string, string]> = [
+    ['tier/throne', 'icon-throne.svg'],
+    ['tier/fortress', 'icon-fortress.svg'],
+    ['tier/legion', 'icon-legion.svg'],
+    ['tier/warren', 'icon-warren.svg'],
+    ['tier/minion', 'icon-minion.svg'],
+    ['resource/evil', 'icon-evil.svg'],
+    ['mark/dread-majesty', 'mark.svg'],
+  ];
+
+  it.each(copies)('draws %s the same as %s', (slot, file) => {
+    expect(committed(file)).toStrictEqual(drawn(slot));
+  });
+
+  it('has a committed copy for every slot in the manifest', () => {
+    expect(copies.map(([slot]) => slot).sort()).toStrictEqual(Object.keys(ART).sort());
   });
 });

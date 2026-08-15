@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="A crooked warren of leaning roofs">
+  <mask id="void" maskUnits="userSpaceOnUse" x="0" y="0" width="48" height="48">
+    <rect width="48" height="48" fill="#fff" />
+    <path d="M7.5 46 L7.5 37 A3.5 3.5 0 0 1 14.5 37 L14.5 46 Z" />
+    <rect x="24.5" y="37" width="5" height="9" />
+    <rect x="38.5" y="36" width="4" height="10" />
+    <rect x="16" y="24.5" width="3" height="3" />
+    <rect x="30.5" y="30" width="3" height="3" />
+  </mask>
+  <g mask="url(#void)" fill="#6b8f5e">
+    <path d="M33 31 L40 23.5 L47 31 L47 46 L33 46 Z" opacity="0.55" />
+    <path d="M19 34 L27.5 25.5 L36 34 L36 46 L19 46 Z" opacity="0.75" />
+    <path d="M14.5 22.5 L14.5 13 L18.5 13 L18.5 26 Z" opacity="0.9" />
+    <path d="M1 29 L11.5 18 L22 29 L22 46 L1 46 Z" />
+  </g>
+</svg>
