@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="A dark legion beneath a torn banner">
+  <mask id="void" maskUnits="userSpaceOnUse" x="0" y="0" width="48" height="48">
+    <rect width="48" height="48" fill="#fff" />
+    <path d="M29.5 14.5 L33 14.5 L37 21 L33 27.5 L29.5 27.5 L33.5 21 Z" />
+  </mask>
+  <g mask="url(#void)" fill="#9c78b5">
+    <g opacity="0.5">
+      <path d="M7 8 L2 46 L4.6 46 L9.4 8 Z" />
+      <path d="M8.2 0.5 L5.2 8.6 L11.2 8.6 Z" />
+      <path d="M14 8 L10 46 L12.6 46 L16.4 8 Z" />
+      <path d="M15.2 0.5 L12.2 8.6 L18.2 8.6 Z" />
+      <path d="M34 8 L38 46 L35.4 46 L31.6 8 Z" />
+      <path d="M32.8 0.5 L29.8 8.6 L35.8 8.6 Z" />
+      <path d="M41 8 L46 46 L43.4 46 L38.6 8 Z" />
+      <path d="M39.8 0.5 L36.8 8.6 L42.8 8.6 Z" />
+    </g>
+    <path d="M22.5 9 L13 11.5 L13 20.5 L22.5 18 Z" opacity="0.45" />
+    <rect x="22.5" y="4" width="3" height="42" />
+    <path d="M24 0 L26.8 3.6 L24 7.2 L21.2 3.6 Z" />
+    <path d="M25.5 8 L44 11 L38.5 20 L44 29 L25.5 32 Z" opacity="0.9" />
+  </g>
+</svg>
