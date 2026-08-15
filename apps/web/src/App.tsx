@@ -672,7 +672,10 @@ export function App(): ReactNode {
             behind a sheet that has already taken the screen. The lesson comes back the
             moment the sheet goes. */}
         {spotlight && !screenTaken && (
-          <Spotlight {...(spotlight.target ? { target: spotlight.target } : {})} />
+          <Spotlight
+            {...(spotlight.target ? { target: spotlight.target } : {})}
+            {...(beat?.gate.kind === 'none' ? { weight: 'soft' as const } : {})}
+          />
         )}
 
         {/* Pinned to the foot of the viewport, and mounted only when there is something
