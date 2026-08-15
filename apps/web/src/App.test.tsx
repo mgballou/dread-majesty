@@ -1169,6 +1169,29 @@ describe('the spotlight follows the beat', () => {
     expect(screen.getByTestId('spotlight')).toHaveClass('spotlight--whole');
   });
 
+  /*
+   * Her beat gates nothing — the rail stays fully live while she asks for another blow — so
+   * the dim must not claim otherwise. Full weight is what a *gated* beat earns.
+   */
+  it('dims at the soft weight while she holds the bar, since her beat gates nothing', async () => {
+    writeOnboarding({ dominion: ['stir'], malice: ['first-blow'], done: false, caved: false });
+    vi.spyOn(storage, 'readSave').mockResolvedValue(struckBlob());
+    render(<App />);
+    await screen.findByRole('status', { name: onboarding.herLabel });
+
+    expect(screen.getByTestId('spotlight')).toHaveAttribute('data-weight', 'soft');
+  });
+
+  /*
+   * The opening Dominion beat gates the rouse: every other control genuinely is held back, so
+   * the dim earns its full weight.
+   */
+  it('dims at the full weight on a gated Dominion beat', async () => {
+    await firstRun();
+
+    expect(screen.getByTestId('spotlight')).toHaveAttribute('data-weight', 'full');
+  });
+
   it('brings the muster forward when the beat points into it', async () => {
     vi.useFakeTimers({ toFake: ['performance', 'requestAnimationFrame', 'cancelAnimationFrame'] });
     await firstRun();

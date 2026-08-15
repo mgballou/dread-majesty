@@ -16,6 +16,15 @@ interface SpotlightProps {
    * the same fallback the deleted first-run tour used.
    */
   target?: string;
+
+  /**
+   * How hard the screen dims around the cutout.
+   *
+   * `full` is a gated beat: the named control is the only one that works, and the dim says so.
+   * `soft` is a beat that points without gating — she asks for a blow while the rail stays live,
+   * and a full dim would claim otherwise. The ring still carries the pointing either way.
+   */
+  weight?: 'full' | 'soft';
 }
 
 interface Frame {
@@ -39,7 +48,7 @@ interface Frame {
  * geometry the deleted `Tour.tsx` used — because they need no compositing and cost
  * nothing to move on a phone.
  */
-export function Spotlight({ target }: SpotlightProps): ReactNode {
+export function Spotlight({ target, weight = 'full' }: SpotlightProps): ReactNode {
   const [frame, setFrame] = useState<Frame | null>(null);
   const reducedMotion = useReducedMotion();
 
@@ -145,6 +154,7 @@ export function Spotlight({ target }: SpotlightProps): ReactNode {
       className={`spotlight spotlight--${mode}`}
       data-testid="spotlight"
       data-motion={reducedMotion ? 'reduced' : 'full'}
+      data-weight={weight}
       aria-hidden="true"
       style={{ pointerEvents: 'none' }}
     >

@@ -215,11 +215,20 @@
    motion drops it and puts nothing in its place. That is the opposite of the spotlight ring,
    which carries the pointing and therefore stays. */
 .evil-node[data-motion='full'][data-beckon='true'][data-smite='ready'] .evil-node__strike {
-  animation: evil-node-beckon var(--duration-slow) ease-in-out infinite;
+  /* Not `--duration-slow`: at 420ms this pulsed twice a second and read as urgency, in the one
+     place where nothing is urgent yet. The mark of this is a blip you catch out of the corner of
+     an eye, not a throb. Composed from the token rather than written flat, so it moves if the
+     motion scale does. */
+  animation: evil-node-beckon calc(var(--duration-slow) * 12) ease-in-out infinite;
 }
 
 @keyframes evil-node-beckon {
-  50% {
-    transform: scale(1.015);
+  0%,
+  90%,
+  100% {
+    transform: none;
+  }
+  95% {
+    transform: scale(1.02);
   }
 }

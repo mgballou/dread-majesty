@@ -30,6 +30,16 @@ describe('Spotlight', () => {
     render(<Spotlight />);
     expect(screen.getByTestId('spotlight')).toHaveAttribute('aria-hidden', 'true');
   });
+
+  it('carries the full weight by default', () => {
+    render(<Spotlight />);
+    expect(screen.getByTestId('spotlight')).toHaveAttribute('data-weight', 'full');
+  });
+
+  it('carries the soft weight when asked for it', () => {
+    render(<Spotlight weight="soft" />);
+    expect(screen.getByTestId('spotlight')).toHaveAttribute('data-weight', 'soft');
+  });
 });
 
 /*
@@ -280,6 +290,21 @@ describe('the stylesheet contract', () => {
 
   it('never spends the accent on the dim', () => {
     expect(spotlightCss).not.toMatch(/--accent(?!-)/);
+  });
+
+  it('dims a gated cutout to the full scrim', () => {
+    expect(
+      rule(
+        spotlightCss,
+        '.spotlight--cutout .spotlight__band,\n.spotlight--whole .spotlight__band',
+      ),
+    ).toMatch(/background:\s*var\(--scrim\)/);
+  });
+
+  it('dims a cutout that points without gating to the soft scrim', () => {
+    expect(rule(spotlightCss, ".spotlight--cutout[data-weight='soft'] .spotlight__band")).toMatch(
+      /background:\s*var\(--scrim-soft\)/,
+    );
   });
 
   it('sits beneath the prompt bar', () => {
