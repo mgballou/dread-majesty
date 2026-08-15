@@ -29,8 +29,9 @@ describe('the worked example', () => {
   it('pays the minion tier at its pre-warren count in the slice they share', () => {
     // At t=120s a Warren and the Minion tier both complete. The 100 minions the warren
     // produces did not exist during the shift that just ended, so the payout uses
-    // 105, not 205. project_init.md §10's higher-tier-first rule gets this wrong;
-    // its own example gets it right.
+    // 105, not 205. Resolving tiers top-down instead would pay 205 — see the design
+    // spec §4.1, which is why the slice reads from a snapshot and there is no
+    // ordering rule to get wrong.
     const state = seeded(5, 1);
 
     run(state, fixture, 119_900);

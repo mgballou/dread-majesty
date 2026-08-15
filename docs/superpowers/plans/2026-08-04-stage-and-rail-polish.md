@@ -1896,7 +1896,7 @@ git commit -m "Cycle the buy quantity on one chip that shows what is set"
 The specs are read before every piece of work here and two of them now describe an interface that no longer exists.
 
 **Files:**
-- Modify: `docs/superpowers/specs/2026-08-03-dread-majesty-design.md`, `docs/reference/ui-sensibility.md`
+- Modify: `docs/superpowers/specs/2026-08-03-dread-majesty-design.md`, `docs/ui-sensibility.md`
 
 **Interfaces:** none.
 
@@ -1935,7 +1935,7 @@ in five segments rather than as a continuous sweep, so a glance gives a fraction
 
 - [ ] **Step 3: Amend ui-sensibility §3**
 
-In `docs/reference/ui-sensibility.md`, under **## 3. One action per screen**, after the "Navigation is not an action" paragraph, add:
+In `docs/ui-sensibility.md`, under **## 3. One action per screen**, after the "Navigation is not an action" paragraph, add:
 
 ```
 **One region, one action.** A screen showing two regions at once — a live diagram beside
