@@ -68,10 +68,13 @@ const OBSOLESCENCE_HOLD_MS = 60 * 1000;
  * and three Minion milestone rungs all land. See §4 of the retune spec.
  *
  * This adds a sample. It changes no measurement: every other row of the table, and
- * every figure above it, reads identically with and without it.
+ * every figure above it, reads identically with and without it. The 10m row is there
+ * for the same reason and on the same terms — the opening question is asked in
+ * minutes, and 5m to 15m is too wide a gap to answer it in.
  */
 const CHECKPOINTS = [
   ['5m', 5 * MINUTE],
+  ['10m', 10 * MINUTE],
   ['15m', 15 * MINUTE],
   ['30m', 30 * MINUTE],
   ['1h', HOUR],
@@ -208,6 +211,11 @@ function run(content: Content): void {
   const firstMilestoneAt = content.milestones[0]?.at ?? null;
 
   const firstOwned = new Map<string, number>();
+  // First moment the player *bought* one of a tier, as opposed to owning one. They
+  // differ only for the tier the run starts holding one of, which is the whole point:
+  // "time to first purchase" is the opening's own measurement and nothing else
+  // reports it.
+  const firstPurchaseAt = new Map<string, number>();
   const overseerAffordableAt = new Map<OverseerId, number>();
   const overseerAppointedAt = new Map<OverseerId, number>();
   // In-progress crossing per tier: the moment `delivered >= purchasable` first held,
@@ -245,6 +253,9 @@ function run(content: Content): void {
     for (const tier of content.tiers) {
       if (!firstOwned.has(tier.id) && state.gens[tier.id].owned.gte(1)) {
         firstOwned.set(tier.id, elapsed);
+      }
+      if (!firstPurchaseAt.has(tier.id) && state.gens[tier.id].purchased.gte(1)) {
+        firstPurchaseAt.set(tier.id, elapsed);
       }
     }
 
@@ -329,7 +340,11 @@ function run(content: Content): void {
   console.log('  first of each tier');
   for (const tier of [...content.tiers].reverse()) {
     const at = firstOwned.get(tier.id);
-    console.log(`    ${tier.plural.padEnd(14)} ${at === undefined ? 'never' : duration(at)}`);
+    const bought = firstPurchaseAt.get(tier.id);
+    console.log(
+      `    ${tier.plural.padEnd(14)} ${(at === undefined ? 'never' : duration(at)).padEnd(14)}` +
+        `first bought ${bought === undefined ? 'never' : duration(bought)}`,
+    );
   }
   console.log(
     `    ${'first prestige'.padEnd(14)} ${firstPrestigeMs === null ? 'never' : duration(firstPrestigeMs)}`,

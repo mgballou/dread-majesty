@@ -123,11 +123,15 @@ describe('railPlan', () => {
     expect(plan().best.appoint).toBeNull();
   });
 
+  // Which tier this names is pinned to live balance, and it moved with the Minion
+  // base cost (160 -> 40, decision 60). With an empty purse and one Minion owned, the
+  // cheapest thing worth saving for is now the Minion itself rather than the thirteenth
+  // Warren. The assertion under test is unchanged: something is named.
   it('names something to save toward when nothing is affordable', () => {
     state.gens.warren.owned = new Decimal(12);
     state.gens.warren.purchased = new Decimal(12);
 
-    expect(plan().saving.purchase?.tierId).toBe('warren');
+    expect(plan().saving.purchase?.tierId).toBe('minion');
   });
 
   it('names nothing to save toward while a purchase is available', () => {
@@ -268,8 +272,11 @@ describe('the horizon lifts a tier at the count where a player notices', () => {
     state.resources.evil = new Decimal('1e12');
   }
 
+  // 300 until the Minion base cost went 160 -> 40 (decision 60). Cheaper Minions keep
+  // the Minion ahead a little longer; the crossing measured back at 320, and that
+  // twenty-unit move is the whole of what the price change did to this rail.
   it('lifts the Warren over the Minion at the count where a player notices', () => {
-    withGens({ minion: 300, warren: 26 });
+    withGens({ minion: 320, warren: 26 });
 
     expect(plan().best.purchase?.tierId).toBe('warren');
   });

@@ -178,6 +178,15 @@ const TAIL_MILESTONES: readonly MilestoneDef[] = (() => {
  * else has not moved, and that pace is the one figure the original design docs got
  * right. Only what a Minion costs was tuned.
  *
+ * *Minion base cost, 160 to 40 (decision 60, 26 August).* At 160 the second Minion is
+ * 32 perfect taps away and the buy rail is grey for 2m 09s, which is the first two
+ * minutes of the game spent watching a disabled button. At 40 the first purchase lands
+ * at 33s. The price was measured rather than guessed, across 160/100/60/40/25: 100 misses
+ * the first minute at 1m 21s, 60 makes it at 49s but fails the harness's own
+ * monotone-deceleration check on the prestige loop, and 25 buys nothing 40 does not.
+ * What it costs is paid in the opening half hour and is gone by a day — 1.9x lifetime
+ * Evil at one hour, 1.2x at eight, and identical to two figures at 1d and 7d.
+ *
  * **Known rough edge.** §4 of the retune spec now measures the cliff in decades an hour
  * rather than in raw jumps between checkpoints, because the checkpoints run from fifteen
  * minutes to four days apart and a raw jump mostly reports the spacing. On Evil per
@@ -330,7 +339,7 @@ export const v1: Content = {
       yield: '5',
       cycleMs: 4 * SECOND,
       costResource: 'evil',
-      baseCost: '160',
+      baseCost: '40',
       costRate: 1.012,
       overseers: [
         {
