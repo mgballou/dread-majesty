@@ -726,7 +726,7 @@ describe('the malice track holds the bar', () => {
    */
   async function appointsDuringHerTurn(): Promise<void> {
     writeOnboarding({
-      dominion: ['stir', 'orders', 'muster'],
+      dominion: ['stir', 'orders', 'strike', 'muster'],
       malice: [],
       done: false,
       caved: false,
@@ -772,7 +772,12 @@ describe('the malice track holds the bar', () => {
    */
   async function appointsBeforeTheTrackAsks(): Promise<void> {
     vi.useFakeTimers({ toFake: ['performance', 'requestAnimationFrame', 'cancelAnimationFrame'] });
-    writeOnboarding({ dominion: ['stir', 'orders'], malice: [], done: false, caved: false });
+    writeOnboarding({
+      dominion: ['stir', 'orders', 'strike'],
+      malice: [],
+      done: false,
+      caved: false,
+    });
     vi.spyOn(storage, 'readSave').mockResolvedValue(struckAndRichBlob());
     render(<App />);
     await screen.findByText(onboarding.malice['first-blow']);
@@ -1227,6 +1232,10 @@ describe('the spotlight follows the beat', () => {
     await userEvent.click(screen.getByRole('button', { name: rouseMinions }));
     wind(15_000);
     await userEvent.click(screen.getByRole('button', { name: rouseMinions }));
+    // `strike` stands between `orders` and `muster` and is cleared by a blow the player
+    // may decline, so the track reaches the muster either by striking or by outlasting
+    // its window. This test is about the spotlight, not about Smite, so it waits it out.
+    wind(21_000);
     await screen.findByText(onboarding.dominion.muster);
 
     expect(screen.getByRole('tab', { name: musterTab })).toHaveAttribute('aria-selected', 'true');

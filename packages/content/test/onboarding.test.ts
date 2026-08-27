@@ -22,9 +22,32 @@ describe('the Dominion track', () => {
     expect(v1Onboarding.dominion.map((beat) => beat.id)).toEqual([...DOMINION_BEAT_IDS]);
   });
 
-  it('gates every beat but the last', () => {
-    const gated = v1Onboarding.dominion.filter((beat) => beat.gate.kind !== 'none');
-    expect(gated).toHaveLength(DOMINION_BEAT_IDS.length - 1);
+  /**
+   * Two beats gate nothing and each has a different reason to. `cascade` is the finale
+   * and there is nothing left to point at; `strike` names Smite, which `GatedControl`
+   * has no variant for and which the opening deliberately leaves ungated. Every other
+   * beat gates, because a beat that neither gates nor ends the track is a line the
+   * player can walk past.
+   */
+  it('gates every beat but the finale and the one that names Smite', () => {
+    const ungated = v1Onboarding.dominion
+      .filter((beat) => beat.gate.kind === 'none')
+      .map((beat) => beat.id);
+    expect(ungated).toEqual(['strike', 'cascade']);
+  });
+
+  /**
+   * The stall guard, and it is the whole reason `strike` is safe to add. `showingBeat`
+   * walks to the first unconsumed beat and stops, so a beat the player may simply
+   * decline holds every later beat behind it for ever. A beat that gates nothing must
+   * therefore either end the track or carry a retirement window.
+   */
+  it('never strands the track behind a beat the player can decline', () => {
+    for (const [index, beat] of v1Onboarding.dominion.entries()) {
+      if (beat.gate.kind !== 'none') continue;
+      const isLast = index === v1Onboarding.dominion.length - 1;
+      expect(isLast || beat.retireAfterMs !== null).toBe(true);
+    }
   });
 
   it('leaves the last beat ungated', () => {

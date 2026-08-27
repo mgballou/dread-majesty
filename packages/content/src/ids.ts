@@ -90,12 +90,14 @@ export type SmiteUpgradeId = (typeof SMITE_UPGRADE_IDS)[number];
  * unlike every other id set in this file they may be renamed freely.
  *
  * The order is the argument the track makes: set the Minion working, learn that it
- * stops, learn that Evil buys more of them, hand the job to somebody else, take ground
- * of your own, start it, and then watch Minions arrive without being asked.
+ * stops, learn there is something to do while it works, learn that Evil buys more of
+ * them, hand the job to somebody else, take ground of your own, start it, and then
+ * watch Minions arrive without being asked.
  */
 export const DOMINION_BEAT_IDS = [
   'stir',
   'orders',
+  'strike',
   'muster',
   'appoint',
   'warren',

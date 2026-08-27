@@ -81,13 +81,13 @@ describe('showingBeat', () => {
     const state = fresh();
     state.gens.minion.lifetimeProduced = new Decimal(5);
     state.resources.evil = new Decimal(10);
-    expect(showing(state, ['stir', 'orders'])).toBeNull();
+    expect(showing(state, ['stir', 'orders', 'strike'])).toBeNull();
   });
 
   it('shows muster once a Minion is affordable', () => {
     const state = fresh();
     state.resources.evil = new Decimal(160);
-    expect(showing(state, ['stir', 'orders'])?.id).toBe('muster');
+    expect(showing(state, ['stir', 'orders', 'strike'])?.id).toBe('muster');
   });
 
   it('never shows a beat out of order', () => {
@@ -303,7 +303,7 @@ describe('the gate never strands the player', () => {
     const state = fresh();
     state.resources.evil = new Decimal(1800);
     state.overseers.minion = ['minion-hand'];
-    const beat = showing(state, ['stir', 'orders', 'muster', 'appoint']);
+    const beat = showing(state, ['stir', 'orders', 'strike', 'muster', 'appoint']);
     expect(beat).toBeNull();
   });
 
@@ -311,15 +311,15 @@ describe('the gate never strands the player', () => {
     const state = fresh();
     state.resources.evil = new Decimal(3000);
     state.overseers.minion = ['minion-hand'];
-    const beat = showing(state, ['stir', 'orders', 'muster', 'appoint']);
+    const beat = showing(state, ['stir', 'orders', 'strike', 'muster', 'appoint']);
     expect(beat?.id).toBe('warren');
   });
 
   it('never names a purchase the player cannot make', () => {
     const prefixes: readonly (readonly DominionBeatId[])[] = [
-      ['stir', 'orders'],
-      ['stir', 'orders', 'muster'],
-      ['stir', 'orders', 'muster', 'appoint'],
+      ['stir', 'orders', 'strike'],
+      ['stir', 'orders', 'strike', 'muster'],
+      ['stir', 'orders', 'strike', 'muster', 'appoint'],
     ];
 
     for (const consumed of prefixes) {
@@ -604,8 +604,13 @@ describe('what is written down', () => {
   });
 
   it('reads back the beats that were consumed', () => {
-    writeOnboarding({ dominion: ['stir', 'orders'], malice: [], done: false, caved: false });
-    expect(readOnboarding()?.dominion).toEqual(['stir', 'orders']);
+    writeOnboarding({
+      dominion: ['stir', 'orders', 'strike'],
+      malice: [],
+      done: false,
+      caved: false,
+    });
+    expect(readOnboarding()?.dominion).toEqual(['stir', 'orders', 'strike']);
   });
 
   it('reads back the Malice track too', () => {
@@ -670,7 +675,12 @@ describe('what is written down', () => {
 });
 
 describe('onboardingDecision', () => {
-  const midway = { dominion: ['stir', 'orders'], malice: [], done: false, caved: false } as const;
+  const midway = {
+    dominion: ['stir', 'orders', 'strike'],
+    malice: [],
+    done: false,
+    caved: false,
+  } as const;
 
   it('starts a player with no save and nothing written down', () => {
     expect(onboardingDecision({ stored: null, fresh: true }).kind).toBe('run');
@@ -687,7 +697,11 @@ describe('onboardingDecision', () => {
 
   it('resumes a walk that was interrupted, save or no save', () => {
     const decision = onboardingDecision({ stored: midway, fresh: false });
-    expect(decision.kind === 'run' && decision.progress.dominion).toEqual(['stir', 'orders']);
+    expect(decision.kind === 'run' && decision.progress.dominion).toEqual([
+      'stir',
+      'orders',
+      'strike',
+    ]);
   });
 
   it('says nothing to a player who finished or skipped', () => {

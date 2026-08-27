@@ -10,7 +10,8 @@
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "harness": "node --experimental-strip-types scripts/harness.ts"
+    "harness": "node --experimental-strip-types scripts/harness.ts",
+    "opening": "node --experimental-strip-types scripts/opening.ts"
   },
   "dependencies": {
     "break_eternity.js": "^2.1.0"
