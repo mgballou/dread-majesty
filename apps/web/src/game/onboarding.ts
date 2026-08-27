@@ -105,6 +105,26 @@ export function latches(beat: OnboardingBeat<string>): boolean {
 }
 
 /**
+ * The first beat of a track that nobody has consumed, ready or not.
+ *
+ * `showingBeat` answers "what is on the bar"; this answers "is the track finished". They
+ * differ for as long as the next beat's condition has not come true — which on the opening
+ * track is the whole of a Minion's cycle, four seconds the player spends having just done
+ * the thing the bar asked for. The bar reads that gap off this: a track with a beat still
+ * to come is still teaching, and the last thing said stays up until the next thing is ready
+ * to be said. A walked-out track returns null and the bar goes for good.
+ */
+export function pendingBeat<Id extends string>({
+  track,
+  consumed,
+}: {
+  track: readonly OnboardingBeat<Id>[];
+  consumed: readonly Id[];
+}): OnboardingBeat<Id> | null {
+  return track.find((beat) => !consumed.includes(beat.id)) ?? null;
+}
+
+/**
  * The one beat of a track that is on screen, or null.
  *
  * The three rules of the spec §2 are the three clauses below, in order: not consumed,

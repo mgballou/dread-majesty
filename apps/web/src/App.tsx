@@ -8,7 +8,7 @@ import {
   isMaliceBeatId,
   type TierId,
 } from '@dm/content';
-import type { Copy, DominionBeatId, MaliceBeatId } from '@dm/content';
+import type { Copy, DominionBeatId, MaliceBeatId, OnboardingBeat } from '@dm/content';
 import { isAppointed, isRousable, isTierUnlocked, prestigeGain } from '@dm/engine';
 import type { GameState } from '@dm/engine';
 import { useSound } from './audio/useSound.ts';
@@ -20,6 +20,7 @@ import {
   herLine,
   isGatedOut,
   onboardingDecision,
+  pendingBeat,
   readOnboarding,
   shouldRetire,
   showingBeat,
@@ -216,6 +217,43 @@ export function App(): ReactNode {
    * out for the next minute. That is `openingDone`, above.
    */
   const beat = maliceBeat ?? dominionBeat;
+
+  /**
+   * The line the bar keeps saying while the next beat is not ready yet.
+   *
+   * A beat is consumed the instant the player does what it asked, and the beat behind it is
+   * ready only once its own condition comes true. Between those two the bar had nothing to
+   * show and unmounted — four seconds of empty strip on the first rouse of a first run, and
+   * again on the second, at exactly the moment the tutorial had just been obeyed and the
+   * player was looking at it for what to do next. The disappearance read as the guidance
+   * being withdrawn as a punishment for following it.
+   *
+   * So the bar holds rather than the beat. `shownAt`, the gate, the spotlight and the
+   * retirement clock all still read `beat` and still go null in the gap — nothing here
+   * changes what is gated or what is being timed. This is the strip declining to go blank
+   * while the track it belongs to still has something to say.
+   *
+   * A ref, and written during render, for the same reason `shownAt` is: it holds what was on
+   * screen last frame, and the game loop re-renders every frame.
+   */
+  const lastShown = useRef<OnboardingBeat<DominionBeatId | MaliceBeatId> | null>(null);
+  if (beat) lastShown.current = beat;
+
+  // Dominion alone decides whether the track is still teaching. Malice is an interruption
+  // rather than a track the player is walked through, and her beats gate nothing, so a
+  // pending one of hers is no reason to keep a narrator line on the bar.
+  const held =
+    running && !beat && pendingBeat({ track: onboarding.dominion, consumed: doneDominion })
+      ? lastShown.current
+      : null;
+  /**
+   * What the bar renders, which is the live beat when there is one and the held line when
+   * there is not. Both sets of buttons below hang off `beat` rather than off this: a held
+   * beat has already been answered, so Skip tutorial on a consumed opening beat would end a
+   * tutorial the player is in the middle of obeying, and a Dismiss on it would ask them to
+   * clear something already cleared.
+   */
+  const onTheBar = beat ?? held;
 
   /**
    * Records an action against every beat it answers, shown or not.
@@ -684,24 +722,24 @@ export function App(): ReactNode {
             moves when it lands or clears: it is out of flow, and the shell reserves the
             room under the footer for as long as onboarding is running. See
             `.shell__prompt`. */}
-        {beat && (
+        {onTheBar && (
           <div className="shell__prompt">
             <Prompt
               line={lineFor({
                 copy,
-                beatId: beat.id,
+                beatId: onTheBar.id,
                 state,
                 caved,
                 /* The stamp names one beat. Handed to another it would say that beat had
                    been on screen since a blow it was never present for — the same guard
                    `showingBeat` and `supersededBeat` apply to the arrival count. */
-                shownAtSmites: shownId === beat.id ? shownAtSmites : null,
+                shownAtSmites: shownId === onTheBar.id ? shownAtSmites : null,
               })}
-              voice={beat.voice}
+              voice={onTheBar.voice}
               label={
-                beat.voice === 'her' ? copy.onboarding.herLabel : copy.onboarding.narratorLabel
+                onTheBar.voice === 'her' ? copy.onboarding.herLabel : copy.onboarding.narratorLabel
               }
-              {...(beat.id === 'stir'
+              {...(beat?.id === 'stir'
                 ? {
                     bail: {
                       skip: copy.onboarding.skip,
@@ -711,7 +749,7 @@ export function App(): ReactNode {
                     },
                   }
                 : {})}
-              {...(beat.clearedBy === 'dismiss'
+              {...(beat?.clearedBy === 'dismiss'
                 ? {
                     dismiss: {
                       label: copy.onboarding.dismiss,
