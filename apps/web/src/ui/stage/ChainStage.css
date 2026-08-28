@@ -14,6 +14,12 @@
 
   display: flex;
   align-items: flex-start;
+  /* Centred, not left-anchored. The track never stretches (see `.stage__track`), so on
+     a wide screen the board used to sit hard left of a shell whose every other region
+     is centred on the same measure — two alignments in one view, which is the thing
+     that reads as unfinished. Centring moves the chain and Evil together and is a
+     no-op the moment the track overflows, because then the line fills the container. */
+  justify-content: center;
   gap: var(--space-3);
   min-inline-size: 0;
   padding: var(--space-4) 0;
@@ -28,6 +34,14 @@
  * snapping would fight it to the nearest rung.
  */
 .stage__track {
+  /*
+   * Positioned, and it has to be. `useAnchoredOnWork` scrolls the track by
+   * `rung.offsetLeft`, which is measured against the nearest positioned ancestor — with
+   * none, that was the shell, so every anchor landed off by the shell's own gutter and
+   * the rung it was pointing at came to rest part-way off the edge.
+   */
+  position: relative;
+
   display: flex;
   align-items: flex-start;
   /* Shrinks to fit and scrolls; never stretches. Stretching would push Evil to the far
@@ -39,10 +53,39 @@
   list-style: none;
   overflow-x: auto;
   overscroll-behavior-x: contain;
+
+  /*
+   * A rung parks flush or not at all.
+   *
+   * Proximity rather than mandatory, because the anchor sets a scroll position on
+   * purpose and mandatory snapping fights it to the nearest rung. What this adds over
+   * a bare scroller is the resting position: a rung sliced down the middle reads as a
+   * broken card, not as a track with more to its right.
+   */
+  scroll-snap-type: x proximity;
 }
 
 .stage__rung {
   display: flex;
   align-items: flex-start;
   flex: none;
+  scroll-snap-align: start;
+}
+
+/*
+ * On a phone the chain is always wider than the room left beside Evil, so it is always
+ * cut. A hard cut through a medallion and its label is the loudest "this is not
+ * finished" signal on the opening screen — the first thing a stranger sees is a word
+ * sawn in half. The fade says what a scrollbar would say if a phone drew one.
+ *
+ * Kept to this width on purpose: above it the chain fits, the track ends flush with its
+ * last rung, and a fade there would dim a node for no reason.
+ */
+@media (width <= 52rem) {
+  .stage__track {
+    /* `currentColor`, not a literal: a mask reads alpha only, so the hue is never
+       drawn and naming one here would put a raw colour outside the token file for
+       nothing — which `tokens.test.ts` rightly fails. */
+    mask-image: linear-gradient(to right, currentColor calc(100% - var(--space-6)), transparent);
+  }
 }
