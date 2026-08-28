@@ -1248,3 +1248,63 @@ describe('the spotlight follows the beat', () => {
     }
   });
 });
+
+/*
+ * The row the reset notice arrives in, and when it starts standing.
+ *
+ * It used to be held from frame one of every first run, which measured 78px of empty
+ * under the chain — a fifth of a phone fold — for a notice the player was three quarters
+ * of the road away from. It rides the horizon latch now, the same one the prestige panel
+ * rides. These three cases are the whole of that latch: nothing at the opening, a row
+ * standing and unreachable once the reset is on the horizon, and the notice landing into
+ * a row that was already there.
+ */
+describe('the reset notice reserves its row from the horizon', () => {
+  // Lifetime Evil at which the formula first pays out a soul, from the shipped constants
+  // rather than a number typed here — the same solve `isPrestigeWorthShowing` does.
+  const firstSoul = (): Decimal => {
+    const { k, scale, exponent } = CURRENT.prestige;
+    return new Decimal(scale).mul(
+      new Decimal(1)
+        .div(k)
+        .add(1)
+        .pow(1 / exponent),
+    );
+  };
+
+  function atLifetime(lifetime: Decimal): SaveBlob {
+    const state = createState(CURRENT);
+    state.lifetimeEvil = lifetime;
+    return serialize(state, Date.now());
+  }
+
+  const row = (): Element | null => document.querySelector('.shell__marker');
+
+  it('holds no row at all through the opening', async () => {
+    vi.spyOn(storage, 'readSave').mockResolvedValue(savedBlob());
+    render(<App />);
+    await screen.findAllByRole('tab');
+
+    expect(row()).toBeNull();
+  });
+
+  it('stands the row up, unreachable, once the reset is on the horizon', async () => {
+    // Three tenths of the way to the first soul: past the quarter the panel shows from,
+    // well short of the soul itself.
+    vi.spyOn(storage, 'readSave').mockResolvedValue(atLifetime(firstSoul().mul(0.3)));
+    render(<App />);
+    await screen.findAllByRole('tab');
+
+    expect(row()).not.toBeNull();
+    expect(row()).toHaveAttribute('inert');
+  });
+
+  it('lands the notice in the row that was already standing', async () => {
+    vi.spyOn(storage, 'readSave').mockResolvedValue(atLifetime(firstSoul().mul(1.1)));
+    render(<App />);
+    await screen.findAllByRole('tab');
+
+    expect(row()).not.toHaveAttribute('inert');
+    expect(screen.getByText(CURRENT_COPY.prestige.owed)).toBeInTheDocument();
+  });
+});

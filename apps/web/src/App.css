@@ -64,13 +64,24 @@
 }
 
 /*
- * The row the reset notice arrives in, held from the first frame of a run.
+ * The row the reset notice arrives in, held from the moment the reset is on the horizon.
  *
  * The notice is shown once, part-way through a session, so a row that mounted at that
  * moment would push the deck and everything under it down the page. It stays mounted
  * and is hidden instead, which keeps the row exactly as tall as the notice at every
  * width — a measured height would have to guess where the line wraps under its own
  * button on a phone, and guess again whenever either changes.
+ *
+ * Held from the horizon, not from frame one. Permanent, it measured 78px under the
+ * chain — 62px of row and the 16px gap above it — standing empty through the whole
+ * opening, which is a fifth of a 844px phone fold given to a notice the player is
+ * three quarters of the road away from. It rides `isPrestigeWorthShowing` instead,
+ * which turns true at a quarter of the way to the first soul and never turns back:
+ * the same latch the prestige panel below the deck rides, and the same shape as
+ * `.shell--onboarding`, which carries its own reserve only while the prompt that needs
+ * it can appear. The row is standing well before the notice lands, so the notice still
+ * moves nothing; the one time the deck shifts is the frame the panel below it stops
+ * being a placeholder, which is a screen already changing.
  *
  * `inert` marks the held state because it is what the state is: not reachable, not
  * spoken, not pressable, whether or not this rule ever loads.

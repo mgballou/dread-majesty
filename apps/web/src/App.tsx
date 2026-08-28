@@ -461,9 +461,14 @@ export function App(): ReactNode {
 
   const prestigeSlot = useRef<HTMLDivElement>(null);
   const reducedMotion = useReducedMotion();
-  // Before the first reset the notice can still arrive, so its row is held from the
-  // first frame. After one it never can, and the row goes with it. See App.css.
-  const markerAhead = state.stats.prestiges === 0;
+  // The reset is on the horizon: a quarter of the way to the first soul, and true for
+  // good once it is true. The panel below the deck rides this and so does the notice's
+  // row above it — one latch, one moment, and the notice still arrives into a row that
+  // has been standing for the three quarters of the road before it. See App.css.
+  const prestigeInReach = isPrestigeWorthShowing(state, content);
+  // Before the first reset the notice can still arrive, so its row is held. After one it
+  // never can, and the row goes with it. See App.css.
+  const markerAhead = state.stats.prestiges === 0 && prestigeInReach;
   const showMarker = markerAhead && prestigeGain(state, content).gt(0);
 
   // jsdom implements neither `scrollIntoView` nor smooth behaviour, so the call is
@@ -635,7 +640,13 @@ export function App(): ReactNode {
                 moment would shove the deck and everything under it down the page — the
                 jump `PrestigeLocked` exists to stop, one panel further down. The notice
                 is hidden rather than withheld, so the row is exactly as tall as the
-                notice at every width, including where it wraps on a phone. */}
+                notice at every width, including where it wraps on a phone.
+
+                Held from the horizon rather than from frame one. Permanent, it was 78px
+                of nothing under the chain in the opening screen — a fifth of a phone
+                fold, for a notice three quarters of the road away. It rides
+                `prestigeInReach`, the same latch the panel below the deck rides, the way
+                `.shell--onboarding` rides the prompt's. */}
             {markerAhead && (
               <div className="shell__marker" inert={!showMarker}>
                 <PrestigeMarker copy={copy.prestige} onReveal={revealPrestige} />
@@ -645,7 +656,7 @@ export function App(): ReactNode {
             <Deck tabs={tabs} {...(spotlight?.panel ? { requestOpen: spotlight.panel } : {})} />
 
             <div ref={prestigeSlot}>
-              {isPrestigeWorthShowing(state, content) ? (
+              {prestigeInReach ? (
                 <PrestigePanel
                   content={content}
                   copy={copy.prestige}
