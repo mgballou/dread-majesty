@@ -13,6 +13,19 @@
   --surge-step: calc(var(--duration-fast) / 2);
 
   display: flex;
+  /*
+   * Tops aligned, so every pixel Evil has over a rung falls under the chain. Measured
+   * on the opening frame that is 66px at 390px and at 430px, and 80px at 1440px, and
+   * three passes have now read it as a hole to close. It is not the stage's padding —
+   * that is 16px top and bottom and sits outside this number — and there is nothing
+   * here to close. Evil's medallion is `--space-8 * 3` against a rung's
+   * `--space-8 * 2 + --space-4`, and the strike button pads it further because it is
+   * sized as a thumb target; that is 26px of the gap at 390px. The rest is
+   * `.evil-node__report`, held at `--space-4 * 2` from frame one so the first blow's
+   * line lands without shoving the deck — the same reserve `.shell--onboarding` and
+   * the prestige row carry, and here the horizon is the first tap. Both halves earn
+   * their space. The chain is simply shorter than Evil, and that is the whole of it.
+   */
   align-items: flex-start;
   /* Centred, not left-anchored. The track never stretches (see `.stage__track`), so on
      a wide screen the board used to sit hard left of a shell whose every other region
