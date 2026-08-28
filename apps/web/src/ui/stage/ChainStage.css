@@ -12,6 +12,14 @@
 .stage {
   --surge-step: calc(var(--duration-fast) / 2);
 
+  /*
+   * Evil's disc, declared here rather than on `.evil-node`. Two things read it and
+   * they are siblings, not parent and child: Evil draws itself at this size, and the
+   * last run measures it to know how far below the rungs' line Evil's centre falls.
+   * One declaration, so the two cannot drift — see `ChainLink.css`.
+   */
+  --evil-node-medallion: calc(var(--space-8) * 3);
+
   display: flex;
   /*
    * Tops aligned, so every pixel Evil has over a rung falls under the chain. Measured
@@ -105,6 +113,10 @@
  * last rung, and a fade there would dim a node for no reason.
  */
 @media (width <= 52rem) {
+  .stage {
+    --evil-node-medallion: calc(var(--space-8) * 2);
+  }
+
   .stage__track {
     /* `currentColor`, not a literal: a mask reads alpha only, so the hue is never
        drawn and naming one here would put a raw colour outside the token file for

@@ -1,14 +1,13 @@
 /*
  * The end of the chain, and the verb. See EvilNode.tsx.
  *
- * Two component tokens: the medallion is a drawn disc rather than a laid-out region,
- * and the art box has to match the size `TierArt` draws itself at. Neither is a
- * measurement the space scale has a name for.
+ * `--evil-node-medallion` is declared on `.stage` rather than here. The last run bends
+ * down to this disc's centre and reads its size to know how far — and `.stage-link` is
+ * not this node's descendant, so a token declared here never reached it. Same move, and
+ * the same reason, as `--stage-node-medallion` on `.stage__rung`.
  */
 
 .evil-node {
-  --evil-node-medallion: calc(var(--space-8) * 3);
-
   display: flex;
   flex: none;
   flex-direction: column;
@@ -194,10 +193,6 @@
 }
 
 @media (width <= 52rem) {
-  .evil-node {
-    --evil-node-medallion: calc(var(--space-8) * 2);
-  }
-
   .evil-node__report {
     inline-size: 9rem;
   }

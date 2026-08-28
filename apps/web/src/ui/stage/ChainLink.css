@@ -16,7 +16,17 @@
   transition: color var(--duration-base) ease-out;
 
   --stage-link-run: calc(var(--space-8) + var(--space-3));
-  --stage-link-spread: calc(var(--stage-link-run) * 0.6);
+  /*
+   * How long the drawing is, as against how wide the box is.
+   *
+   * They are the same number on every run but the last, which slopes: a sloped line
+   * covering the same horizontal reach is longer than the box that holds it. Splitting
+   * the two means the hairline, the surge and the motes all measure the line they are
+   * actually on, while `inline-size` below still measures the box — widen that and the
+   * track widens with it, which would push Evil sideways.
+   */
+  --stage-link-span: var(--stage-link-run);
+  --stage-link-spread: calc(var(--stage-link-span) * 0.6);
   --stage-link-head: var(--space-2);
   --stage-link-trail: calc(var(--space-2) / 2);
 
@@ -31,7 +41,8 @@
 .stage-link::before {
   content: '';
   position: absolute;
-  inset-inline: 0;
+  inset-inline-start: 0;
+  inline-size: var(--stage-link-span);
   inset-block-start: calc(var(--stage-node-medallion) / 2);
   block-size: 2px;
   background: var(--line);
@@ -43,6 +54,7 @@
  */
 .stage-link__surge {
   position: absolute;
+  inset-inline-start: 0;
   inset-block-start: calc(var(--stage-node-medallion) / 2 - 1px);
   block-size: 3px;
   inline-size: var(--stage-link-spread);
@@ -105,8 +117,7 @@
 }
 
 .stage-link[data-motion='reduced'] .stage-link__surge {
-  inset-inline: 0;
-  inline-size: auto;
+  inline-size: var(--stage-link-span);
 }
 
 @keyframes stage-mote-run {
@@ -125,7 +136,7 @@
 
   to {
     opacity: 0;
-    transform: translateX(calc(var(--stage-link-run) - var(--stage-link-spread)));
+    transform: translateX(calc(var(--stage-link-span) - var(--stage-link-spread)));
   }
 }
 
@@ -141,7 +152,7 @@
 
   to {
     opacity: 0;
-    transform: translateX(var(--stage-link-run));
+    transform: translateX(var(--stage-link-span));
   }
 }
 
@@ -173,4 +184,53 @@
   .stage-link {
     --stage-link-run: var(--space-6);
   }
+}
+
+/*
+ * The last run, which does not arrive at another rung.
+ *
+ * Every other run joins two discs of the same size, so it is level and its hairline
+ * sits at `--stage-node-medallion / 2` on both ends. The last one joins a rung to
+ * Evil, and Evil's centre is lower — 21px at 1440, 17px at 390, measured. Two things
+ * put it there and neither is a mistake: Evil's medallion is the larger disc, and it
+ * lives inside the strike button, whose own border and top padding sit above it
+ * because it is sized as a thumb target.
+ *
+ * So the run bends. Evil keeps its weight, the chain keeps its level line, and the
+ * one run that has somewhere else to be visibly goes there. The alternative — shrink
+ * Evil's disc to a rung's — closes 8px of the 21 and 4px of the 17 and leaves the
+ * button's 13px at both widths, and it shortens Evil's column by what it takes off
+ * the disc. Evil is the tallest thing on the stage, so that is the 82px band under
+ * the chain reopening, which is closed.
+ *
+ * The descent is spent inside the run's own box. `.stage__track` scrolls, so anything
+ * drawn past this box is clipped by the scroller — the line arrives on Evil's centre
+ * at the track's edge and the stage gap carries it flat into Evil's rule.
+ */
+.stage-link[data-landing='evil'] {
+  /*
+   * How far below the rungs' line Evil's centre sits. Read from the two discs and the
+   * button's chrome rather than written flat, so it moves when either does — the same
+   * reason `--stage-node-medallion` is declared where both sides can see it.
+   */
+  --stage-link-drop: calc(
+    1px + var(--space-3) + (var(--evil-node-medallion) - var(--stage-node-medallion)) / 2
+  );
+  --stage-link-span: hypot(var(--stage-link-run), var(--stage-link-drop));
+  --stage-link-tilt: atan2(var(--stage-link-drop), var(--stage-link-run));
+}
+
+/*
+ * One rotation, about the point the run leaves the rung's centre, applied to all three
+ * layers. The hairline, the surge and the whole mote string turn together, so the
+ * cargo travels the line it is drawn on instead of running level across a sloped run.
+ *
+ * `rotate` is composed before `transform`, so the motes' `translateX` keyframe reads
+ * as "along the slope" without the keyframe knowing there is one.
+ */
+.stage-link[data-landing='evil']::before,
+.stage-link[data-landing='evil'] .stage-link__surge,
+.stage-link[data-landing='evil'] .stage-link__motes {
+  transform-origin: 0 calc(var(--stage-node-medallion) / 2);
+  rotate: var(--stage-link-tilt);
 }

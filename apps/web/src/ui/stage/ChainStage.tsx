@@ -179,6 +179,7 @@ export function ChainStage({
               tone={toneOf(rungs[index + 1]?.art ?? EVIL_ART)}
               surging={surge !== null}
               surgeIndex={(beats - 1 - index) * 2}
+              {...(index === rungs.length - 1 ? ({ landing: 'evil' } as const) : {})}
             />
           </li>
         ))}

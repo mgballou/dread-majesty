@@ -47,6 +47,13 @@ interface ChainLinkProps {
   surging: boolean;
   /** Where this run sits in the wave. The chain sets it; the stylesheet delays by it. */
   surgeIndex: number;
+  /**
+   * What this run arrives at, when it is not another rung.
+   *
+   * Only the last one has an answer, and the answer is Evil. It is the one run that is
+   * not level, because Evil's centre sits below the rungs' — see `ChainLink.css`.
+   */
+  landing?: 'evil';
 }
 
 /**
@@ -71,6 +78,7 @@ export function ChainLink({
   tone,
   surging,
   surgeIndex,
+  landing,
 }: ChainLinkProps): ReactNode {
   const reduced = useReducedMotion();
   const pulse = usePulse(produced, version);
@@ -80,6 +88,7 @@ export function ChainLink({
     <div
       className="stage-link"
       data-motion={reduced ? 'reduced' : 'full'}
+      {...(landing === undefined ? {} : { 'data-landing': landing })}
       aria-hidden="true"
       style={{
         ...(tone === null ? {} : { ['--node-tone' as string]: `var(--tone-${tone})` }),
