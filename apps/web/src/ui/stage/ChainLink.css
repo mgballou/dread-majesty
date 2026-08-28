@@ -32,7 +32,7 @@
   content: '';
   position: absolute;
   inset-inline: 0;
-  inset-block-start: calc(var(--stage-node-medallion, 5rem) / 2);
+  inset-block-start: calc(var(--stage-node-medallion) / 2);
   block-size: 2px;
   background: var(--line);
 }
@@ -43,7 +43,7 @@
  */
 .stage-link__surge {
   position: absolute;
-  inset-block-start: calc(var(--stage-node-medallion, 5rem) / 2 - 1px);
+  inset-block-start: calc(var(--stage-node-medallion) / 2 - 1px);
   block-size: 3px;
   inline-size: var(--stage-link-spread);
   border-radius: 1px;
@@ -61,7 +61,7 @@
  */
 .stage-link__mote {
   position: absolute;
-  inset-block-start: calc(var(--stage-node-medallion, 5rem) / 2);
+  inset-block-start: calc(var(--stage-node-medallion) / 2);
   inline-size: var(--stage-link-trail);
   block-size: var(--stage-link-trail);
   margin-block-start: calc(var(--stage-link-trail) / -2);

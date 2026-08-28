@@ -8,13 +8,26 @@
  * name for.
  */
 
+/*
+ * The medallion's size, declared on the rung rather than on the node.
+ *
+ * The run between two nodes draws its hairline at half this — see `ChainLink.css` —
+ * and `.stage-link` is the node's sibling, not its child, so a token declared on the
+ * node never reached it. It fell back to a hard 5rem, which is what the disc happens
+ * to measure on a laptop and 24px too tall on a phone: the line crossed the chain
+ * 12px below every centre it was meant to join. One scope up and both sides read the
+ * same number at both widths.
+ */
+.stage__rung {
+  --stage-node-medallion: calc(var(--space-8) * 2 + var(--space-4));
+}
+
 .stage-node {
   /* The tier's own colour, handed in by the component. Everything on the node
      inherits it, and the chain overrides it wholesale during an evocation. */
   color: var(--node-tone, inherit);
   transition: color var(--duration-base) ease-out;
 
-  --stage-node-medallion: calc(var(--space-8) * 2 + var(--space-4));
   --stage-node-art: calc(var(--space-8) + var(--space-4));
   --stage-node-width: calc(var(--space-8) * 5 + var(--space-4));
   /* How hard the completion flash strikes. The surge rule below raises it. */
@@ -393,8 +406,11 @@
  * is still several times the WCAG 2.2 floor.
  */
 @media (width <= 52rem) {
-  .stage-node {
+  .stage__rung {
     --stage-node-medallion: calc(var(--space-8) + var(--space-6));
+  }
+
+  .stage-node {
     --stage-node-art: var(--space-8);
     --stage-node-width: calc(var(--space-8) * 4);
   }

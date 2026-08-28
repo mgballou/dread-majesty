@@ -35,7 +35,17 @@
   justify-content: center;
   gap: var(--space-3);
   min-inline-size: 0;
-  padding: var(--space-4) 0;
+  /*
+   * Top only. The crown ends exactly where the stage begins — `.shell__frame` is a
+   * plain block and the crown carries no bottom margin — so this padding is the only
+   * air between the rate and the chain, and it is load-bearing. Below the stage there
+   * is already a rule doing the same job: `.shell__body` is a grid and its gap sits
+   * between the stage and `.shell__side`. A symmetric `var(--space-4) 0` meant that
+   * gap was paid twice, 32px of the 98px band between the rungs' bottom edge and the
+   * deck on a phone. The other 66px is Evil standing taller than a rung, which is
+   * measured, earned, and not padding — see the `align-items` note above.
+   */
+  padding-block-start: var(--space-4);
 }
 
 /*
