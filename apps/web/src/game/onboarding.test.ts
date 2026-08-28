@@ -853,6 +853,51 @@ describe('accomplishedBeat', () => {
     expect(accomplished(fresh(), [appoint])).toBeNull();
   });
 
+  // Smite is live from second zero, so `strike` can come due for a player who already used it —
+  // asking for a blow the cooldown will refuse for the next twenty seconds.
+  it('reports a beat cleared by a blow once a blow has landed', () => {
+    const state = fresh();
+    apply(state, content, { kind: 'smite' });
+    const strike = testBeat({
+      id: 'strike',
+      clearedBy: 'smite',
+      ready: { kind: 'cycled', tierId: 'minion' },
+    });
+    expect(accomplished(state, [strike])).toBe('strike');
+  });
+
+  it('reports nothing for a beat cleared by a blow before one lands', () => {
+    const strike = testBeat({
+      id: 'strike',
+      clearedBy: 'smite',
+      ready: { kind: 'cycled', tierId: 'minion' },
+    });
+    expect(accomplished(fresh(), [strike])).toBeNull();
+  });
+
+  // She points at Smite and is cleared by supersession, not by the blow. Her whole condition is
+  // that one has landed, so accomplishment must not reach her.
+  it('leaves a beat that merely points at Smite alone', () => {
+    const state = fresh();
+    apply(state, content, { kind: 'smite' });
+    const goad = testBeat({
+      id: 'goad',
+      points: { kind: 'smite' },
+      clearedBy: { kind: 'superseded', when: { kind: 'smites-since-shown', count: 2 } },
+    });
+    expect(accomplished(state, [goad])).toBeNull();
+  });
+
+  // The whole reason this exists: on the shipped track, a player who strikes first never sees
+  // the beat that would have told them to.
+  it('walks the shipped opening past `strike` for a player who struck first', () => {
+    const state = fresh();
+    apply(state, content, { kind: 'smite' });
+    expect(
+      accomplishedBeat({ track: dominion, consumed: ['stir', 'orders'], state, content }),
+    ).toBe('strike');
+  });
+
   it('reports a rouse beat whose tier has been handed to an automator', () => {
     const rouse = testBeat({ id: 'rouse', gate: { kind: 'rouse', tierId: 'minion' } });
     expect(accomplished(filled(), [rouse])).toBe('rouse');

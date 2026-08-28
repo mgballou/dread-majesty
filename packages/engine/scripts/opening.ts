@@ -15,6 +15,11 @@
  *   - taps to first purchase, counting every rouse and every blow
  *   - what the player is holding at second 0, 10 and 30
  *
+ * Three kinds of player, not two. `no blow` has not found Smite; `blows` found it before the
+ * game mentioned it; `told` strikes when the `strike` beat reaches the bar. That third row is
+ * the only one that measures the opening *track* — the other two measure the economy at its
+ * two ends and neither is a person following the instructions.
+ *
  * It is a script, not a test, and must never gate CI.
  *
  * **The reaction gap is a policy, not a fact about the engine.** A player does not tap
@@ -27,6 +32,7 @@ import type { Content } from '@dm/content';
 import { CURRENT } from '@dm/content';
 import { apply } from '../src/intents.ts';
 import { createState } from '../src/state.ts';
+import type { GameState } from '../src/types.ts';
 import { BASE_DT_MS, step } from '../src/step.ts';
 import { canSmite, isRousable } from '../src/selectors.ts';
 
@@ -35,20 +41,52 @@ const WINDOW_MS = 2 * 60 * SECOND;
 const REACTION_MS = 500;
 const SAMPLE_AT = [0, 10 * SECOND, 30 * SECOND];
 
+/**
+ * When the player strikes.
+ *
+ * `never` and `always` are the two ends and neither is a person: one has not found the verb,
+ * the other found it before the game said a word. `told` is the row that measures the track
+ * rather than the economy — it strikes on the condition the `strike` beat is ready on, a
+ * completed Minion cycle, because that is the frame the beat reaches the bar. Read against
+ * `always` it says what the opening's one instructive beat is worth; read against `never` it
+ * says what a player who ignores it pays.
+ */
+type Blows = 'never' | 'told' | 'always';
+
 interface Policy {
   readonly name: string;
   /** Milliseconds a rousable tier waits before the player notices and taps. */
   readonly reactionMs: number;
-  /** Whether the player uses the verb the opening never mentioned. */
-  readonly smites: boolean;
+  readonly blows: Blows;
 }
 
 const POLICIES: readonly Policy[] = [
-  { name: 'perfect tapping, no blow', reactionMs: 0, smites: false },
-  { name: 'perfect tapping, blows', reactionMs: 0, smites: true },
-  { name: 'real tapping, no blow', reactionMs: REACTION_MS, smites: false },
-  { name: 'real tapping, blows', reactionMs: REACTION_MS, smites: true },
+  { name: 'perfect tapping, no blow', reactionMs: 0, blows: 'never' },
+  { name: 'perfect tapping, told', reactionMs: 0, blows: 'told' },
+  { name: 'perfect tapping, blows', reactionMs: 0, blows: 'always' },
+  { name: 'real tapping, no blow', reactionMs: REACTION_MS, blows: 'never' },
+  { name: 'real tapping, told', reactionMs: REACTION_MS, blows: 'told' },
+  { name: 'real tapping, blows', reactionMs: REACTION_MS, blows: 'always' },
 ];
+
+/**
+ * Whether this player would strike on this frame, before the reaction gap is applied.
+ *
+ * The `told` arm reads the beat's own `ready` condition off the state — `cycled`, which is
+ * `lifetimeProduced > 0` — rather than importing it, because the beat conditions live in the
+ * web app and the engine may not depend on it. It is duplicated in one line and named here so
+ * a change to the beat has somewhere obvious to land.
+ */
+function wouldStrike(state: GameState, blows: Blows): boolean {
+  switch (blows) {
+    case 'never':
+      return false;
+    case 'always':
+      return true;
+    case 'told':
+      return state.gens.minion.lifetimeProduced.gt(0);
+  }
+}
 
 interface Reading {
   readonly policy: string;
@@ -68,6 +106,8 @@ function run(content: Content, policy: Policy): Reading {
   let firstPurchaseMs: number | null = null;
   // When the player's eyes get back to a tier that has finished. Null while it turns.
   let noticedAt: number | null = 0;
+  // The same, for the blow. Null while the cooldown runs or the player has no reason to strike.
+  let noticedBlow: number | null = null;
   let nextSample = 0;
 
   while (elapsed <= WINDOW_MS) {
@@ -88,9 +128,18 @@ function run(content: Content, policy: Policy): Reading {
       }
     }
 
-    if (policy.smites && canSmite(state)) {
-      const struck = apply(state, content, { kind: 'smite' });
-      if (struck.ok) blows += 1;
+    // The blow carries the same reaction gap as the tap. A player who is told to strike does
+    // not strike on the frame they are told, and the whole point of the `told` row is what the
+    // instruction is worth to somebody reading it.
+    if (wouldStrike(state, policy.blows) && canSmite(state)) {
+      noticedBlow ??= elapsed + policy.reactionMs;
+      if (elapsed >= noticedBlow) {
+        const struck = apply(state, content, { kind: 'smite' });
+        if (struck.ok) {
+          blows += 1;
+          noticedBlow = null;
+        }
+      }
     }
 
     if (isRousable(state, content, 'minion')) {
@@ -115,7 +164,8 @@ function run(content: Content, policy: Policy): Reading {
     while (elapsed < at) {
       step(state, content, BASE_DT_MS);
       elapsed += BASE_DT_MS;
-      if (policy.smites && canSmite(state)) apply(state, content, { kind: 'smite' });
+      if (wouldStrike(state, policy.blows) && canSmite(state))
+        apply(state, content, { kind: 'smite' });
       if (isRousable(state, content, 'minion'))
         apply(state, content, { kind: 'rouse', tierId: 'minion' });
     }

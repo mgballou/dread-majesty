@@ -342,8 +342,13 @@ export function App(): ReactNode {
    * this the track stops on it for good — the post cannot be filled twice, so the beat is
    * never cleared and never ready again.
    *
-   * Only Dominion is checked. Every Malice beat gates `none`, so there is no action for one of
-   * them to have accomplished, and checking the track anyway would be dead code.
+   * It is also what keeps `strike` off the bar for a player who found Smite on their own — the
+   * verb is live from second zero, so the beat that teaches it can come due twenty seconds into
+   * a cooldown the player started themselves.
+   *
+   * Only Dominion is checked. Every Malice beat gates `none` and none of them is cleared by a
+   * blow, so there is no action for one of them to have accomplished and checking the track
+   * anyway would be dead code.
    */
   const accomplished = running
     ? accomplishedBeat({ track: onboarding.dominion, consumed: doneDominion, state, content })
