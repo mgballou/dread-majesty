@@ -15,6 +15,10 @@
      than a control. */
   --deck-mark: 5px;
 
+  /* The width of the division between one segment and the next. It is a real gap in the
+     tube with the strip's gold ground behind it, not a line drawn on either side. */
+  --deck-seam: 2px;
+
   /*
    * The height of the open panel. Fixed, not a floor.
    *
@@ -38,16 +42,30 @@
 /*
  * One tube, cut into four — not four chevrons set side by side.
  *
- * Every segment after the first is pulled back by exactly the depth of the point, so
- * the tip of one seats into the notch of the next and the run reads as a single piece
- * of chrome divided up. No gap, no padding, no wrapping: a gap between segments is the
- * thing that makes four badges out of one strip.
+ * Every segment after the first is pulled back by nearly the depth of the point, so the
+ * tip of one seats into the notch of the next and the run reads as a single piece of
+ * chrome divided up. The two pixels held back are the division itself, cut through the
+ * shapes rather than set between them — no padding and no wrapping, because slack
+ * between segments is the thing that makes four badges out of one strip.
  */
 .deck__strip {
   display: flex;
   flex-wrap: nowrap;
   gap: 0;
-  background: var(--surface-raised);
+
+  /*
+   * The seam colour, showing through from underneath.
+   *
+   * It used to be a `drop-shadow` on each segment, and that shadow did not draw: the
+   * neighbour's own fill sits exactly where the offset put it, so all four tabs ran
+   * together as one bar with a single notch in it — three of the four divisions were
+   * gone at every width, and at 430px, where the glyphs are only 99px apart, that is
+   * four tabs collided into one. The ground is the seam now. Each segment after the
+   * first is pulled back by two pixels less than the point, so the strip shows through
+   * as a two-pixel chevron between one shape and the next. A ground cannot fail to
+   * paint.
+   */
+  background: var(--accent-line);
 }
 
 /*
@@ -70,17 +88,22 @@
   cursor: pointer;
 }
 
-/* The bite that seats each segment into the one before it. */
+/*
+ * The bite that seats each segment into the one before it, held two pixels off so the
+ * gold ground shows between them. Two, not one: three of the four segments share a
+ * ground, so the seam is the only thing dividing them, and a hairline in the structural
+ * colour is a division nobody sees.
+ */
 .deck__tab + .deck__tab {
-  margin-inline-start: calc(var(--deck-point) * -1);
+  margin-inline-start: calc(var(--deck-point) * -1 + var(--deck-seam));
 }
 
 /*
  * The segment itself: notched at the leading edge, pointed at the trailing one.
  *
- * The seam is a drop-shadow rather than a border, because a border draws on the
- * element's box and the box here is a rectangle — the shadow follows the clipped shape,
- * so the hairline traces the chevron exactly.
+ * No border draws the seam. A border draws on the element's box and the box here is a
+ * rectangle, so it would cut straight across the chevron; the seam is the strip's own
+ * ground, showing through the two pixels between one clipped shape and the next.
  */
 .deck__edge {
   display: block;
@@ -93,13 +116,6 @@
     0 100%,
     var(--deck-point) 50%
   );
-  /*
-   * Gold at line weight, the same structural gold the banners edge with — and two
-   * pixels, not one. Three of the four segments share a ground, so the seam is the only
-   * thing dividing them; at hairline weight in the structural colour those divisions
-   * disappear and the tube reads as one flat bar with a single notch in it.
-   */
-  filter: drop-shadow(-2px 0 0 var(--accent-line));
   /* The line that divides the strip from the panel, carried per segment rather than
      once across the strip, so the open one can drop it and join its panel.
 
@@ -119,7 +135,6 @@
     calc(100% - var(--deck-point)) 100%,
     0 100%
   );
-  filter: none;
 }
 
 .deck__tab:last-child .deck__edge {
