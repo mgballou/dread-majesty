@@ -123,4 +123,30 @@
        nothing — which `tokens.test.ts` rightly fails. */
     mask-image: linear-gradient(to right, currentColor calc(100% - var(--space-6)), transparent);
   }
+
+  /*
+   * Ground for the fade to eat at the end of the chain.
+   *
+   * The mask sits on the scroller's own right edge, not on the content, so scrolled
+   * to the end it dimmed whatever had come to rest there — and at this width that is
+   * the last run, which is `--space-6` wide, exactly the fade. The bend down to Evil
+   * was drawn and then rubbed out. The fade's whole job is to say *there is more*,
+   * and at the end of the chain there is not.
+   *
+   * So the track carries one run's width of nothing after its last rung. The fade
+   * still eats the right edge exactly as before; at the end there is simply nothing
+   * there to lose, and the last run clears the mask entirely. The alternative was a
+   * scroll listener setting a state the mask reads, which buys the same picture for a
+   * re-render per scroll frame and pops the fade off at the end rather than letting
+   * it run out.
+   *
+   * A flex item rather than `padding-inline-end`: end padding on a flex scroller is
+   * the long-standing browser disagreement, and an item is always in the scrollable
+   * overflow. It is not a snap target, so parking is unchanged.
+   */
+  .stage__track::after {
+    content: '';
+    flex: none;
+    inline-size: var(--space-6);
+  }
 }
