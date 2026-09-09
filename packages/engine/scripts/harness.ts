@@ -423,11 +423,13 @@ function run(content: Content): void {
  * coefficient, not an exponent) into that product and warned at `a = 1.66` — the same
  * conflation `packages/content/test/generators.test.ts` already catches elsewhere.
  *
- * The shipping numbers sit on that line, not comfortably under it: `a = 16.97` over
- * 2h→4h gives `a · q = 0.933`; `a = 18.38` over 4h→8h gives `a · q = 1.011`. Spec
- * §2.1 says as much — the product "sits between 0.94 and 1.01, on the line" — and
- * the loop still converges (see `prestigeLoop` below) because `a` itself falls as a
- * run lengthens, pulling the product back under 1 rather than past it.
+ * The shipping numbers now sit under that line rather than on it: `a = 15.427` over
+ * 2h→4h gives `a · q = 0.848`; `a = 16.598` over 4h→8h gives `a · q = 0.913`. They read
+ * 0.933 and 1.011 while the Minion opened at 160, which is the pair spec §2.1 records —
+ * the product "sits between 0.94 and 1.01, on the line". Opening at 40 raises early
+ * lifetime Evil, which flattens the ratio between any two later checkpoints and pulls
+ * `a` down with it. The loop converges either way (see `prestigeLoop` below), because
+ * `a` itself falls as a run lengthens, pulling the product further under 1.
  */
 function growthExponent(early: Decimal, late: Decimal, timesLonger: number): number {
   return late.div(early).ln().toNumber() / Math.log(timesLonger);

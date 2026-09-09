@@ -287,7 +287,9 @@ describe('the prestige curve', () => {
 
   it('anchors the scale on the lifetime Evil where the count passes 600 souls', () => {
     const { k, scale, exponent } = v1.prestige;
-    // 5.147e9 is the measured lifetime Evil at 41m 51s.
+    // 5.147e9 is the lifetime Evil where the count passes 600 souls. A run at the
+    // current opening price reaches it about 33m 30s in; at the old 160 it was 41m 51s.
+    // The figure is pinned on purpose, so this measures the curve and not the balance.
     const souls = k * Math.pow(5.147e9 / Number(scale), exponent);
 
     expect(Math.round(souls)).toBe(600);
@@ -295,11 +297,14 @@ describe('the prestige curve', () => {
 
   it('spans a run rather than a lifetime', () => {
     const { k, scale, exponent } = v1.prestige;
-    // 2.394e15 is the harness's three-hour lifetime Evil, rounded for readability.
-    // 2.098729383197602e25 is its twelve-hour figure at full precision — the harness
-    // table prints it rounded to 2.1e25, which is precise enough for the table but
-    // not for this assertion: `soulsEarned` floors, and flooring the rounded figure
-    // lands on 4,336, one past what the harness actually pays out. The engine's
+    // Both figures are the harness's three- and twelve-hour lifetime Evil as it read
+    // while the Minion opened at 160, pinned here rather than re-read, so this measures
+    // the soul curve's span and not the balance. At the 40 opening the harness reaches
+    // 1e16 and 2.5e25 at the same two marks, and pays about 1,330 and 4,380 souls.
+    // 2.394e15 is rounded for readability. 2.098729383197602e25 is at full precision —
+    // the harness table printed it rounded to 2.1e25, which is precise enough for a
+    // table but not for this assertion: `soulsEarned` floors, and flooring the rounded
+    // figure lands on 4,336, one past what that harness actually paid out. The engine's
     // `soulsEarned` floors rather than rounds (`selectors.ts`), so this test does too.
     const atThreeHours = k * Math.pow(2.394e15 / Number(scale), exponent);
     const atTwelveHours = k * Math.pow(2.098729383197602e25 / Number(scale), exponent);

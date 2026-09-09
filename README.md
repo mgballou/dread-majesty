@@ -35,7 +35,7 @@ pays at the bottom several steps later.
 | <img src="docs/assets/icon-fortress.svg" width="26" alt="" /> | **Fortresses**   | 1 Dark Legion  | 30m   | 6e8 Evil                       |
 |  <img src="docs/assets/icon-legion.svg" width="26" alt="" />  | **Dark Legions** | 1 Warren       | 10m   | 6e7 Evil                       |
 |  <img src="docs/assets/icon-warren.svg" width="26" alt="" />  | **Warrens**      | 5 Minions      | 60s   | 3,000 Evil                     |
-|  <img src="docs/assets/icon-minion.svg" width="26" alt="" />  | **Minions**      | 5 Evil         | 4s    | 160 Evil                       |
+|  <img src="docs/assets/icon-minion.svg" width="26" alt="" />  | **Minions**      | 5 Evil         | 4s    | 40 Evil                        |
 |   <img src="docs/assets/icon-evil.svg" width="26" alt="" />   | **Evil**         | —              | —     | what everything is bought with |
 
 **Nothing runs until somebody makes it run.** Every tier starts manual: you rouse it from
@@ -186,10 +186,11 @@ Every player-facing string lives in `packages/content/src/v1/copy.ts`. Adding an
 without copy fails typecheck.
 
 **Economy tuning is ongoing.** The numbers have had several measured passes, and the current
-ones are the best answer so far rather than a finished one: Warrens at 11 minutes, Dark
-Legions at 41 minutes, Fortresses at 1h23m, Thrones at 2h30m, first prestige at 42 minutes.
-Expect them to move. They want real players more than another harness run. Re-run
-`pnpm harness` after touching any number in `packages/content`.
+ones are the best answer so far rather than a finished one: Warrens at 3 minutes, Dark
+Legions at 14 minutes, Fortresses at 1h11m, Thrones at 2h12m, first prestige at 34 minutes.
+The first Minion is bought by hand at 33 seconds, eight taps in. Expect them to move.
+They want real players more than another harness run. Re-run `pnpm harness` after
+touching any number in `packages/content`.
 
 **Not done:** real art. Every slot renders a generated SVG fallback — including the marks in
 this file, which are the same drawings the game ships.
