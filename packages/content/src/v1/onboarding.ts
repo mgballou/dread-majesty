@@ -32,6 +32,30 @@ export const v1Onboarding: Onboarding = {
       retireAfterMs: null,
     },
     {
+      // The only beat of the opening that names a verb the player already has. Between
+      // `orders` and `muster` sit seven rouses and some twenty-four seconds under one
+      // unchanging line — measured, not guessed: at 40 Evil a first purchase is eight
+      // cycles away, `orders` clears on the second of them, and nothing else is said
+      // until the eighth. Smite is ungated from second zero and doubles production for
+      // fifteen of every twenty seconds, so the dead four seconds of a turning cycle
+      // already have something in them and the track never mentioned it.
+      //
+      // It gates nothing, because `GatedControl` has no smite variant and gating the
+      // rouse instead would stop the opening dead on a player who ignores the prompt.
+      // For the same reason it retires: `showingBeat` walks to the first unconsumed
+      // beat, so a beat cleared only by an action the player may decline would strand
+      // `muster` and everything after it for ever. Twenty seconds is one whole smite
+      // cooldown — long enough that the prompt outlives the blow it asks for, short
+      // enough that it is gone before the first purchase is affordable.
+      id: 'strike',
+      ready: { kind: 'cycled', tierId: 'minion' },
+      gate: { kind: 'none' },
+      points: { kind: 'smite' },
+      voice: 'narrator',
+      clearedBy: 'smite',
+      retireAfterMs: 20 * SECOND,
+    },
+    {
       id: 'muster',
       ready: { kind: 'can-afford-tier', tierId: 'minion' },
       gate: { kind: 'buy', tierId: 'minion' },

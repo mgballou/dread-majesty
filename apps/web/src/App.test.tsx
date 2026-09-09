@@ -518,11 +518,32 @@ describe('onboarding drives the interface', () => {
     );
   });
 
+  /*
+   * Read off what was written down rather than off the bar. The bar holds the answered
+   * line until the next beat is ready — see the test below — so its text no longer says
+   * anything about whether the beat behind it was consumed.
+   */
   it('consumes the beat when the player performs the gated action', async () => {
     await firstRun();
     await userEvent.click(screen.getByRole('button', { name: rouseMinions }));
 
-    expect(screen.queryByText(onboarding.dominion.stir)).not.toBeInTheDocument();
+    expect(readOnboarding()?.dominion).toContain('stir');
+  });
+
+  /*
+   * The gap between a beat being answered and the next one coming ready is a whole Minion
+   * cycle — four seconds — and the bar used to unmount for all of it. That is the first
+   * rouse of a first run: the player does the one thing the tutorial asked and the tutorial
+   * vanishes. The line stays up instead, and the opening beat's two ways out go with the
+   * beat rather than with the line, because a consumed beat has no tutorial left to skip.
+   */
+  it('keeps a line on the bar between one beat being answered and the next coming ready', async () => {
+    await firstRun();
+    await userEvent.click(screen.getByRole('button', { name: rouseMinions }));
+
+    const bar = screen.getByRole('status', { name: onboarding.narratorLabel });
+    expect(bar).toHaveTextContent(onboarding.dominion.stir);
+    expect(screen.queryByRole('button', { name: onboarding.skip })).toBeNull();
   });
 
   it('lifts the gate once the beat is consumed', async () => {
@@ -705,7 +726,7 @@ describe('the malice track holds the bar', () => {
    */
   async function appointsDuringHerTurn(): Promise<void> {
     writeOnboarding({
-      dominion: ['stir', 'orders', 'muster'],
+      dominion: ['stir', 'orders', 'strike', 'muster'],
       malice: [],
       done: false,
       caved: false,
@@ -751,7 +772,12 @@ describe('the malice track holds the bar', () => {
    */
   async function appointsBeforeTheTrackAsks(): Promise<void> {
     vi.useFakeTimers({ toFake: ['performance', 'requestAnimationFrame', 'cancelAnimationFrame'] });
-    writeOnboarding({ dominion: ['stir', 'orders'], malice: [], done: false, caved: false });
+    writeOnboarding({
+      dominion: ['stir', 'orders', 'strike'],
+      malice: [],
+      done: false,
+      caved: false,
+    });
     vi.spyOn(storage, 'readSave').mockResolvedValue(struckAndRichBlob());
     render(<App />);
     await screen.findByText(onboarding.malice['first-blow']);
@@ -1206,6 +1232,10 @@ describe('the spotlight follows the beat', () => {
     await userEvent.click(screen.getByRole('button', { name: rouseMinions }));
     wind(15_000);
     await userEvent.click(screen.getByRole('button', { name: rouseMinions }));
+    // `strike` stands between `orders` and `muster` and is cleared by a blow the player
+    // may decline, so the track reaches the muster either by striking or by outlasting
+    // its window. This test is about the spotlight, not about Smite, so it waits it out.
+    wind(21_000);
     await screen.findByText(onboarding.dominion.muster);
 
     expect(screen.getByRole('tab', { name: musterTab })).toHaveAttribute('aria-selected', 'true');

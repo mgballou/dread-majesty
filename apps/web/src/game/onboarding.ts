@@ -105,6 +105,26 @@ export function latches(beat: OnboardingBeat<string>): boolean {
 }
 
 /**
+ * The first beat of a track that nobody has consumed, ready or not.
+ *
+ * `showingBeat` answers "what is on the bar"; this answers "is the track finished". They
+ * differ for as long as the next beat's condition has not come true — which on the opening
+ * track is the whole of a Minion's cycle, four seconds the player spends having just done
+ * the thing the bar asked for. The bar reads that gap off this: a track with a beat still
+ * to come is still teaching, and the last thing said stays up until the next thing is ready
+ * to be said. A walked-out track returns null and the bar goes for good.
+ */
+export function pendingBeat<Id extends string>({
+  track,
+  consumed,
+}: {
+  track: readonly OnboardingBeat<Id>[];
+  consumed: readonly Id[];
+}): OnboardingBeat<Id> | null {
+  return track.find((beat) => !consumed.includes(beat.id)) ?? null;
+}
+
+/**
  * The one beat of a track that is on screen, or null.
  *
  * The three rules of the spec §2 are the three clauses below, in order: not consumed,
@@ -277,7 +297,11 @@ export function supersededBeat<Id extends string>({
 }
 
 /**
- * The beat whose gated action the player has already accomplished.
+ * The beat whose action the player has already performed.
+ *
+ * Two ways that happens, and neither is the beat's gate being obeyed: the gated control is in
+ * a state it cannot leave (`isGateAccomplished`), or the beat asks for a blow and a blow has
+ * landed (`isBlowStruck`). Smite has no gate to read, which is why it needs its own clause.
  *
  * The fourth answer to "this beat's time is up", beside the player acting (`clearsBeat`),
  * nobody acting (`shouldRetire`) and the state moving on (`supersededBeat`). This one is the
@@ -312,7 +336,29 @@ export function accomplishedBeat<Id extends string>({
   const standing = track.find((beat) => !consumed.includes(beat.id));
   if (!standing) return null;
 
+  if (isBlowStruck(standing, state)) return standing.id;
+
   return isGateAccomplished({ gate: standing.gate, state, content }) ? standing.id : null;
+}
+
+/**
+ * Whether a beat asking for a blow is asking a player who has already struck one.
+ *
+ * Smite is live from second zero and gated by nothing, so the opening's one instructive beat
+ * can come due for a player who found the verb on their own. Without this it does: `strike`
+ * is ready on the first cycle, its gate is `none` so `isGateAccomplished` has nothing to
+ * answer, and it takes the bar at about four seconds asking for a blow the cooldown will
+ * refuse for the next twenty — the whole of the opening spent pointing at a dead button.
+ * It is the same defect `goad` had one track over, where the narrator thanked a player for
+ * listening to somebody they had never seen.
+ *
+ * Keyed on `clearedBy`, not on `points`. Pointing at Smite is what `goad` does while asking
+ * for something else entirely, and she must still arrive for a player who has struck — her
+ * whole condition is that they have. A beat *cleared* by a blow is asking for one, and one
+ * has landed.
+ */
+function isBlowStruck(beat: OnboardingBeat<string>, state: GameState): boolean {
+  return beat.clearedBy === 'smite' && state.stats.smites > 0;
 }
 
 /**

@@ -420,6 +420,9 @@ export const v1Copy = {
       stir: 'A trusted lackey who will do your bidding. Set it about some wickedness.',
       orders:
         'Once they finish a task, they await further orders. Initiative seems a rare quality.',
+      // PLACEHOLDER — needs his voice. What it has to do: name Smite, say it works while
+      // the Minion is turning, and not promise a number.
+      strike: 'PLACEHOLDER: tell them to smite while the Minion works.',
       muster: 'One is not a host. Evil buys more of them, and more of them is more Evil.',
       appoint: 'Perhaps with enough Evil you can set someone about managing this for you.',
       warren: 'Take ground of your own. A Warren breeds Minions without being asked.',
