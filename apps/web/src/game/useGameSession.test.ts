@@ -31,6 +31,35 @@ async function ready() {
   return rendered;
 }
 
+/**
+ * Drives the animation-frame tick by hand.
+ *
+ * Fake timers cannot do this: they deliver `requestAnimationFrame` every 16 ms, so
+ * reaching a day of banked time would run the callback five million times. The tick
+ * reads exactly one clock and asks for exactly one frame, so holding both is enough
+ * to hand it any gap in a single callback — which is what a backgrounded tab does.
+ */
+function frames() {
+  let now = 0;
+  let pending: FrameRequestCallback | null = null;
+
+  vi.spyOn(performance, 'now').mockImplementation(() => now);
+  vi.spyOn(globalThis, 'requestAnimationFrame').mockImplementation((callback) => {
+    pending = callback;
+    return 1;
+  });
+  vi.spyOn(globalThis, 'cancelAnimationFrame').mockImplementation(() => undefined);
+
+  return {
+    advance(ms: number): void {
+      now += ms;
+      const callback = pending;
+      pending = null;
+      act(() => callback?.(now));
+    },
+  };
+}
+
 describe('useGameSession', () => {
   it('gets past the boot screen under the double mount StrictMode performs', async () => {
     const { result } = renderHook(() => useGameSession(CURRENT), { wrapper: StrictMode });
@@ -188,6 +217,60 @@ describe('useGameSession', () => {
     await act(async () => result.current.abdicate());
 
     expect(result.current.state.stats.playTimeMs).toBe(0);
+  });
+
+  it('spends an ordinary run of frames in whole slices', async () => {
+    const clock = frames();
+    const { result } = await ready();
+
+    clock.advance(250);
+
+    expect(result.current.state.stats.playTimeMs).toBe(200);
+  });
+
+  it('says nothing about a gap the frame loop can still spend', async () => {
+    const clock = frames();
+    const { result } = await ready();
+
+    clock.advance(119_000);
+
+    expect(result.current.offline).toBeNull();
+  });
+
+  it('hands a backgrounded tab to the same catch-up a closed one gets', async () => {
+    const clock = frames();
+    const { result } = await ready();
+
+    clock.advance(24 * 60 * 60 * 1000);
+
+    expect(result.current.offline?.elapsedMs).toBe(CURRENT.offlineCapMs);
+  });
+
+  it('tells the returning player the gap outran the cap', async () => {
+    const clock = frames();
+    const { result } = await ready();
+
+    clock.advance(24 * 60 * 60 * 1000);
+
+    expect(result.current.offline?.capped).toBe(true);
+  });
+
+  it('coarsens a background gap past an hour rather than stepping it finely', async () => {
+    const clock = frames();
+    const { result } = await ready();
+
+    clock.advance(2 * 60 * 60 * 1000);
+
+    expect(result.current.offline?.coarsened).toBe(true);
+  });
+
+  it('moves the clock by the capped span and not by the whole gap', async () => {
+    const clock = frames();
+    const { result } = await ready();
+
+    clock.advance(24 * 60 * 60 * 1000);
+
+    expect(result.current.state.stats.playTimeMs).toBe(CURRENT.offlineCapMs);
   });
 
   it('reports a refused save rather than starting fresh in silence', async () => {

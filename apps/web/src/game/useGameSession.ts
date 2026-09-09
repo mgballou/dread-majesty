@@ -42,6 +42,24 @@ const RECONCILE_MS = 1000;
  */
 const RETURN_SUMMARY_FLOOR_MS = 2 * 60 * 1000;
 
+/**
+ * The banked gap at which a run of frames stops being frames and becomes an absence.
+ *
+ * Below this the bank is spent in `BASE_DT_MS` slices, which is what a browser
+ * scheduling frames badly looks like. At or above it the whole bank goes to
+ * `catchUp`, which clamps it to `content.offlineCapMs` and widens its slices above
+ * an hour — so a tab left open in the background and a tab that was closed pay the
+ * same, which is what this hook has always claimed and did not do. Uncapped, the
+ * rAF path paid a day away 16,182 times what the offline path paid for it, in one
+ * synchronous frame.
+ *
+ * It is the return-summary floor because that is already the line the game draws
+ * between a pause and a leaving, and because the two paths are identical below it:
+ * `catchUp` does not coarsen under an hour and does not cap under four, so a gap
+ * spent either way produces the same state to the last unit.
+ */
+const ABSENCE_MS = RETURN_SUMMARY_FLOOR_MS;
+
 export interface Session {
   state: GameState;
   /** Bumps whenever the state moved. Components read state; this is what re-renders them. */
@@ -90,8 +108,9 @@ export interface Session {
  *
  * Elapsed milliseconds are banked and spent in whole `BASE_DT_MS` slices, so cycle
  * completion stays exact however the browser schedules frames, and the leftover
- * carries. A backgrounded tab simply banks more time and catches up down the same
- * path `catchUp` takes for a real absence.
+ * carries. A backgrounded tab banks more time than a frame is worth, and once the
+ * bank reaches `ABSENCE_MS` it is handed to `catchUp` — the same path a tab that was
+ * closed takes, with the same cap and the same coarsening.
  */
 export function useGameSession(content: Content): Session {
   const stateRef = useRef<GameState | null>(null);
@@ -182,8 +201,21 @@ export function useGameSession(content: Content): Session {
       banked += now - last;
       last = now;
 
-      const slices = Math.floor(banked / BASE_DT_MS);
       const state = stateRef.current;
+
+      if (state && banked >= ABSENCE_MS) {
+        // `catchUp` spends the whole span, remainder included, and moves both clocks
+        // itself — so the bank empties rather than carrying, and nothing here adds to
+        // `playTimeMs` a second time.
+        const away = banked;
+        banked = 0;
+        setOffline(catchUp(state, content, away));
+        setVersion((previous) => previous + 1);
+        frame = requestAnimationFrame(tick);
+        return;
+      }
+
+      const slices = Math.floor(banked / BASE_DT_MS);
 
       if (slices > 0 && state) {
         banked -= slices * BASE_DT_MS;
