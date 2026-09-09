@@ -18,6 +18,38 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Dread Majesty" />
+
+    <!-- The link card. Without these a post of this game renders as a bare URL and
+         its own name, which is the whole of what a stranger on r/incremental_games
+         sees before deciding.
+
+         Absolute URLs, and the site's own domain hardcoded: crawlers do not run the
+         page and several of them refuse a relative `og:image` outright, so there is
+         nowhere else for the origin to come from. `og.png` is 1200x630 and lives in
+         `public/`, which is why it is not fingerprinted — the card's address has to
+         survive a deploy that changes the bundle. -->
+    <meta
+      name="description"
+      content="An incremental game. Fortresses raise Dark Legions, Legions take ground that becomes Warrens, Warrens breed Minions, Minions generate Evil."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Dread Majesty" />
+    <meta property="og:url" content="https://dreadmajesty.netlify.app/" />
+    <meta property="og:title" content="Dread Majesty" />
+    <meta
+      property="og:description"
+      content="An incremental game. Fortresses raise Dark Legions, Legions take ground that becomes Warrens, Warrens breed Minions, Minions generate Evil."
+    />
+    <meta property="og:image" content="https://dreadmajesty.netlify.app/og.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="A war hammer beside the words Dread Majesty, and the chain of production beneath them."
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/favicon.svg" />
