@@ -6,3 +6,6 @@ docs
 
 # Machine-local harness config. Not project source.
 .claude/settings.local.json
+
+# Machine-local generated art. Not project source.
+assets

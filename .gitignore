@@ -12,3 +12,6 @@ coverage/
 # Superpowers SDD scratch
 .superpowers/
 .claude/settings.local.json
+
+# Machine-local generated art, 7.3 MB of it. Never commit this.
+assets/
