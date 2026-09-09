@@ -266,6 +266,8 @@ export const v1Copy = {
     summary: (duration: string): string => `${duration} of work, done without you.`,
     capped: (cap: string): string =>
       `They worked ${cap}, then stopped. You had not told them to continue.`,
+    idle: (duration: string): string => `${duration} away.`,
+    idleCapped: (cap: string): string => `Away longer than ${cap}.`,
     nothing: 'Nothing happened. There was nobody to do it.',
     dismiss: 'Back to it',
   },

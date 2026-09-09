@@ -82,6 +82,45 @@ describe('OfflineSummary', () => {
     expect(screen.getByText(CURRENT_COPY.offline.nothing)).toBeInTheDocument();
   });
 
+  it('says only how long it was when nothing was produced', () => {
+    render(
+      <OfflineSummary
+        report={report({ produced: {} })}
+        content={CURRENT}
+        copy={CURRENT_COPY.offline}
+        onDismiss={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText(CURRENT_COPY.offline.idle('2h 14m'))).toBeInTheDocument();
+  });
+
+  it('names the cap on an absence that outran it and produced nothing', () => {
+    render(
+      <OfflineSummary
+        report={report({ produced: {}, capped: true })}
+        content={CURRENT}
+        copy={CURRENT_COPY.offline}
+        onDismiss={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText(CURRENT_COPY.offline.idleCapped('2h 14m'))).toBeInTheDocument();
+  });
+
+  it('never claims work was done above the line saying nothing happened', () => {
+    render(
+      <OfflineSummary
+        report={report({ produced: {}, capped: true })}
+        content={CURRENT}
+        copy={CURRENT_COPY.offline}
+        onDismiss={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByText(CURRENT_COPY.offline.capped('2h 14m'))).not.toBeInTheDocument();
+  });
+
   it('carries exactly one primary action, and it is the way out', async () => {
     const onDismiss = vi.fn();
     render(

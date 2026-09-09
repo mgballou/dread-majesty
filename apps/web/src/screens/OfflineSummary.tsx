@@ -29,6 +29,7 @@ export function OfflineSummary({
 }: OfflineSummaryProps): ReactNode {
   const rows = ledger(report, content);
   const span = formatDuration(report.elapsedMs);
+  const idle = rows.length === 0;
 
   return (
     <div className="return" role="dialog" aria-modal="true" aria-labelledby="return-title">
@@ -37,10 +38,10 @@ export function OfflineSummary({
           <h1 className="return__title" id="return-title">
             {copy.heading}
           </h1>
-          <p className="return__span">{report.capped ? copy.capped(span) : copy.summary(span)}</p>
+          <p className="return__span">{spanLine({ report, copy, span, idle })}</p>
         </header>
 
-        {rows.length === 0 ? (
+        {idle ? (
           <p className="return__nothing">{copy.nothing}</p>
         ) : (
           <ul className="return__ledger">
@@ -61,6 +62,29 @@ export function OfflineSummary({
       </div>
     </div>
   );
+}
+
+/**
+ * The one line that says how long the absence was.
+ *
+ * Four states, not two: the cap and the empty ledger are independent, and a line
+ * that says work was done sits directly above one that says nothing happened. An
+ * absence that produced nothing says only how long it was, and lets the ledger's
+ * stand-in carry the rest.
+ */
+function spanLine({
+  report,
+  copy,
+  span,
+  idle,
+}: {
+  report: OfflineReport;
+  copy: Copy['offline'];
+  span: string;
+  idle: boolean;
+}): string {
+  if (idle) return report.capped ? copy.idleCapped(span) : copy.idle(span);
+  return report.capped ? copy.capped(span) : copy.summary(span);
 }
 
 interface LedgerRow {

@@ -213,10 +213,22 @@ export interface StartCopy {
 
 export interface OfflineCopy {
   readonly heading: string;
+  /** The span line for an absence that produced something. */
   readonly summary: (duration: string) => string;
-  /** Used instead of `summary` when the absence outran the offline cap. */
+  /** `summary`, for an absence that outran the offline cap. */
   readonly capped: (cap: string) => string;
-  /** Used when the player owns nothing that produces. */
+  /**
+   * The span line for an absence that produced nothing.
+   *
+   * The cap and the empty ledger are independent conditions, so both `summary` and
+   * `capped` can land above `nothing` — and both of them claim work that a player
+   * with nobody to do it did not get. *They worked 4h, then stopped* over *Nothing
+   * happened* is one screen saying opposite things in consecutive sentences.
+   */
+  readonly idle: (duration: string) => string;
+  /** `idle`, for an absence that outran the offline cap. */
+  readonly idleCapped: (cap: string) => string;
+  /** The ledger's stand-in when the player owns nothing that produces. */
   readonly nothing: string;
   readonly dismiss: string;
 }
