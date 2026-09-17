@@ -17,7 +17,9 @@
     "fix": "eslint . --fix && prettier --write .",
     "check": "pnpm typecheck && pnpm lint && pnpm test",
     "harness": "pnpm --filter @dm/engine harness",
-    "opening": "pnpm --filter @dm/engine opening"
+    "opening": "pnpm --filter @dm/engine opening",
+    "conformance:emit": "pnpm --filter @dm/engine conformance:emit",
+    "conformance:verify": "pnpm --filter @dm/engine conformance:verify"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.0",

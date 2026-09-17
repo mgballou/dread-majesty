@@ -11,7 +11,9 @@
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "harness": "node --experimental-strip-types scripts/harness.ts",
-    "opening": "node --experimental-strip-types scripts/opening.ts"
+    "opening": "node --experimental-strip-types scripts/opening.ts",
+    "conformance:emit": "node --experimental-transform-types conformance/emit.ts",
+    "conformance:verify": "node --experimental-transform-types conformance/verify.ts"
   },
   "dependencies": {
     "break_eternity.js": "^2.1.0"
