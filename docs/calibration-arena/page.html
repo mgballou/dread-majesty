@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Calibration arena</title>
+<style>
+:root{color:#e7e2d9;background:#101214;font:16px/1.5 system-ui,sans-serif;color-scheme:dark}body{max-width:58rem;margin:auto;padding:3rem 1rem}h1{font-size:clamp(2.5rem,8vw,5rem);line-height:1;margin:0 0 1rem;max-width:9ch}.muted{color:#a8adb3}.facts{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin:2rem 0}.fact{border-top:1px solid #454b52;padding-top:.7rem}.fact strong{display:block;font-size:1.8rem;color:#e5b769}.chart{background:#171a1e;border:1px solid #34383d;border-radius:6px;max-width:100%}.legend{display:flex;gap:1rem;color:#a8adb3;font-size:.9rem}.dot{display:inline-block;width:.7rem;height:.7rem;border-radius:50%;margin-right:.3rem}.human{background:#e5b769}.base{background:#78a9d6}section{border-top:1px solid #34383d;margin-top:3rem;padding-top:2rem}code{color:#e5b769}
+</style></head>
+<body>
+<p class="muted">Recorded benchmark · 20 seeded rounds · NDJSON deliverable</p>
+<h1>Calibration arena</h1>
+<p class="muted">A player and a base-rate predictor forecast deterministic Dread Majesty simulations. The outcome is computed by stepping the engine forward, so this measures probability quality against a free ground truth.</p>
+<div class="facts"><div class="fact"><span class="muted">Base rate</span><strong>50.0%</strong></div><div class="fact"><span class="muted">Human Brier</span><strong>0.0625</strong></div><div class="fact"><span class="muted">Baseline Brier</span><strong>0.2500</strong></div></div>
+<section><h2>Reliability curve</h2><p class="muted">The player used 25% for no and 75% for yes. The base-rate baseline used 50% every round. Lower Brier is better; the diagonal is perfect calibration.</p>
+<svg class="chart" viewBox="0 0 520 330" role="img" aria-label="Reliability curve with human predictions at 25 percent observed zero and 75 percent observed one, and baseline at 50 percent observed 50 percent"><line x1="55" y1="275" x2="475" y2="55" stroke="#454b52" stroke-dasharray="6 6" stroke-width="2"/><line x1="55" y1="275" x2="475" y2="275" stroke="#899098"/><line x1="55" y1="275" x2="55" y2="55" stroke="#899098"/><circle cx="160" cy="275" r="8" fill="#e5b769"/><circle cx="370" cy="55" r="8" fill="#e5b769"/><circle cx="265" cy="165" r="8" fill="#78a9d6"/></svg>
+<p class="legend"><span><i class="dot human"></i>human: (0.25, 0.00), (0.75, 1.00)</span><span><i class="dot base"></i>baseline: (0.50, 0.50)</span></p></section>
+<section><h2>Scoring contract</h2><p class="muted">Tests pin the known values: a perfect prediction scores <code>0</code>, a maximally wrong confident prediction scores <code>1</code>, and a constant <code>0.5</code> scores <code>0.25</code>. The report command reads the saved log and prints Brier, reliability bins, count, and mean latency per predictor.</p></section>
+<section><h2>Second predictor seam</h2><p class="muted">Implement <code>Predictor</code> in <code>apps/calibration/src/domain.ts</code>: provide a <code>name</code> and <code>predict(question): Promise&lt;{p, ms}&gt;</code>. Register it alongside the human and base-rate predictors in <code>apps/calibration/src/main.tsx</code>; no credentials or model SDK are involved.</p></section>
+<p class="muted">Reference read: Endless Sky, listed under Adventure games in <a href="https://github.com/bobeff/open-source-games">open-source-games</a>. Its data-driven simulation/replay posture informed the seeded, re-runnable question log.</p>
+</body></html>

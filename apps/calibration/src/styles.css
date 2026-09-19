@@ -1,0 +1,23 @@
+:root { color: #e7e2d9; background: #101214; font-family: Inter, ui-sans-serif, system-ui, sans-serif; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+button, input { font: inherit; }
+button { cursor: pointer; border: 1px solid #e5b769; background: #e5b769; color: #17130d; border-radius: 6px; padding: .7rem 1rem; font-weight: 700; }
+button:disabled { cursor: not-allowed; opacity: .45; }
+.shell { width: min(100% - 2rem, 58rem); margin: 0 auto; padding: 3rem 0 5rem; }
+header { border-bottom: 1px solid #34383d; padding-bottom: 2rem; }
+.eyebrow, .label { color: #a8adb3; text-transform: uppercase; letter-spacing: .1em; font-size: .72rem; }
+h1 { font-size: clamp(2.2rem, 7vw, 4.8rem); line-height: .98; max-width: 10ch; margin: .8rem 0 1rem; }
+h2 { font-size: clamp(1.5rem, 3vw, 2.3rem); max-width: 30ch; margin: .6rem 0; }
+.lede, .muted { color: #a8adb3; line-height: 1.6; }
+section { border-bottom: 1px solid #34383d; padding: 2rem 0; }
+.state code { display: block; margin-top: .8rem; color: #e5b769; font-size: .95rem; white-space: normal; }
+.forecast { display: grid; gap: 1rem; max-width: 34rem; }
+.forecast label { font-size: 1.2rem; }
+input[type="range"] { accent-color: #e5b769; width: 100%; }
+.reveal { border-left: 3px solid #e5b769; padding-left: 1.2rem; }
+.scoreboard { display: grid; grid-template-columns: repeat(3, 1fr) auto; gap: 1rem; align-items: end; }
+.scoreboard div { display: grid; gap: .4rem; }.scoreboard strong { font-size: 1.7rem; }
+.secondary { background: transparent; color: #e5b769; }
+.chart-section { display: grid; gap: 1rem; }.chart { width: min(100%, 420px); background: #171a1e; border: 1px solid #34383d; border-radius: 6px; }.axis { stroke: #899098; stroke-width: 1; }.diagonal { stroke: #454b52; stroke-dasharray: 5 5; }.legend { display: flex; gap: 1rem; color: #a8adb3; font-size: .85rem; }.legend i { display: inline-block; width: .65rem; height: .65rem; border-radius: 50%; margin-right: .35rem; }.human-dot { background: #e5b769; }.baseline-dot { background: #78a9d6; }
+@media (max-width: 680px) { .scoreboard { grid-template-columns: 1fr 1fr; }.scoreboard .secondary { grid-column: 1 / -1; }.shell { padding-top: 2rem; } }
