@@ -1,0 +1,33 @@
+{
+    "name": "dread-majesty/decimal",
+    "description": "break_eternity.js Decimal port with V8-compatible log10 and pow10",
+    "type": "library",
+    "license": "proprietary",
+    "require": {
+        "php": "^8.4"
+    },
+    "require-dev": {
+        "pestphp/pest": "^3.0",
+        "phpstan/phpstan": "^2.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "DreadMajesty\\Decimal\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "DreadMajesty\\Decimal\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "scripts": {
+        "test": "pest",
+        "analyse": "phpstan analyse --level=9 src/",
+        "check": ["@analyse", "@test"]
+    }
+}
