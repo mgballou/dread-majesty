@@ -288,9 +288,9 @@ The whole point of milestones 2 and 3 is that the PHP port can replay the engine
 
 ### Tasks
 
-- [ ] **8.1** Write `RunConformanceCommand`. It loads the current published release's chain JSON, instantiates the PHP Decimal-based step loop with the chain data, runs every conformance vector, and reports pass/fail. Register it in the scheduler.
-- [ ] **8.2** Write `ImportV1Command`. It reads a JSON file argument, parses it as `Content`, creates the Chain and all related models. Idempotent: if a chain with that version already exists, it skips.
-- [ ] **8.3** Test both commands: the conformance run passes against a known-good release; the import creates the expected model graph.
+- [x] **8.1** Write `RunConformanceCommand`. It loads the current published release's chain JSON, instantiates the PHP Decimal-based step loop with the chain data, runs every conformance vector, and reports pass/fail. Register it in the scheduler.
+- [x] **8.2** Write `ImportV1Command`. It reads a JSON file argument, parses it as `Content`, creates the Chain and all related models. Idempotent: if a chain with that version already exists, it skips.
+- [x] **8.3** Test both commands: the conformance run passes against a known-good release; the import creates the expected model graph.
 
 **Done check:** `php artisan conformance:run` passes. `php artisan script:import-v1 vectors/v1.json` creates a chain. `composer check` passes.
 
