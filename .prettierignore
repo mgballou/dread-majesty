@@ -9,3 +9,6 @@ docs
 
 # Machine-local generated art. Not project source.
 assets
+
+# Byte for byte what the backstage publishes. Its copy is tests/Fixtures/published-chain.json there.
+packages/content/test/fixtures/published-chain.json
