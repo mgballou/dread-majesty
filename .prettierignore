@@ -9,3 +9,8 @@ docs
 
 # Machine-local generated art. Not project source.
 assets
+
+# Composer's install tree and the files Composer writes in its own format.
+packages/decimal-php/vendor
+packages/decimal-php/composer.json
+packages/decimal-php/composer.lock

@@ -15,3 +15,6 @@ coverage/
 
 # Machine-local generated art, 7.3 MB of it. Never commit this.
 assets/
+
+# Composer's install tree for the PHP port.
+packages/decimal-php/vendor/

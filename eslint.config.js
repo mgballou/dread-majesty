@@ -2,7 +2,15 @@ import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-  { ignores: ['**/dist/**', '**/node_modules/**', '**/*.d.ts'] },
+  {
+    ignores: [
+      '**/dist/**',
+      '**/node_modules/**',
+      '**/*.d.ts',
+      // Composer's install tree for the PHP port. Third-party, never ours to lint.
+      'packages/decimal-php/vendor/**',
+    ],
+  },
 
   js.configs.recommended,
   ...tseslint.configs.recommended,
