@@ -10,8 +10,12 @@ const baseRate = rounds.filter((round) => round.outcome).length / rounds.length;
 console.log(`Rounds: ${rounds.length}`);
 console.log(`Base rate: ${(baseRate * 100).toFixed(1)}%`);
 for (const name of names) {
-  const scored = rounds.map((round) => ({ p: round.predictions[name].p, outcome: Number(round.outcome) === 1 ? 1 : 0 }));
-  const latency = rounds.reduce((sum, round) => sum + round.predictions[name].ms, 0) / rounds.length;
+  const scored = rounds.map((round) => ({
+    p: round.predictions[name].p,
+    outcome: Number(round.outcome) === 1 ? 1 : 0,
+  }));
+  const latency =
+    rounds.reduce((sum, round) => sum + round.predictions[name].ms, 0) / rounds.length;
   console.log(`\n${name}`);
   console.log(`  Brier: ${brierScore(scored).toFixed(4)}`);
   console.log(`  Count: ${scored.length}`);

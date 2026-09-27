@@ -83,7 +83,9 @@ function clamp(value: number): number {
 }
 
 function formatNumber(value: number): string {
-  return value >= 1000 ? value.toLocaleString('en-US', { maximumFractionDigits: 0 }) : value.toFixed(1);
+  return value >= 1000
+    ? value.toLocaleString('en-US', { maximumFractionDigits: 0 })
+    : value.toFixed(1);
 }
 
 function mulberry32(seed: number): () => number {
@@ -99,6 +101,9 @@ function mulberry32(seed: number): () => number {
 
 export function stateSummary(state: GameState): string {
   const counts: Partial<Record<TierId, string>> = {};
-  for (const tier of Object.keys(state.gens) as TierId[]) counts[tier] = state.gens[tier].owned.toString();
-  return Object.entries(counts).map(([tier, count]) => `${tier}: ${count}`).join(' · ');
+  for (const tier of Object.keys(state.gens) as TierId[])
+    counts[tier] = state.gens[tier].owned.toString();
+  return Object.entries(counts)
+    .map(([tier, count]) => `${tier}: ${count}`)
+    .join(' · ');
 }
