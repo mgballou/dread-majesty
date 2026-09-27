@@ -21,8 +21,8 @@ describe('calibration scoring', () => {
       { p: 0.8, outcome: 1 },
       { p: 0.9, outcome: 0 },
     ], 2)).toEqual([
-      { bucket: 0, count: 2, stated: 0.15, observed: 0.5 },
-      { bucket: 1, count: 2, stated: 0.85, observed: 0.5 },
+      { bucket: 0, count: 2, stated: expect.closeTo(0.15), observed: 0.5 },
+      { bucket: 1, count: 2, stated: expect.closeTo(0.85), observed: 0.5 },
     ]);
   });
 });

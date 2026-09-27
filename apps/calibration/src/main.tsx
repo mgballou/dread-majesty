@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { buildSession, humanPredictor, baselinePredictor, stateSummary, toLogLine, type Predictor, type Question, type RoundLog } from './domain.ts';
+import { buildSession, humanPredictor, baselinePredictor, stateSummary, toLogLine, type Prediction, type Predictor, type RoundLog } from './domain.ts';
 import { brierScore, reliabilityCurve, type ScoredPrediction } from './metrics.ts';
 import './styles.css';
 
@@ -46,8 +46,8 @@ function App() {
     URL.revokeObjectURL(link.href);
   }
 
-  const humanScores = rounds.map((round) => ({ p: round.predictions.human.p, outcome: Number(round.outcome) as 0 | 1 }));
-  const baselineScores = rounds.map((round) => ({ p: round.predictions['base-rate baseline'].p, outcome: Number(round.outcome) as 0 | 1 }));
+  const humanScores = scoresFor(rounds, 'human');
+  const baselineScores = scoresFor(rounds, 'base-rate baseline');
 
   return <main className="shell">
     <header>
@@ -72,7 +72,7 @@ function App() {
     {revealed && <section className="reveal" aria-live="polite">
       <span className="label">Outcome</span>
       <h2>{revealed.outcome ? 'Yes' : 'No'}</h2>
-      <p>Your forecast: {Math.round(revealed.predictions.human.p * 100)}% · baseline: {Math.round(revealed.predictions['base-rate baseline'].p * 100)}%</p>
+      <p>Your forecast: {percent(revealed.predictions.human)} · baseline: {percent(revealed.predictions['base-rate baseline'])}</p>
       <button onClick={next}>Next question</button>
     </section>}
     <section className="scoreboard">
@@ -85,10 +85,21 @@ function App() {
   </main>;
 }
 
+/** Rounds where this predictor gave no forecast are left out rather than scored as zero. */
+function scoresFor(rounds: readonly RoundLog[], name: string): ScoredPrediction[] {
+  return rounds.flatMap((round) => {
+    const prediction = round.predictions[name];
+    return prediction ? [{ p: prediction.p, outcome: Number(round.outcome) as 0 | 1 }] : [];
+  });
+}
+
+function percent(prediction: Prediction | undefined): string {
+  return prediction ? `${Math.round(prediction.p * 100)}%` : '—';
+}
+
 function Reliability({ rounds }: { readonly rounds: readonly RoundLog[] }) {
   const series = ['human', 'base-rate baseline'].map((name, seriesIndex) => {
-    const scored: ScoredPrediction[] = rounds.map((round) => ({ p: round.predictions[name].p, outcome: Number(round.outcome) as 0 | 1 }));
-    return { name, color: seriesIndex === 0 ? '#e5b769' : '#78a9d6', bins: reliabilityCurve(scored) };
+    return { name, color: seriesIndex === 0 ? '#e5b769' : '#78a9d6', bins: reliabilityCurve(scoresFor(rounds, name)) };
   });
   return <section className="chart-section">
     <div><span className="label">Reliability curve</span><p className="muted">Stated probability against observed frequency. Perfect calibration follows the diagonal.</p></div>
