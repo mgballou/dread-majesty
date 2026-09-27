@@ -1,0 +1,214 @@
+{
+    "version": "conformance",
+    "tiers": [
+        {
+            "id": "warren",
+            "name": "Warren",
+            "plural": "Warrens",
+            "produces": "minion",
+            "yield": "100",
+            "cycleMs": 60000,
+            "costResource": "evil",
+            "baseCost": "1500",
+            "costRate": 1.089,
+            "overseers": [
+                {
+                    "id": "warren-hand",
+                    "name": "Fixture Warden",
+                    "cost": "600",
+                    "effect": {
+                        "kind": "automate"
+                    }
+                },
+                {
+                    "id": "warren-goad",
+                    "name": "Fixture Goad",
+                    "cost": "2400",
+                    "effect": {
+                        "kind": "quicken",
+                        "factor": 2
+                    }
+                },
+                {
+                    "id": "warren-glut",
+                    "name": "Fixture Glut",
+                    "cost": "9600",
+                    "effect": {
+                        "kind": "swell",
+                        "factor": 2
+                    }
+                }
+            ],
+            "art": "tier/warren"
+        },
+        {
+            "id": "minion",
+            "name": "Minion",
+            "plural": "Minions",
+            "produces": "evil",
+            "yield": "15",
+            "cycleMs": 24000,
+            "costResource": "evil",
+            "baseCost": "90",
+            "costRate": 1.089,
+            "overseers": [
+                {
+                    "id": "minion-hand",
+                    "name": "Fixture Taskmaster",
+                    "cost": "400",
+                    "effect": {
+                        "kind": "automate"
+                    }
+                },
+                {
+                    "id": "minion-goad",
+                    "name": "Fixture Goad",
+                    "cost": "1600",
+                    "effect": {
+                        "kind": "quicken",
+                        "factor": 2
+                    }
+                },
+                {
+                    "id": "minion-glut",
+                    "name": "Fixture Glut",
+                    "cost": "6400",
+                    "effect": {
+                        "kind": "swell",
+                        "factor": 2
+                    }
+                }
+            ],
+            "art": "tier/minion"
+        }
+    ],
+    "milestones": [],
+    "achievements": [
+        {
+            "id": "minion-10",
+            "name": "Ten Minions",
+            "description": "Own 10 Minions.",
+            "condition": {
+                "kind": "tier-owned",
+                "tierId": "minion",
+                "atLeast": "10"
+            },
+            "multiplier": 1
+        },
+        {
+            "id": "evil-1e3",
+            "name": "A Thousand Evil",
+            "description": "Earn 1,000 Evil in total.",
+            "condition": {
+                "kind": "lifetime-evil",
+                "atLeast": "1000"
+            },
+            "multiplier": 1
+        },
+        {
+            "id": "souls-500",
+            "name": "Five Hundred Souls",
+            "description": "Hold 500 souls.",
+            "condition": {
+                "kind": "souls",
+                "atLeast": "500"
+            },
+            "multiplier": 1
+        },
+        {
+            "id": "prestige-1",
+            "name": "One Reset",
+            "description": "Claim souls once.",
+            "condition": {
+                "kind": "prestiges",
+                "atLeast": 1
+            },
+            "multiplier": 1
+        },
+        {
+            "id": "smite-1",
+            "name": "One Smite",
+            "description": "Smite once.",
+            "condition": {
+                "kind": "smites",
+                "atLeast": 1
+            },
+            "multiplier": 1
+        }
+    ],
+    "unlockFraction": 0.5,
+    "prestige": {
+        "k": 150,
+        "scale": "10000",
+        "exponent": 0.5,
+        "perSoul": 0.02
+    },
+    "offlineCapMs": 14400000,
+    "smite": {
+        "cooldownMs": 120000,
+        "apathy": {
+            "perBlow": 1,
+            "cap": 3
+        },
+        "climbGrowth": 2,
+        "upgrades": [
+            {
+                "id": "weight",
+                "name": "Fixture Weight",
+                "base": 2,
+                "unit": "multiplier",
+                "rungs": [
+                    {
+                        "evil": "1000",
+                        "souls": "5",
+                        "value": 3
+                    },
+                    {
+                        "evil": "4000",
+                        "souls": "10",
+                        "value": 4
+                    }
+                ]
+            },
+            {
+                "id": "reach",
+                "name": "Fixture Reach",
+                "base": 48000,
+                "unit": "seconds",
+                "rungs": [
+                    {
+                        "evil": "2000",
+                        "souls": "5",
+                        "value": 72000
+                    }
+                ]
+            },
+            {
+                "id": "forgetting",
+                "name": "Fixture Forgetting",
+                "base": 60000,
+                "unit": "seconds",
+                "rungs": [
+                    {
+                        "evil": "3000",
+                        "souls": "5",
+                        "value": 30000
+                    }
+                ]
+            },
+            {
+                "id": "restraint",
+                "name": "Fixture Restraint",
+                "base": 0.5,
+                "unit": "amount",
+                "rungs": [
+                    {
+                        "evil": "5000",
+                        "souls": "5",
+                        "value": 0.25
+                    }
+                ]
+            }
+        ]
+    }
+}
