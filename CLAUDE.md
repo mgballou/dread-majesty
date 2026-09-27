@@ -186,6 +186,7 @@ Draw Things lab being reachable.
 - PR descriptions follow the format in the global `CLAUDE.md`.
 
 <!-- block:begin -->
+
 ## Agents
 
 Delegate anything that means many reads and one conclusion. A turn in this pane
