@@ -3,6 +3,7 @@ parameters:
     paths:
         - src/Decimal.php
         - src/Ieee754.php
+        - src/Reconciler.php
         - src/V8Math.php
     ignoreErrors:
         - identifier: greaterOrEqual.alwaysTrue

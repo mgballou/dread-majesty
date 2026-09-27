@@ -9,6 +9,60 @@ namespace DreadMajesty\Decimal;
  *
  * Ports the engine's step() and catchUp() against the conformance chain.
  * The chain is the Content object from v1.json, not the shipping content.
+ *
+ * @phpstan-type OverseerEffect array{kind: 'automate'}|array{kind: 'quicken'|'swell', factor: int|float}
+ * @phpstan-type OverseerDef array{id: string, effect: OverseerEffect}
+ * @phpstan-type TierDef array{id: string, produces: string, yield: string, cycleMs: int, overseers: list<OverseerDef>}
+ * @phpstan-type MilestoneDef array{at: int|float, multiplier: int|float}
+ * @phpstan-type AchievementDef array{id: string, multiplier: int|float}
+ * @phpstan-type SmiteUpgradeDef array{id: string, base: int|float, rungs: list<array{value: int|float}>}
+ * @phpstan-type Content array{
+ *     offlineCapMs: int,
+ *     tiers: list<TierDef>,
+ *     milestones: list<MilestoneDef>,
+ *     achievements: list<AchievementDef>,
+ *     prestige: array{perSoul: int|float},
+ *     smite: array{upgrades: list<SmiteUpgradeDef>},
+ * }
+ * @phpstan-type Stats array{playTimeMs: int, smites: int, prestiges: int, runMs: int}
+ * @phpstan-type GenState array{owned: Decimal, progressMs: int, lifetimeProduced: Decimal, running: bool, purchased: Decimal}
+ * @phpstan-type State array{
+ *     saveVersion: int,
+ *     resources: array<string, Decimal>,
+ *     gens: array<string, GenState>,
+ *     souls: Decimal,
+ *     soulsSpent: Decimal,
+ *     lifetimeEvil: Decimal,
+ *     earnedAchievements: list<string>,
+ *     unlocked: array<string, bool>,
+ *     overseers: array<string, list<string>>,
+ *     smiteActiveMs: int|float,
+ *     smiteCooldownMs: int|float,
+ *     smiteApathy: int|float,
+ *     smiteBlow: int|float,
+ *     smiteRungs: array<string, int>,
+ *     smiteKept: array<string, int>,
+ *     stats: Stats,
+ * }
+ * @phpstan-type SavedGen array{owned?: string, progressMs?: int, lifetimeProduced?: string, running?: bool, purchased?: string}
+ * @phpstan-type SaveBlob array{
+ *     saveVersion: int,
+ *     resources: array<string, string>,
+ *     gens?: array<string, SavedGen>,
+ *     souls?: string,
+ *     soulsSpent?: string,
+ *     lifetimeEvil?: string,
+ *     earnedAchievements?: list<string>,
+ *     unlocked?: array<string, bool>,
+ *     overseers?: array<string, list<string>>,
+ *     smiteActiveMs?: int|float,
+ *     smiteCooldownMs?: int|float,
+ *     smiteApathy?: int|float,
+ *     smiteBlow?: int|float,
+ *     smiteRungs?: array<string, int>,
+ *     smiteKept?: array<string, int>,
+ *     stats?: Stats,
+ * }
  */
 final class Reconciler
 {
@@ -21,10 +75,13 @@ final class Reconciler
     /**
      * Run catchUp: call step in a loop for the given elapsed time.
      *
-     * @param  array<string, mixed>  $state  Deserialized GameState
-     * @param  array<string, mixed>  $content  The chain (Content object)
+     * @param  State  $state  Deserialized GameState
+     * @param  Content  $content  The chain (Content object)
      * @param  int  $elapsedMs  Milliseconds to catch up
-     * @return array{state: array<string, mixed>, produced: array<string, Decimal>}
+     *
+     * @param-out State  $state
+     *
+     * @return array{state: State, produced: array<string, Decimal>}
      */
     public static function catchUp(array &$state, array $content, int $elapsedMs): array
     {
@@ -57,22 +114,27 @@ final class Reconciler
     /**
      * One simulation step.
      *
+     * @param  State  $state
+     * @param  Content  $content
+     *
+     * @param-out State  $state
+     *
      * @return array<string, Decimal>
      */
     public static function step(array &$state, array $content, int $dtMs): array
     {
         // Smite countdowns
-        $state['smiteActiveMs'] = max(0, ($state['smiteActiveMs'] ?? 0) - $dtMs);
-        $state['smiteCooldownMs'] = max(0, ($state['smiteCooldownMs'] ?? 0) - $dtMs);
+        $state['smiteActiveMs'] = max(0, $state['smiteActiveMs'] - $dtMs);
+        $state['smiteCooldownMs'] = max(0, $state['smiteCooldownMs'] - $dtMs);
 
-        if (($state['smiteActiveMs'] ?? 0) <= 0) {
+        if ($state['smiteActiveMs'] <= 0) {
             $state['smiteBlow'] = 1;
         }
 
         // Apathy bleed
         $bleedMs = self::smiteBleedMs($state, $content);
         if ($bleedMs > 0) {
-            $state['smiteApathy'] = max(0, ($state['smiteApathy'] ?? 0) - $dtMs / $bleedMs);
+            $state['smiteApathy'] = max(0, $state['smiteApathy'] - $dtMs / $bleedMs);
         }
 
         // Snapshot owned counts
@@ -132,13 +194,22 @@ final class Reconciler
         return $delta;
     }
 
+    /**
+     * @param  State  $state
+     * @param  Content  $content
+     * @param  array<string, Decimal>  $delta
+     *
+     * @param-out State  $state
+     */
     private static function commit(array &$state, array $content, array $delta): void
     {
-        $tierIds = array_map(fn (array $t) => $t['id'], $content['tiers']);
+        $tierIds = array_column($content['tiers'], 'id');
 
         foreach ($delta as $id => $amount) {
             if (in_array($id, $tierIds, true)) {
-                $state['gens'][$id]['owned'] = $state['gens'][$id]['owned']->add($amount);
+                $gen = $state['gens'][$id];
+                $gen['owned'] = $gen['owned']->add($amount);
+                $state['gens'][$id] = $gen;
 
                 continue;
             }
@@ -167,8 +238,8 @@ final class Reconciler
     }
 
     /**
-     * @param  array<string, mixed>  $state
-     * @param  array<string, mixed>  $tier
+     * @param  State  $state
+     * @param  TierDef  $tier
      */
     private static function hasAutomator(array $state, array $tier): bool
     {
@@ -183,8 +254,8 @@ final class Reconciler
     }
 
     /**
-     * @param  array<string, mixed>  $state
-     * @param  array<string, mixed>  $tier
+     * @param  State  $state
+     * @param  TierDef  $tier
      */
     private static function effectiveCycleMs(array $state, array $tier): int
     {
@@ -202,8 +273,8 @@ final class Reconciler
     }
 
     /**
-     * @param  array<string, mixed>  $state
-     * @param  array<string, mixed>  $tier
+     * @param  State  $state
+     * @param  TierDef  $tier
      */
     private static function effectiveYield(array $state, array $tier): Decimal
     {
@@ -221,8 +292,8 @@ final class Reconciler
     }
 
     /**
-     * @param  array<string, mixed>  $state
-     * @param  array<string, mixed>  $content
+     * @param  State  $state
+     * @param  Content  $content
      */
     private static function tierMultiplier(array $state, array $content, Decimal $owned): Decimal
     {
@@ -241,8 +312,8 @@ final class Reconciler
     }
 
     /**
-     * @param  array<string, mixed>  $state
-     * @param  array<string, mixed>  $content
+     * @param  State  $state
+     * @param  Content  $content
      */
     private static function globalMultiplier(array $state, array $content): Decimal
     {
@@ -251,7 +322,7 @@ final class Reconciler
         $perSoul = $content['prestige']['perSoul'];
         $fromSouls = Decimal::one()->add($souls->mul(Decimal::fromNumber($perSoul)));
 
-        $fromSmite = ($state['smiteActiveMs'] ?? 0) > 0 ? ($state['smiteBlow'] ?? 1) : 1;
+        $fromSmite = $state['smiteActiveMs'] > 0 ? $state['smiteBlow'] : 1;
 
         $achMul = self::achievementMultiplier($state, $content);
 
@@ -259,8 +330,8 @@ final class Reconciler
     }
 
     /**
-     * @param  array<string, mixed>  $state
-     * @param  array<string, mixed>  $content
+     * @param  State  $state
+     * @param  Content  $content
      */
     private static function achievementMultiplier(array $state, array $content): Decimal
     {
@@ -269,7 +340,7 @@ final class Reconciler
             if ($achievement['multiplier'] === 1) {
                 continue;
             }
-            if (in_array($achievement['id'], $state['earnedAchievements'] ?? [], true)) {
+            if (in_array($achievement['id'], $state['earnedAchievements'], true)) {
                 $multiplier = $multiplier->mul(
                     Decimal::fromNumber((float) $achievement['multiplier'])
                 );
@@ -279,11 +350,19 @@ final class Reconciler
         return $multiplier;
     }
 
+    /**
+     * @param  State  $state
+     * @param  Content  $content
+     */
     private static function smiteBleedMs(array $state, array $content): float
     {
         return self::smiteValueNow($state, $content, 'forgetting');
     }
 
+    /**
+     * @param  State  $state
+     * @param  Content  $content
+     */
     private static function smiteValueNow(array $state, array $content, string $id): float
     {
         $upgrade = null;
@@ -309,9 +388,9 @@ final class Reconciler
     /**
      * Deserialize a SaveBlob from v1.json into a working state with Decimals.
      *
-     * @param  array<string, mixed>  $blob
-     * @param  array<string, mixed>  $content
-     * @return array<string, mixed>
+     * @param  SaveBlob  $blob
+     * @param  Content  $content
+     * @return State
      */
     public static function deserializeState(array $blob, array $content): array
     {
@@ -328,7 +407,7 @@ final class Reconciler
         // The vectors carry five tiers but the conformance chain only defines two.
         $state['gens'] = [];
         $allTierIds = array_unique(array_merge(
-            array_map(fn (array $t) => $t['id'], $content['tiers']),
+            array_column($content['tiers'], 'id'),
             array_keys($blob['gens'] ?? []),
         ));
         foreach ($allTierIds as $id) {
@@ -362,9 +441,9 @@ final class Reconciler
     /**
      * Serialize the working state back to a SaveBlob.
      *
-     * @param  array<string, mixed>  $state
-     * @param  array<string, mixed>  $content
-     * @return array<string, mixed>
+     * @param  State  $state
+     * @param  Content  $content
+     * @return SaveBlob
      */
     public static function serializeState(array $state, array $content): array
     {
