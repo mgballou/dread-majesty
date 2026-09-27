@@ -407,7 +407,10 @@ final class V8Math
         $w = $v - ($z - $u);
         $t = $z * $z;
         $t1 = $z - $t * ($P1 + $t * ($P2 + $t * ($P3 + $t * ($P4 + $t * $P5))));
-        $r = ($z * $t1) / ($t1 - $two) - ($w + $z * $w);
+        // Classic fdlibm has (z*t1)/(t1-two) - (w+z*w). V8 12.4's ieee754.cc wraps
+        // the division in base::Divide and takes the whole difference as the
+        // divisor, so this does.
+        $r = ($z * $t1) / (($t1 - $two) - ($w + $z * $w));
         $z = $one - ($r - $z);
         $j = Ieee754::getHighWord($z);
         // PHP ints are 64-bit; simulate the 32-bit addition V8 does
@@ -445,10 +448,18 @@ final class V8Math
     }
 
     /**
-     * scalbn(x, n) — ldexp equivalent.
+     * scalbn(x, n): x times 2^n, rounded once, as V8 12.4's ieee754.cc does.
+     *
+     * pow only calls this when the result is subnormal or zero, so n can fall
+     * below -1074, where 2^n is itself zero. Scaling by 2^-1000 first is exact
+     * for x near 1 and leaves a factor that is still representable.
      */
     private static function scalbn(float $x, int $n): float
     {
-        return $x * (2.0 ** $n);
+        if ($n < -1000) {
+            return ($x * 2.0 ** -1000) * 2.0 ** ($n + 1000);
+        }
+
+        return $x * 2.0 ** $n;
     }
 }
