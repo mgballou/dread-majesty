@@ -19,7 +19,8 @@
     "harness": "pnpm --filter @dm/engine harness",
     "opening": "pnpm --filter @dm/engine opening",
     "conformance:emit": "pnpm --filter @dm/engine conformance:emit",
-    "conformance:verify": "pnpm --filter @dm/engine conformance:verify"
+    "conformance:verify": "pnpm --filter @dm/engine conformance:verify",
+    "export:current": "pnpm --filter @dm/content export:current"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.0",
