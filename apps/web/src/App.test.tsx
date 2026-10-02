@@ -3,7 +3,13 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event';
 import { CURRENT, CURRENT_COPY, CURRENT_ONBOARDING } from '@dm/content';
 import type { Content } from '@dm/content';
-import { createState, exportSave, serialize, type SaveBlob } from '@dm/engine';
+import {
+  MIN_SUPPORTED_SAVE_VERSION,
+  createState,
+  exportSave,
+  serialize,
+  type SaveBlob,
+} from '@dm/engine';
 import type { Intent, IntentFailure, IntentResult } from '@dm/engine';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { App } from './App.tsx';
@@ -1366,5 +1372,29 @@ describe('the reset notice reserves its row from the horizon', () => {
 
     expect(row()).not.toHaveAttribute('inert');
     expect(screen.getByText(CURRENT_COPY.prestige.owed)).toBeInTheDocument();
+  });
+});
+
+describe('a save that will not load', () => {
+  beforeEach(() => finishOnboarding());
+
+  afterEach(() => {
+    forgetOnboarding();
+    vi.restoreAllMocks();
+  });
+
+  it('says a save it could not read was set aside', async () => {
+    const between = MIN_SUPPORTED_SAVE_VERSION + 0.5;
+    vi.spyOn(storage, 'readSave').mockResolvedValue({ ...savedBlob(), saveVersion: between });
+    render(<App />);
+
+    expect(await screen.findByText(CURRENT_COPY.errors.unreadableSave)).toBeInTheDocument();
+  });
+
+  it('says a save too old to load is too old', async () => {
+    vi.spyOn(storage, 'readSave').mockResolvedValue({ ...savedBlob(), saveVersion: 1 });
+    render(<App />);
+
+    expect(await screen.findByText(CURRENT_COPY.errors.obsoleteSave)).toBeInTheDocument();
   });
 });

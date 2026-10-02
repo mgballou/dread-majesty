@@ -5,13 +5,14 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { CURRENT } from '@dm/content';
 import { createState, serialize } from '@dm/engine';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { clearSave, readSave, writeSave } from './storage.ts';
+import { clearKeptSave, clearSave, readKeptSave, readSave, writeSave } from './storage.ts';
 import { useGameSession } from './useGameSession.ts';
 
 const TEN_MINUTES = 600_000;
 
 beforeEach(async () => {
   await clearSave();
+  await clearKeptSave();
   vi.spyOn(Date, 'now').mockReturnValue(TEN_MINUTES);
 });
 
@@ -29,6 +30,27 @@ async function ready() {
   const rendered = renderHook(() => useGameSession(CURRENT));
   await waitFor(() => expect(rendered.result.current.ready).toBe(true));
   return rendered;
+}
+
+/**
+ * Puts something that is not a save where the save belongs.
+ *
+ * `writeSave` only takes a well-formed blob, and a damaged one is exactly what it cannot
+ * be handed, so this goes to the store underneath it. `clearSave` in `beforeEach` has
+ * already opened the database, so the store exists.
+ */
+async function plant(value: unknown): Promise<void> {
+  const db = await new Promise<IDBDatabase>((resolve, reject) => {
+    const opening = indexedDB.open('dread-majesty', 1);
+    opening.onsuccess = () => resolve(opening.result);
+    opening.onerror = () => reject(opening.error ?? new Error('open failed'));
+  });
+  await new Promise<void>((resolve, reject) => {
+    const putting = db.transaction('saves', 'readwrite').objectStore('saves').put(value, 'current');
+    putting.onsuccess = () => resolve();
+    putting.onerror = () => reject(putting.error ?? new Error('put failed'));
+  });
+  db.close();
 }
 
 /**
@@ -279,6 +301,42 @@ describe('useGameSession', () => {
 
     const { result } = await ready();
 
-    expect(result.current.saveRefused).toBe(true);
+    expect(result.current.refusedSave).toBe('obsolete');
+  });
+
+  it('tells the player a save it could not read was set aside', async () => {
+    await plant('not a save');
+
+    const { result } = await ready();
+
+    expect(result.current.refusedSave).toBe('unreadable');
+  });
+
+  it('keeps an unreadable save aside after the autosave has written over it', async () => {
+    await plant('not a save');
+    const rendered = await ready();
+
+    rendered.unmount();
+    await waitFor(async () => expect((await readSave())?.savedAtMs).toBe(TEN_MINUTES));
+
+    expect(await readKeptSave()).toBe('not a save');
+  });
+
+  it('keeps nothing aside when the save loaded', async () => {
+    await writeSave(serialize(createState(CURRENT), 0));
+    const rendered = await ready();
+
+    rendered.unmount();
+    await waitFor(async () => expect((await readSave())?.savedAtMs).toBe(TEN_MINUTES));
+
+    expect(await readKeptSave()).toBeNull();
+  });
+
+  it('raises no notice when the save loaded', async () => {
+    await writeSave(serialize(createState(CURRENT), 0));
+
+    const { result } = await ready();
+
+    expect(result.current.refusedSave).toBeNull();
   });
 });

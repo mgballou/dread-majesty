@@ -647,9 +647,11 @@ function Realm({ content }: { content: Content }): ReactNode {
        pinned and the room is below the fold anyway. See App.css. */
     <div className={running ? 'shell shell--onboarding' : 'shell'}>
       <div className="shell__frame" inert={screenTaken}>
-        {session.saveRefused && (
+        {session.refusedSave && (
           <p className="shell__refusal" role="status">
-            {copy.errors.obsoleteSave}
+            {session.refusedSave === 'obsolete'
+              ? copy.errors.obsoleteSave
+              : copy.errors.unreadableSave}
             <button type="button" className="button" onClick={session.dismissRefusal}>
               {copy.close}
             </button>

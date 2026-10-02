@@ -398,6 +398,8 @@ export interface ErrorCopy {
   readonly unmigratableSave: string;
   /** Shown when a save predates the supported floor and cannot be brought forward. */
   readonly obsoleteSave: string;
+  /** Shown when the save on disk could not be read at all. The blob is set aside, not lost. */
+  readonly unreadableSave: string;
   readonly storageBlocked: string;
 }
 

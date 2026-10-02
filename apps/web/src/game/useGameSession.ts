@@ -14,7 +14,7 @@ import {
   step,
 } from '@dm/engine';
 import type { GameState, Intent, IntentResult, OfflineReport } from '@dm/engine';
-import { clearSave, readSave, writeSave } from './storage.ts';
+import { clearSave, keepUnreadableSave, readSave, writeSave } from './storage.ts';
 
 /** How often the game writes itself down while it is being played. */
 const AUTOSAVE_MS = 10_000;
@@ -60,6 +60,16 @@ const RETURN_SUMMARY_FLOOR_MS = 2 * 60 * 1000;
  */
 const ABSENCE_MS = RETURN_SUMMARY_FLOOR_MS;
 
+/**
+ * Why the save on disk did not load.
+ *
+ * `obsolete` is a save older than the supported floor: ours, permanent, and explained
+ * as such. `unreadable` is everything else — damaged, truncated, or from a build that
+ * wrote a shape this one cannot read. Either way the blob has been set aside before
+ * the first autosave could write over it.
+ */
+export type SaveRefusal = 'obsolete' | 'unreadable';
+
 export interface Session {
   state: GameState;
   /** Bumps whenever the state moved. Components read state; this is what re-renders them. */
@@ -80,8 +90,8 @@ export interface Session {
   dismissOffline: () => void;
   /** Achievements earned since the last render. Empty most frames. */
   justEarned: readonly AchievementId[];
-  /** True when the save on disk was refused for being too old. Cleared on dismissal. */
-  saveRefused: boolean;
+  /** Why the save on disk did not load, or null when it did. Cleared on dismissal. */
+  refusedSave: SaveRefusal | null;
   dismissRefusal: () => void;
   dispatch: (intent: Intent) => IntentResult;
   exportBlob: () => string;
@@ -120,7 +130,7 @@ export function useGameSession(content: Content): Session {
   const [ready, setReady] = useState(false);
   const [offline, setOffline] = useState<OfflineReport | null>(null);
   const [justEarned, setJustEarned] = useState<readonly AchievementId[]>([]);
-  const [saveRefused, setSaveRefused] = useState(false);
+  const [refusedSave, setRefusedSave] = useState<SaveRefusal | null>(null);
   const [fresh, setFresh] = useState(false);
   const loaded = useRef(false);
 
@@ -158,7 +168,7 @@ export function useGameSession(content: Content): Session {
     if (loaded.current) return;
     loaded.current = true;
 
-    void readSave().then((blob) => {
+    void readSave().then(async (blob) => {
       setFresh(blob === null);
 
       if (blob) {
@@ -169,11 +179,12 @@ export function useGameSession(content: Content): Session {
           const report = catchUp(restored, content, Date.now() - blob.savedAtMs);
           if (report.elapsedMs >= RETURN_SUMMARY_FLOOR_MS) setOffline(report);
         } catch (error) {
-          // A refused save is the one failure worth telling the player about: it is
-          // ours, it is permanent, and starting fresh in silence looks like data loss.
-          // Anything else is unreadable data nobody can be helped with here, and the
-          // old blob stays on disk until the first autosave overwrites it.
-          if (error instanceof ObsoleteSave) setSaveRefused(true);
+          // Starting fresh in silence looks like data loss, and the first autosave
+          // would make it so: it writes over the only slot ten seconds in. The blob is
+          // set aside first, and it is awaited because `ready` below is what starts the
+          // autosave.
+          await keepUnreadableSave(blob);
+          setRefusedSave(error instanceof ObsoleteSave ? 'obsolete' : 'unreadable');
         }
       }
 
@@ -323,7 +334,7 @@ export function useGameSession(content: Content): Session {
   );
 
   const dismissOffline = useCallback((): void => setOffline(null), []);
-  const dismissRefusal = useCallback((): void => setSaveRefused(false), []);
+  const dismissRefusal = useCallback((): void => setRefusedSave(null), []);
 
   return {
     state: stateRef.current,
@@ -333,7 +344,7 @@ export function useGameSession(content: Content): Session {
     offline,
     dismissOffline,
     justEarned,
-    saveRefused,
+    refusedSave,
     dismissRefusal,
     dispatch,
     exportBlob,
