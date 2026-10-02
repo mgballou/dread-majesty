@@ -1,14 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import {
-  CURRENT,
   CURRENT_COPY,
   CURRENT_ONBOARDING,
   isDominionBeatId,
   isMaliceBeatId,
   type TierId,
 } from '@dm/content';
-import type { Copy, DominionBeatId, MaliceBeatId, OnboardingBeat } from '@dm/content';
+import type { Content, Copy, DominionBeatId, MaliceBeatId, OnboardingBeat } from '@dm/content';
 import { isAppointed, isRousable, isTierUnlocked, prestigeGain } from '@dm/engine';
 import type { GameState } from '@dm/engine';
 import { useSound } from './audio/useSound.ts';
@@ -31,6 +30,8 @@ import {
 } from './game/onboarding.ts';
 import { isPrestigeWorthShowing } from './game/reveals.ts';
 import { spotlightFor } from './game/spotlight.ts';
+import { CHAIN_URL } from './game/chain.ts';
+import { useChain } from './game/useChain.ts';
 import { useGameSession } from './game/useGameSession.ts';
 import { Ledger } from './screens/Ledger.tsx';
 import { OfflineSummary } from './screens/OfflineSummary.tsx';
@@ -81,7 +82,13 @@ import './App.css';
  * with no route to earning any teaches nothing.
  */
 export function App(): ReactNode {
-  const content = CURRENT;
+  const chain = useChain(CHAIN_URL);
+  if (!chain.settled) return <BootScreen />;
+  return <Realm content={chain.content} />;
+}
+
+/** The game, once `useChain` has settled what it runs on. See `App`. */
+function Realm({ content }: { content: Content }): ReactNode {
   const copy = CURRENT_COPY;
   const onboarding = CURRENT_ONBOARDING;
   const session = useGameSession(content);
