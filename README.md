@@ -55,7 +55,7 @@ pnpm build      # production bundle
 pnpm harness    # headless balance run
 ```
 
-Node 22 or newer.
+Node 22 or newer. On Node 26, run checks with `NODE_OPTIONS=--no-experimental-webstorage pnpm check` so Node's experimental `localStorage` does not mask jsdom's implementation.
 
 ---
 
