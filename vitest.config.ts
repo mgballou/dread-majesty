@@ -10,6 +10,19 @@ import { defineConfig } from 'vitest/config';
  */
 export default defineConfig({
   test: {
+    /**
+     * Node 25 and later ship their own `localStorage`, and under jsdom it shadows
+     * jsdom's. With no `--localstorage-file` it is an empty shell, so every web test
+     * that writes or reads a save fails. Turning it off hands the global back to
+     * jsdom. Node 22, which the repo pins, accepts the flag and changes nothing.
+     *
+     * It lives here because Vitest reads worker arguments only from the root config;
+     * a project cannot set its own.
+     */
+    pool: 'forks',
+    poolOptions: {
+      forks: { execArgv: ['--no-experimental-webstorage'] },
+    },
     projects: [
       {
         test: {
