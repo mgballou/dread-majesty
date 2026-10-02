@@ -651,6 +651,17 @@ describe('onboarding retires a beat nobody answered', () => {
     await struckDuringDominion();
     await userEvent.click(screen.getByRole('button', { name: onboarding.dismiss }));
     await screen.findByRole('status', { name: onboarding.herLabel });
+    await settles();
+  }
+
+  /*
+   * The flush `findsHer` carries, for the same reason: these tests wind from the find
+   * with nothing to click in between, so her window must be open before the wind starts.
+   */
+  async function settles(): Promise<void> {
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
   }
 
   it('retires the beat once its own window closes', async () => {
@@ -932,6 +943,25 @@ describe('the Malice conversation resolves', () => {
     vi.spyOn(storage, 'readSave').mockResolvedValue(struckBlob());
     render(<App />);
     await screen.findByRole('status', { name: onboarding.herLabel });
+    await settles();
+  }
+
+  /*
+   * Finds her twice over: once in the DOM, once in the bookkeeping.
+   *
+   * The bar reaching the screen and her arrival being written down are two events, and
+   * the second can lag the first — it happens in an effect, which React schedules as its
+   * own task and does not flush before the committing render is visible. A test that
+   * winds straight from the find can outrun that task, and her seventy-five-second
+   * window then opens only after the whole span has already elapsed — on a frozen fake
+   * clock, so the verdict can never arrive. Every test that strikes before winding is
+   * safe by accident, because a click runs inside `act` and flushes the task. This is
+   * that flush for the tests with nothing to click.
+   */
+  async function settles(): Promise<void> {
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
   }
 
   async function strike(): Promise<void> {
