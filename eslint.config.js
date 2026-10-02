@@ -16,6 +16,12 @@ export default tseslint.config(
   },
 
   {
+    // Scripts run under Node, outside any tsconfig.
+    files: ['apps/*/scripts/**/*.mjs'],
+    languageOptions: { globals: { console: 'readonly', process: 'readonly' } },
+  },
+
+  {
     // Config files are loaded by their tools through a default export.
     files: ['**/*.config.{js,ts}', 'eslint.config.js'],
     rules: { 'no-restricted-exports': 'off' },

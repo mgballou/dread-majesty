@@ -1,0 +1,9 @@
+parameters:
+    level: 9
+    paths:
+        - src/Decimal.php
+        - src/Ieee754.php
+        - src/V8Math.php
+    ignoreErrors:
+        - identifier: greaterOrEqual.alwaysTrue
+          path: src/V8Math.php
