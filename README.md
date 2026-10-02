@@ -197,6 +197,25 @@ this file, which are the same drawings the game ships.
 
 ---
 
+## The backstage
+
+The game needs nothing but itself. It runs with no account and no network, and that stays true.
+
+The progression chain is authored elsewhere. [**`dread-majesty-backstage`**](https://github.com/mgballou/dread-majesty-backstage)
+is the operator's tool, built on Laravel and Filament: it edits the chain and publishes it.
+Players never see it.
+
+[**`dm-decimal`**](https://github.com/mgballou/dm-decimal) is the PHP port of `Decimal` and `step` that the
+backstage runs its numbers through. It is held to this repo's conformance vectors in
+[`packages/engine/conformance/vectors/`](packages/engine/conformance/vectors/), so the two sides
+agree on every value.
+
+A published chain reaches the game through `VITE_CHAIN_URL`, set at build time. Unset, the game
+plays the bundled chain. Set, it fetches the published one at startup and falls back to the
+bundled one if the fetch or the validation fails.
+
+---
+
 ## Reading order
 
 1. [**The design spec**](docs/superpowers/specs/2026-08-03-dread-majesty-design.md) — the

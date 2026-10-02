@@ -62,6 +62,8 @@ export type {
   WaitingLine,
 } from './copy.ts';
 
+export { isContent } from './validate.ts';
+
 export { ART } from './art.ts';
 export type { ArtSlot } from './art.ts';
 

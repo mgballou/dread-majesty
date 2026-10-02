@@ -9,6 +9,7 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "export:current": "node --experimental-strip-types scripts/export-current.ts"
   }
 }
