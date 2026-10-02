@@ -217,4 +217,5 @@ Matthew reads. Claude and Codex both reach Linear through its MCP.
   them instead.
 - Never touch another project's tickets. Never put client or work content in
   Linear.
+
 <!-- block:end -->
