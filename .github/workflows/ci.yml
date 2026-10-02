@@ -12,6 +12,7 @@ jobs:
   gate:
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     permissions:
       contents: read
     outputs:
@@ -20,15 +21,20 @@ jobs:
       - id: base
         env:
           GH_TOKEN: ${{ github.token }}
+        # The gate never fails a PR. A behind branch skips the check; an API error
+        # runs it, since a skipped check would read as a pass.
         run: |
-          behind=$(gh api "repos/${{ github.repository }}/compare/${{ github.base_ref }}...${{ github.event.pull_request.head.sha }}" --jq .behind_by)
-          if [ "$behind" = "0" ]; then echo "run=true" >> "$GITHUB_OUTPUT"
+          behind=$(gh api "repos/${{ github.repository }}/compare/${{ github.base_ref }}...${{ github.event.pull_request.head.sha }}" --jq .behind_by) || behind=""
+          if [ -z "$behind" ]; then echo "::warning::Could not compare with ${{ github.base_ref }}. Running CI anyway."; echo "run=true" >> "$GITHUB_OUTPUT"
+          elif [ "$behind" = "0" ]; then echo "run=true" >> "$GITHUB_OUTPUT"
           else echo "::notice::This branch is $behind commits behind ${{ github.base_ref }}. Update it to run CI."; echo "run=false" >> "$GITHUB_OUTPUT"; fi
 
   check:
     needs: gate
     if: needs.gate.outputs.run == 'true'
     runs-on: ubuntu-latest
+    # The whole job takes under a minute. A hang should cost minutes, not hours.
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
