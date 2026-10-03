@@ -83,5 +83,5 @@ game a reader arriving from a link is guaranteed to see.
 
 ## What is left for him
 
-Recorded as decision 60 in the Laila vault: whether the opening two minutes are what he
+Open decision: whether the opening two minutes are what he
 wants a stranger to meet, or whether they change before the post goes up.
