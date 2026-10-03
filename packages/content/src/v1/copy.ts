@@ -409,6 +409,7 @@ export const v1Copy = {
     unmigratableSave: 'That save is older than this build can read.',
     obsoleteSave:
       'This save is from an early development build and no longer loads. Starting fresh.',
+    unreadableSave: 'This save could not be read and has been set aside. Starting fresh.',
     storageBlocked: 'This browser will not let the game save. Close the tab and it is gone.',
   },
 
