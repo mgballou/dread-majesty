@@ -6,7 +6,7 @@ import { defineConfig } from 'vitest/config';
  * The engine is pure TypeScript and must keep running under plain Node with no DOM
  * — that constraint is load-bearing, so its tests get no DOM to lean on by
  * accident. The web app brings its own config, which is where jsdom and Testing
- * Library are set up.
+ * Library are set up. The calibration app brings its own too; its tests need no DOM.
  */
 export default defineConfig({
   test: {
@@ -19,6 +19,7 @@ export default defineConfig({
         },
       },
       './apps/web',
+      './apps/calibration',
     ],
   },
 });
