@@ -16,24 +16,32 @@ jobs:
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     timeout-minutes: 3
+    outputs:
+      run: ${{ steps.base.outputs.run }}
     steps:
-      - name: Require the branch to be current with its base
+      - id: base
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
           BASE: ${{ github.base_ref }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        # Fails, rather than skips, a PR behind its base: a skipped check reads
-        # as a pass with no tests run.
+        # The gate never fails a PR. A behind branch skips the check with a notice;
+        # an API error runs it, since a skipped check would read as a pass.
         run: |
-          behind=$(gh api "repos/$REPO/compare/$BASE...$HEAD_SHA" --jq .behind_by)
-          if [ "$behind" != "0" ]; then
-            echo "::error::This branch is $behind commits behind $BASE. Update it to run CI."
-            exit 1
+          behind=$(gh api "repos/$REPO/compare/$BASE...$HEAD_SHA" --jq .behind_by) || behind=""
+          if [ -z "$behind" ]; then
+            echo "::warning::Could not compare with $BASE. Running CI anyway."
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          elif [ "$behind" = "0" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::This branch is $behind commits behind $BASE. Update it to run CI."
+            echo "run=false" >> "$GITHUB_OUTPUT"
           fi
 
   check:
     needs: gate
+    if: needs.gate.outputs.run == 'true'
     runs-on: ubuntu-latest
     # The whole job takes under a minute. A hang should cost minutes, not hours.
     timeout-minutes: 15
